@@ -72,6 +72,7 @@ function inputCls(hasError) {
                             required
                             autofocus
                             autocomplete="username"
+                            placeholder="email@example.com"
                             :class="inputCls(!!form.errors.email)"
                         />
                         <p v-if="form.errors.email" class="mt-1.5 text-xs text-red-500">{{ form.errors.email }}</p>
@@ -87,6 +88,7 @@ function inputCls(hasError) {
                             v-model="form.password"
                             required
                             autocomplete="current-password"
+                            placeholder="••••••••"
                             :class="inputCls(!!form.errors.password)"
                         />
                         <p v-if="form.errors.password" class="mt-1.5 text-xs text-red-500">{{ form.errors.password }}</p>
