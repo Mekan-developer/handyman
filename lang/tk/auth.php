@@ -9,6 +9,7 @@ return [
         'remember' => 'Ýatda sakla',
         'forgot_password' => 'Açar sözüňizi unutdyňyzmy?',
         'submit' => 'Giriş',
+        'processing' => 'Girýär...',
     ],
     'register' => [
         'title' => 'Hasap açmak',
@@ -18,5 +19,14 @@ return [
         'confirm_password' => 'Açar sözi tassyklaň',
         'submit' => 'Hasap açmak',
         'already_registered' => 'Eýýäm hasabyňyz barmy?',
+    ],
+    'forgot_password' => [
+        'title' => 'Açar sözi dikeltmek',
+        'subtitle' => 'Email giriziň — täze açar söz üçin link iberýäris',
+        'description' => 'Hasabyňyzyň email adresini giriziň, täze açar söz döretmek üçin link iberiler.',
+        'email' => 'Email',
+        'submit' => 'Link iber',
+        'processing' => 'Iberilýär...',
+        'back_to_login' => 'Girişe gaýdyp git',
     ],
 ];

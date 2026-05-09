@@ -1,7 +1,7 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
@@ -9,6 +9,13 @@ import { createPinia } from 'pinia';
 import i18n from './i18n';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+function applyTranslations(translations) {
+    if (!translations) { return; }
+    Object.entries(translations).forEach(([locale, messages]) => {
+        i18n.global.setLocaleMessage(locale, messages);
+    });
+}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -18,6 +25,13 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.vue'),
         ),
     setup({ el, App, props, plugin }) {
+        applyTranslations(props.initialPage.props.translations);
+
+        // Re-apply on every Inertia visit so lang file edits propagate after a page reload.
+        router.on('success', (event) => {
+            applyTranslations(event.detail.page.props.translations);
+        });
+
         return createApp({ render: () => h(App, props) })
             .use(plugin)
             .use(ZiggyVue)

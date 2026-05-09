@@ -3,6 +3,8 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\File;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -36,6 +38,43 @@ class HandleInertiaRequests extends Middleware
             ],
             'locale' => session('locale', config('app.locale', 'ru')),
             'notification' => session('notification'),
+            'translations' => $this->loadTranslations(),
         ];
+    }
+
+    /**
+     * Load every PHP lang file under lang/{locale} for all supported locales,
+     * so the Vue i18n client can hot-swap without a round trip.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function loadTranslations(): array
+    {
+        return Cache::driver(app()->isProduction() ? null : 'array')->rememberForever(
+            'inertia.translations',
+            function (): array {
+                $locales = ['ru', 'tk'];
+                $bundle = [];
+
+                foreach ($locales as $locale) {
+                    $path = lang_path($locale);
+
+                    if (! File::isDirectory($path)) {
+                        $bundle[$locale] = [];
+
+                        continue;
+                    }
+
+                    $bundle[$locale] = collect(File::files($path))
+                        ->filter(fn ($file) => $file->getExtension() === 'php')
+                        ->mapWithKeys(fn ($file) => [
+                            $file->getFilenameWithoutExtension() => require $file->getPathname(),
+                        ])
+                        ->all();
+                }
+
+                return $bundle;
+            }
+        );
     }
 }

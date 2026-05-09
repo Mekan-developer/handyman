@@ -60,6 +60,11 @@ class Master extends Model
         return $this->hasOne(MasterLocation::class)->latestOfMany('recorded_at');
     }
 
+    public function orders(): HasMany
+    {
+        return $this->hasMany(Order::class);
+    }
+
     public function hasActiveAccess(): bool
     {
         return $this->access_expires_at === null || $this->access_expires_at->isFuture();

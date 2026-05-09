@@ -17,6 +17,7 @@ class MasterLocation extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'master_id',
+        'order_id',
         'latitude',
         'longitude',
         'recorded_at',
@@ -34,5 +35,10 @@ class MasterLocation extends Model
     public function master(): BelongsTo
     {
         return $this->belongsTo(Master::class);
+    }
+
+    public function order(): BelongsTo
+    {
+        return $this->belongsTo(Order::class);
     }
 }

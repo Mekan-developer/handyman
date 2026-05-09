@@ -16,12 +16,15 @@ class MasterRepository
     }
 
     /** All active masters with latest location — for map view. */
-    public function forMap(): Collection
+    public function forMap(?int $cityId = null): Collection
     {
         return Master::with(['city', 'latestLocation'])
             ->where('is_active', true)
-            ->whereNotNull('access_expires_at')
-            ->where('access_expires_at', '>', now())
+            ->where(function ($q) {
+                $q->whereNull('access_expires_at')
+                    ->orWhere('access_expires_at', '>', now());
+            })
+            ->when($cityId, fn ($q, $id) => $q->where('city_id', $id))
             ->get();
     }
 
@@ -69,5 +72,22 @@ class MasterRepository
     public function resetBalance(Master $master): void
     {
         $master->update(['balance' => 0]);
+    }
+
+    /** Active masters in given city, optionally filtered by category — for order assignment dropdown. */
+    public function eligibleForOrder(int $cityId, ?int $categoryId = null): Collection
+    {
+        return Master::with(['categories', 'latestLocation'])
+            ->where('city_id', $cityId)
+            ->where('is_active', true)
+            ->where(function ($q) {
+                $q->whereNull('access_expires_at')
+                    ->orWhere('access_expires_at', '>', now());
+            })
+            ->when($categoryId, fn ($q, $catId) => $q->whereHas(
+                'categories',
+                fn ($c) => $c->where('categories.id', $catId)
+            ))
+            ->get();
     }
 }

@@ -3,6 +3,7 @@
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\MasterController;
+use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -31,6 +32,12 @@ Route::middleware('auth')->group(function () {
     Route::get('masters/map', [MasterController::class, 'map'])->name('masters.map');
     Route::get('masters/{master}/trajectory', [MasterController::class, 'trajectory'])->name('masters.trajectory');
     Route::resource('masters', MasterController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::resource('orders', OrderController::class)->only(['index', 'show', 'store', 'destroy']);
+    Route::post('orders/{order}/assign', [OrderController::class, 'assign'])->name('orders.assign');
+    Route::post('orders/{order}/price', [OrderController::class, 'setPrice'])->name('orders.set-price');
+    Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
+    Route::get('orders/{order}/master-trajectory', [OrderController::class, 'masterTrajectoryForOrder'])->name('orders.master-trajectory');
 });
 
 require __DIR__.'/auth.php';

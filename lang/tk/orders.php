@@ -1,0 +1,74 @@
+<?php
+
+return [
+    'title' => 'Sargytlar',
+    'show' => 'Sargyt',
+    'add' => 'Sargyt döret',
+    'edit' => 'Üýtget',
+    'view' => 'Aç',
+    'delete' => 'Öçür',
+    'delete_confirm' => 'Bu sargydy öçürmek isleýärsiňizmi?',
+    'empty' => 'Sargyt ýok',
+    'back' => 'Sanawa dolan',
+    'save' => 'Ýatda sakla',
+    'cancel' => 'Ýatyr',
+
+    'fields' => [
+        'id' => '№',
+        'client_name' => 'Müşderiniň ady',
+        'client_phone' => 'Müşderiniň telefony',
+        'description' => 'Meseläniň beýany',
+        'client_address' => 'Salgy',
+        'city' => 'Şäher',
+        'category' => 'Kategoriýa',
+        'master' => 'Usta',
+        'status' => 'Ýagdaý',
+        'final_price' => 'Jemi baha',
+        'created_at' => 'Döredildi',
+        'assigned_at' => 'Bellenildi',
+        'started_at' => 'Başlandy',
+        'completed_at' => 'Tamamlandy',
+        'cancelled_at' => 'Ýatyryldy',
+        'cancel_reason' => 'Ýatyrylan sebäbi',
+        'photos' => 'Meseläniň suratlary',
+        'tasks' => 'Edilen işler',
+        'location' => 'Ýerleşişi',
+    ],
+
+    'actions' => [
+        'assign_master' => 'Ussa belle',
+        'change_master' => 'Ussany çalyş',
+        'set_price' => 'Bahany goý',
+        'change_status' => 'Ýagdaýy üýtget',
+        'view_on_map' => 'Kartada görkez',
+        'call_master' => 'Ussa jaň et',
+        'call_client' => 'Müşderä jaň et',
+    ],
+
+    'filters' => [
+        'all' => 'Hemmesi',
+        'by_status' => 'Ýagdaý boýunça',
+        'by_city' => 'Şäher boýunça',
+    ],
+
+    'modals' => [
+        'assign_title' => 'Sargyda ussa belle',
+        'price_title' => 'Jemi bahany goý',
+        'status_title' => 'Sargydyň ýagdaýyny üýtget',
+        'no_eligible_masters' => 'Bu şäher we kategoriýa üçin elýeterli ussa ýok',
+    ],
+
+    'notifications' => [
+        'master_assigned' => 'Usta üstünlikli bellenildi',
+        'price_set' => 'Baha goýuldy',
+        'status_updated' => 'Ýagdaý täzelendi',
+    ],
+
+    'errors' => [
+        'master_inactive' => 'Usta işjeň däl ýa-da girişiň möhleti gutardy',
+        'city_mismatch' => 'Ussanyň şäheri sargydyň şäheri bilen gabat gelmeýär',
+        'category_mismatch' => 'Ussa bu kategoriýada işlemeýär',
+        'already_final' => 'Sargyt eýýäm jemleýji ýagdaýda',
+        'invalid_transition' => 'Ýagdaý üýtgetmek mümkin däl',
+    ],
+];

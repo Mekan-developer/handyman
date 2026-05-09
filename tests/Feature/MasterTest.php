@@ -67,7 +67,18 @@ class MasterTest extends TestCase
 
         $this->get(route('masters.map'))
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Masters/Map')->has('masters'));
+            ->assertInertia(fn ($page) => $page->component('Masters/Map')->has('masters')->has('cityIds'));
+    }
+
+    public function test_map_includes_masters_with_null_access_expires_at(): void
+    {
+        $this->actingAsAdmin();
+        Master::factory()->create(['access_expires_at' => null, 'is_active' => true]);
+        Master::factory()->create(['access_expires_at' => now()->addDays(10), 'is_active' => true]);
+        Master::factory()->expired()->create();
+
+        $this->get(route('masters.map'))
+            ->assertInertia(fn ($page) => $page->where('masters', fn ($masters) => count($masters) === 2));
     }
 
     // ── Trajectory ────────────────────────────────────────────────────────────

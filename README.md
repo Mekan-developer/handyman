@@ -383,6 +383,29 @@ When a client submits a new order:
 
 ---
 
+## Live Master Tracking on Admin Map
+
+The admin map (`/masters/map`) shows masters in real-time. When a master mobile app pings its location:
+
+1. Master POSTs to `/api/v1/master/{id}/location`
+2. Backend stores it and dispatches `MasterLocationUpdated` event
+3. Event broadcasts to public channel `masters-map.{cityId}`
+4. Admin's open map subscribes to relevant city channels and animates the marker smoothly
+
+**Without Flutter app — for testing/demo**:
+```bash
+# Start Reverb in one terminal
+php artisan reverb:start
+
+# Simulate master movement in another terminal
+php artisan master:simulate-movement 1 --interval=3 --steps=60
+# Master 1 will broadcast a new location every 3 seconds for 3 minutes
+```
+
+Open `/masters/map` in the browser — the marker for master 1 will animate.
+
+---
+
 ## API (Mobile Apps)
 
 All Flutter mobile app communication uses the versioned REST API.
@@ -391,11 +414,19 @@ All Flutter mobile app communication uses the versioned REST API.
 |---|---|
 | Base path | `/api/v1/` |
 | Controllers | `app/Http/Controllers/Api/V1/` |
-| Auth | Laravel Sanctum — token-based, no sessions |
+| Auth | Laravel Sanctum — token-based, no sessions (planned for master endpoints) |
 | Responses | Always via Eloquent API Resources |
 | Routes | `routes/api/v1.php` |
 
 Web (Inertia) and API controllers are **strictly separate**. Never reuse or share a controller between both.
+
+**Flutter developer reference**: see [docs/MASTER_APP_SPEC.md](docs/MASTER_APP_SPEC.md) for the full Master mobile app technical specification — endpoints, WebSocket contracts, screen flow, and open questions.
+
+### Currently implemented endpoints
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `POST` | `/api/v1/master/{master}/location` | open (dev) | Master pings GPS location; broadcasts to admin map |
 
 ---
 

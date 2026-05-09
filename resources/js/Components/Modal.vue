@@ -52,7 +52,7 @@ onUnmounted(() => {
         >
             <div
                 v-if="show"
-                class="fixed inset-0 z-50 flex items-center justify-center px-4 py-8"
+                class="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8"
             >
                 <!-- Backdrop -->
                 <div

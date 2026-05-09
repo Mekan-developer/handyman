@@ -39,8 +39,11 @@ class MasterController extends Controller
 
     public function map(): Response
     {
+        $masters = $this->repository->forMap();
+
         return Inertia::render('Masters/Map', [
-            'masters' => MasterResource::collection($this->repository->forMap()),
+            'masters' => MasterResource::collection($masters)->resolve(),
+            'cityIds' => $masters->pluck('city_id')->unique()->values(),
         ]);
     }
 
