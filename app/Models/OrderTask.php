@@ -24,6 +24,7 @@ class OrderTask extends Model
     protected $fillable = [
         'order_id',
         'title',
+        'description',
         'before_photo_path',
         'after_photo_path',
         'before_status',

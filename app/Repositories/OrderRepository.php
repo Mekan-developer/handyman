@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Master;
 use App\Models\Order;
 use App\OrderStatus;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -18,6 +19,24 @@ class OrderRepository
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function forMaster(Master $master, string $filter = 'active'): LengthAwarePaginator
+    {
+        return Order::with(['category'])
+            ->where('master_id', $master->id)
+            ->when($filter === 'active', fn ($q) => $q->whereIn('status', [OrderStatus::Assigned->value, OrderStatus::InProgress->value]))
+            ->when($filter === 'history', fn ($q) => $q->whereIn('status', [OrderStatus::Completed->value, OrderStatus::Cancelled->value]))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+    }
+
+    public function findForMasterOrFail(int $orderId, Master $master): Order
+    {
+        return Order::with(['category', 'photos', 'tasks'])
+            ->where('master_id', $master->id)
+            ->findOrFail($orderId);
     }
 
     public function findOrFail(int $id): Order

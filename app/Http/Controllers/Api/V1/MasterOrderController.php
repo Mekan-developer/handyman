@@ -1,0 +1,72 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Actions\CompleteMasterOrderAction;
+use App\Actions\StartMasterOrderAction;
+use App\Exceptions\OrderException;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\CompleteOrderRequest;
+use App\Http\Resources\Api\V1\MasterOrderResource;
+use App\Models\Master;
+use App\Repositories\OrderRepository;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class MasterOrderController extends Controller
+{
+    public function __construct(private readonly OrderRepository $repository) {}
+
+    public function index(Request $request): AnonymousResourceCollection
+    {
+        /** @var Master $master */
+        $master = $request->user();
+
+        $orders = $this->repository->forMaster($master, $request->query('filter', 'active'));
+
+        return MasterOrderResource::collection($orders);
+    }
+
+    public function show(Request $request, int $id): MasterOrderResource
+    {
+        /** @var Master $master */
+        $master = $request->user();
+
+        $order = $this->repository->findForMasterOrFail($id, $master);
+
+        return new MasterOrderResource($order);
+    }
+
+    public function start(Request $request, int $id, StartMasterOrderAction $action): JsonResponse
+    {
+        /** @var Master $master */
+        $master = $request->user();
+
+        $order = $this->repository->findForMasterOrFail($id, $master);
+
+        try {
+            $updated = $action->handle($master, $order);
+        } catch (OrderException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return (new MasterOrderResource($updated))->response();
+    }
+
+    public function complete(CompleteOrderRequest $request, int $id, CompleteMasterOrderAction $action): JsonResponse
+    {
+        /** @var Master $master */
+        $master = $request->user();
+
+        $order = $this->repository->findForMasterOrFail($id, $master);
+
+        try {
+            $updated = $action->handle($master, $order, (float) $request->validated('final_price'));
+        } catch (OrderException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return (new MasterOrderResource($updated))->response();
+    }
+}

@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Api\V1\MasterAuthController;
 use App\Http\Controllers\Api\V1\MasterLocationController;
+use App\Http\Controllers\Api\V1\MasterOrderController;
 use App\Http\Controllers\Api\V1\MasterProfileController;
+use App\Http\Controllers\Api\V1\MasterTaskController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -29,5 +31,17 @@ Route::prefix('master')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::get('me', [MasterProfileController::class, 'show'])->name('api.v1.master.me');
+
+        Route::prefix('orders')->name('api.v1.master.orders.')->group(function () {
+            Route::get('/', [MasterOrderController::class, 'index'])->name('index');
+            Route::get('{order}', [MasterOrderController::class, 'show'])->name('show');
+            Route::post('{order}/start', [MasterOrderController::class, 'start'])->name('start');
+            Route::post('{order}/complete', [MasterOrderController::class, 'complete'])->name('complete');
+
+            Route::prefix('{order}/tasks')->name('tasks.')->group(function () {
+                Route::post('/', [MasterTaskController::class, 'store'])->name('store');
+                Route::post('{task}/photo', [MasterTaskController::class, 'uploadPhoto'])->name('photo');
+            });
+        });
     });
 });
