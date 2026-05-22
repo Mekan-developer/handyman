@@ -1,0 +1,30 @@
+meta {
+  name: Send Location (No Order)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{base_url}}/api/v1/master/{{master_id}}/location
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "latitude": 37.960000,
+    "longitude": 58.390000
+  }
+}
+
+docs {
+  # Send Location without order_id
+
+  Minimal ping — master is online but not on a specific order trip.
+  Backend defaults `recorded_at` to server now().
+}
