@@ -378,8 +378,17 @@ When a client submits a new order:
 2. Admin panel receives the WebSocket message
 3. `useNotificationStore.info()` displays a toast notification
 4. Sound alert plays from `public/sounds/new-order.mp3`
+5. Notification bell counter increments in the topbar (via `unreadNotificationsCount` shared prop)
 
 **Page Visibility API**: sound only plays when the browser tab is **active**, preventing stacked alerts when the admin returns to the tab.
+
+### Notification Bell & Panel
+
+The topbar bell button shows unread count and opens `NotificationPanel.vue` — a slide-in drawer listing all admin notifications. Supports: mark single as read, mark all as read, delete single, delete all. Routes handled by `NotificationController` (`/notifications/*`). The `unreadNotificationsCount` is shared via `HandleInertiaRequests` so the badge stays in sync without extra API calls.
+
+### Notifications table
+
+Laravel's built-in `notifications` table (UUID primary key, polymorphic `notifiable`). Migration: `2026_05_22_162610_create_notifications_table.php`. Run `php artisan migrate` to apply.
 
 ---
 
@@ -391,6 +400,16 @@ The admin map (`/masters/map`) shows masters in real-time. When a master mobile 
 2. Backend stores it and dispatches `MasterLocationUpdated` event
 3. Event broadcasts to public channel `masters-map.{cityId}`
 4. Admin's open map subscribes to relevant city channels and animates the marker smoothly
+
+### Per-Order Live Tracking (Orders → Show)
+
+The order detail page (`/orders/{id}`) provides live tracking when a master is assigned and the order is `assigned` or `in_progress`:
+
+- On mount, loads the master's trajectory polyline from `/orders/{id}/master-trajectory`
+- Subscribes to `masters-map.{cityId}` via Reverb and moves the master marker in real-time
+- Extends the trajectory polyline as new location events arrive
+- Shows a live distance (Haversine) and ETA chip (assuming 60 km/h) with a pulsing dot
+- Unsubscribes and cleans up on `onBeforeUnmount`
 
 **Without Flutter app — for testing/demo**:
 ```bash
@@ -424,9 +443,20 @@ Web (Inertia) and API controllers are **strictly separate**. Never reuse or shar
 
 ### Currently implemented endpoints
 
+**Master API**
+
 | Method | Path | Auth | Purpose |
 |--------|------|------|---------|
 | `POST` | `/api/v1/master/{master}/location` | open (dev) | Master pings GPS location; broadcasts to admin map |
+
+**Client API**
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| `POST` | `/api/v1/auth/request-otp` | — | Send OTP to phone number |
+| `POST` | `/api/v1/auth/verify-otp` | — | Verify OTP, returns Sanctum token |
+| `POST` | `/api/v1/auth/complete-registration` | Sanctum | Save name + city after first login |
+| `POST` | `/api/v1/auth/logout` | Sanctum | Revoke current token |
 
 ---
 

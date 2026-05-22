@@ -4,6 +4,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MasterController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
@@ -44,6 +45,14 @@ Route::middleware('auth')->group(function () {
     Route::post('orders/{order}/price', [OrderController::class, 'setPrice'])->name('orders.set-price');
     Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');
     Route::get('orders/{order}/master-trajectory', [OrderController::class, 'masterTrajectoryForOrder'])->name('orders.master-trajectory');
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('{id}/read', [NotificationController::class, 'markRead'])->name('read');
+        Route::post('read-all', [NotificationController::class, 'markAllRead'])->name('read-all');
+        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
+    });
 });
 
 require __DIR__.'/auth.php';

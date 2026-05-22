@@ -62,6 +62,9 @@ Route::prefix('client')->group(function () {
     Route::prefix('auth')->name('api.v1.client.auth.')->group(function () {
         Route::post('request-otp', [ClientAuthController::class, 'requestOtp'])->name('request-otp');
         Route::post('verify-otp', [ClientAuthController::class, 'verifyOtp'])->name('verify-otp');
+        Route::post('complete-registration', [ClientAuthController::class, 'completeRegistration'])
+            ->middleware(['auth:sanctum', 'ensure.client'])
+            ->name('complete-registration');
         Route::post('logout', [ClientAuthController::class, 'logout'])
             ->middleware(['auth:sanctum', 'ensure.client'])
             ->name('logout');

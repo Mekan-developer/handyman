@@ -45,8 +45,13 @@ return [
         'call_client' => 'Müşderä jaň et',
     ],
 
+    'no_master' => 'Bellenilmedi',
+    'no_price' => 'Kesgitlenilmedi',
+
     'filters' => [
         'all' => 'Hemmesi',
+        'all_statuses' => 'Hemme ýagdaýlar',
+        'all_cities' => 'Hemme şäherler',
         'by_status' => 'Ýagdaý boýunça',
         'by_city' => 'Şäher boýunça',
     ],
@@ -54,7 +59,9 @@ return [
     'modals' => [
         'assign_title' => 'Sargyda ussa belle',
         'price_title' => 'Jemi bahany goý',
+        'price_placeholder' => 'Bahany giriziň',
         'status_title' => 'Sargydyň ýagdaýyny üýtget',
+        'cancel_reason' => 'Ýatyrylan sebäbi',
         'no_eligible_masters' => 'Bu şäher we kategoriýa üçin elýeterli ussa ýok',
     ],
 

@@ -1,10 +1,11 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, computed, onMounted, onBeforeUnmount } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/useThemeStore'
 import { useLocaleStore } from '@/stores/useLocaleStore'
 import { useNotificationStore } from '@/stores/useNotificationStore'
+import NotificationPanel from '@/Components/NotificationPanel.vue'
 
 defineProps({
     title: {
@@ -21,6 +22,10 @@ const page = usePage()
 
 const sidebarOpen = ref(false)
 const userMenuOpen = ref(false)
+const notificationPanelOpen = ref(false)
+const notificationPanelRef = ref(null)
+
+const unreadCount = computed(() => page.props.unreadNotificationsCount ?? 0)
 
 watch(() => localeStore.locale, (lang) => {
     locale.value = lang
@@ -109,6 +114,12 @@ function handleNewOrder(payload) {
 
     if (document.visibilityState === 'visible') {
         playNewOrderSound()
+    }
+
+    // Обновляем счётчик и добавляем в панель без перезагрузки
+    router.reload({ only: ['unreadNotificationsCount'] })
+    if (notificationPanelOpen.value) {
+        notificationPanelRef.value?.fetchNotifications()
     }
 }
 
@@ -242,6 +253,23 @@ onBeforeUnmount(() => {
                 <!-- Controls -->
                 <div class="flex items-center gap-2">
 
+                    <!-- Bell notifications -->
+                    <button
+                        @click="notificationPanelOpen = true"
+                        class="relative rounded-md p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-white"
+                        title="Уведомления"
+                    >
+                        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <span
+                            v-if="unreadCount > 0"
+                            class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white"
+                        >
+                            {{ unreadCount > 99 ? '99+' : unreadCount }}
+                        </span>
+                    </button>
+
                     <!-- Dark mode toggle -->
                     <button
                         @click="themeStore.toggle"
@@ -329,6 +357,15 @@ onBeforeUnmount(() => {
             v-if="userMenuOpen"
             class="fixed inset-0 z-40"
             @click="userMenuOpen = false"
+        />
+
+        <!-- Notification slide panel -->
+        <NotificationPanel
+            ref="notificationPanelRef"
+            :open="notificationPanelOpen"
+            :unread-count="unreadCount"
+            @close="notificationPanelOpen = false"
+            @read="router.reload({ only: ['unreadNotificationsCount'] })"
         />
 
         <!-- Toast notifications -->

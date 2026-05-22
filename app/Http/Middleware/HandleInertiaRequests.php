@@ -39,6 +39,9 @@ class HandleInertiaRequests extends Middleware
             'locale' => session('locale', config('app.locale', 'ru')),
             'notification' => session('notification'),
             'translations' => $this->loadTranslations(),
+            'unreadNotificationsCount' => $request->user()
+                ? $request->user()->unreadNotifications()->count()
+                : 0,
         ];
     }
 

@@ -23,6 +23,15 @@ const showStatusModal = ref(false)
 
 const mapContainer = ref(null)
 let map = null
+let masterMarkerL = null
+let trajectoryLine = null
+
+const liveDistance = ref(null)
+const liveEta = ref(null)
+
+const isTracking = computed(() =>
+    props.order.master && ['assigned', 'in_progress'].includes(props.order.status)
+)
 
 onMounted(async () => {
     const L = (await import('leaflet')).default
@@ -69,11 +78,17 @@ onMounted(async () => {
             iconAnchor: [14, 14],
         })
 
-        L.marker([masterLat, masterLng], { icon: masterIcon })
+        masterMarkerL = L.marker([masterLat, masterLng], { icon: masterIcon })
             .addTo(map)
             .bindPopup(`<b>${escapeHtml(props.order.master.name)}</b><br>${escapeHtml(props.order.master.phone)}`)
 
         allLatLngs.push([masterLat, masterLng])
+        updateDistanceEta(masterLat, masterLng, clientLat, clientLng)
+
+        // Load trajectory polyline
+        if (isTracking.value) {
+            await fetchAndDrawTrajectory(L)
+        }
     } else {
         // No master assigned — show eligible candidates as gray dots
         props.eligibleMasters.forEach((m) => {
@@ -121,10 +136,44 @@ onMounted(async () => {
     window.__assignFromMap = (masterId) => {
         router.post(route('orders.assign', props.order.id), { master_id: masterId })
     }
+
+    // Real-time master tracking via Reverb
+    if (isTracking.value && window.Echo && props.order.city?.id) {
+        const clientLat = parseFloat(props.order.client_lat)
+        const clientLng = parseFloat(props.order.client_lng)
+
+        window.Echo.channel(`masters-map.${props.order.city.id}`)
+            .listen('.master.location.updated', (payload) => {
+                if (payload.master_id !== props.order.master.id) { return }
+
+                const lat = parseFloat(payload.latitude)
+                const lng = parseFloat(payload.longitude)
+
+                // Move marker
+                masterMarkerL?.setLatLng([lat, lng])
+
+                // Extend polyline
+                if (trajectoryLine) {
+                    trajectoryLine.addLatLng([lat, lng])
+                } else {
+                    trajectoryLine = L.polyline([[lat, lng]], {
+                        color: '#2563eb',
+                        weight: 3,
+                        opacity: 0.7,
+                        dashArray: '8 5',
+                    }).addTo(map)
+                }
+
+                updateDistanceEta(lat, lng, clientLat, clientLng)
+            })
+    }
 })
 
 onBeforeUnmount(() => {
     delete window.__assignFromMap
+    if (props.order.city?.id) {
+        window.Echo?.leave(`masters-map.${props.order.city.id}`)
+    }
     if (map) {
         map.remove()
         map = null
@@ -155,6 +204,40 @@ function formatDistance(km) {
     if (km < 1) { return `${Math.round(km * 1000)} м` }
     if (km < 10) { return `${km.toFixed(1)} км` }
     return `${Math.round(km)} км`
+}
+
+const ETA_SPEED_KMH = 60
+
+function updateDistanceEta(masterLat, masterLng, clientLat, clientLng) {
+    const km = haversineKm(masterLat, masterLng, clientLat, clientLng)
+    liveDistance.value = km
+    liveEta.value = Math.ceil((km / ETA_SPEED_KMH) * 60)
+}
+
+function formatEta(minutes) {
+    if (minutes < 60) { return `~${minutes} мин` }
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return m === 0 ? `~${h} ч` : `~${h} ч ${m} мин`
+}
+
+async function fetchAndDrawTrajectory(L) {
+    try {
+        const res = await fetch(route('orders.master-trajectory', props.order.id))
+        const json = await res.json()
+        const points = (json.points ?? []).map(p => [parseFloat(p.latitude), parseFloat(p.longitude)])
+
+        if (points.length < 2) { return }
+
+        trajectoryLine = L.polyline(points, {
+            color: '#2563eb',
+            weight: 3,
+            opacity: 0.7,
+            dashArray: '8 5',
+        }).addTo(map)
+    } catch {
+        // silent — trajectory is optional
+    }
 }
 
 const sortedEligibleMasters = computed(() => {
@@ -293,6 +376,36 @@ const cardClass = 'rounded-xl bg-white shadow-sm dark:bg-slate-800'
                                 <p v-if="order.assigned_at" class="mt-1 text-xs text-gray-400">
                                     {{ t('orders.fields.assigned_at') }}: {{ order.assigned_at }}
                                 </p>
+
+                                <!-- Live tracking info -->
+                                <div v-if="isTracking && liveDistance !== null" class="mt-3 space-y-1.5 rounded-lg bg-blue-50 px-3 py-2.5 dark:bg-blue-900/20">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-3">
+                                            <!-- Distance -->
+                                            <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                                </svg>
+                                                <span class="text-sm font-semibold">{{ formatDistance(liveDistance) }}</span>
+                                            </div>
+                                            <div class="h-3 w-px bg-blue-200 dark:bg-blue-700" />
+                                            <!-- ETA -->
+                                            <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                <span class="text-sm font-semibold">{{ formatEta(liveEta) }}</span>
+                                            </div>
+                                        </div>
+                                        <!-- Ping dot -->
+                                        <span class="relative flex h-2 w-2">
+                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                                            <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                                        </span>
+                                    </div>
+                                    <!-- Speed label -->
+                                    <p class="text-xs text-blue-500 dark:text-blue-400">при скорости {{ ETA_SPEED_KMH }} км/ч</p>
+                                </div>
                             </div>
                             <p v-else class="text-gray-400 dark:text-slate-500">{{ t('orders.no_master') }}</p>
                         </div>

@@ -3,9 +3,18 @@
 namespace App\Repositories;
 
 use App\Models\Client;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ClientRepository
 {
+    public function paginate(int $perPage = 20): LengthAwarePaginator
+    {
+        return Client::with('city')
+            ->withCount('orders')
+            ->latest()
+            ->paginate($perPage);
+    }
+
     public function findOrFail(int $id): Client
     {
         return Client::findOrFail($id);
