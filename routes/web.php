@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +35,9 @@ Route::middleware('auth')->group(function () {
     Route::get('masters/{master}/trajectory', [MasterController::class, 'trajectory'])->name('masters.trajectory');
     Route::post('masters/{master}/reset-balance', [MasterController::class, 'resetBalance'])->name('masters.reset-balance');
     Route::resource('masters', MasterController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
+    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
 
     Route::resource('orders', OrderController::class)->only(['index', 'show', 'store', 'destroy']);
     Route::post('orders/{order}/assign', [OrderController::class, 'assign'])->name('orders.assign');
