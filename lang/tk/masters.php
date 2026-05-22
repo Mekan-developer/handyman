@@ -31,4 +31,10 @@ return [
     'trajectory' => 'Ugur',
     'no_location' => 'Ýerleşiş maglumaty ýok',
     'last_seen' => 'Soňky ýerleşiş',
+    'reset_balance' => 'Balansy nola getir',
+    'reset_balance_confirm' => 'Balans nola getirilýär. Töleg geçirilenden soň etmek isleýärsiňizmi?',
+
+    'notifications' => [
+        'balance_reset' => 'Ussadyň balansy nola getirildi',
+    ],
 ];

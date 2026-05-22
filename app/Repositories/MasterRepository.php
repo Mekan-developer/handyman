@@ -69,6 +69,11 @@ class MasterRepository
         $master->delete();
     }
 
+    public function incrementBalance(Master $master, float $amount): void
+    {
+        $master->increment('balance', $amount);
+    }
+
     public function resetBalance(Master $master): void
     {
         $master->update(['balance' => 0]);

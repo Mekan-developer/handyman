@@ -76,6 +76,11 @@ function destroy(master) {
     router.delete(route('masters.destroy', master.id))
 }
 
+function resetBalance(master) {
+    if (!confirm(t('masters.reset_balance_confirm'))) { return }
+    router.post(route('masters.reset-balance', master.id))
+}
+
 const currentPage = computed(() => props.masters?.current_page ?? 1)
 const lastPage = computed(() => props.masters?.last_page ?? 1)
 const masterList = computed(() => props.masters?.data ?? [])
@@ -124,12 +129,13 @@ const masterList = computed(() => props.masters?.data ?? [])
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.payment_model') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.status') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.access_expires_at') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.balance') }}</th>
                                 <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                             <tr v-if="masterList.length === 0">
-                                <td colspan="8" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
+                                <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
                                     {{ t('masters.empty') }}
                                 </td>
                             </tr>
@@ -183,6 +189,20 @@ const masterList = computed(() => props.masters?.data ?? [])
                                         {{ master.access_expires_at }}
                                     </span>
                                     <span v-else class="text-gray-300 dark:text-slate-600">—</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-sm font-semibold text-gray-900 dark:text-slate-200">
+                                            {{ Number(master.balance ?? 0).toFixed(2) }}
+                                        </span>
+                                        <button
+                                            v-if="Number(master.balance) > 0"
+                                            @click="resetBalance(master)"
+                                            class="rounded px-2 py-0.5 text-xs font-medium text-orange-600 ring-1 ring-orange-300 hover:bg-orange-50 dark:text-orange-400 dark:ring-orange-500/40 dark:hover:bg-orange-500/10 transition-colors"
+                                        >
+                                            {{ t('masters.reset_balance') }}
+                                        </button>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-right">
                                     <div class="flex items-center justify-end gap-1">

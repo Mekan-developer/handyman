@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateMasterAction;
 use App\Actions\DeleteMasterAction;
+use App\Actions\ResetMasterBalanceAction;
 use App\Actions\UpdateMasterAction;
 use App\Http\Requests\StoreMasterRequest;
 use App\Http\Requests\UpdateMasterRequest;
@@ -79,6 +80,15 @@ class MasterController extends Controller
         $master = $this->repository->findOrFail($id);
         $action->handle($master);
         $this->notifySuccess('notifications.deleted', ['resource' => __('resources.master')]);
+
+        return redirect()->route('masters.index');
+    }
+
+    public function resetBalance(int $id, ResetMasterBalanceAction $action): RedirectResponse
+    {
+        $master = $this->repository->findOrFail($id);
+        $action->handle($master);
+        $this->notifySuccess('masters.notifications.balance_reset');
 
         return redirect()->route('masters.index');
     }
