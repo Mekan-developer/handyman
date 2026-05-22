@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
 import { Link, router, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { useThemeStore } from '@/stores/useThemeStore'
@@ -89,6 +89,46 @@ function isCurrentRoute(name) {
 function logout() {
     router.post(route('logout'))
 }
+
+function playNewOrderBeep() {
+    try {
+        const ctx = new AudioContext()
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(880, ctx.currentTime)
+        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3)
+        gain.gain.setValueAtTime(0.4, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
+        osc.start(ctx.currentTime)
+        osc.stop(ctx.currentTime + 0.6)
+    } catch {
+        // AudioContext not available
+    }
+}
+
+function handleNewOrder(payload) {
+    const message = t('orders.notifications.new_order', {
+        client: payload.client_name ?? '—',
+        category: payload.category ?? '—',
+    })
+    notificationStore.info(message)
+
+    if (document.visibilityState === 'visible') {
+        playNewOrderBeep()
+    }
+}
+
+onMounted(() => {
+    if (!window.Echo) { return }
+    window.Echo.channel('orders').listen('.order.created', handleNewOrder)
+})
+
+onBeforeUnmount(() => {
+    window.Echo?.leave('orders')
+})
 </script>
 
 <template>

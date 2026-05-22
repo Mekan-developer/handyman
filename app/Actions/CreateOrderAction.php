@@ -2,6 +2,8 @@
 
 namespace App\Actions;
 
+use App\Events\OrderCreated;
+use App\Jobs\ConvertOrderPhotoJob;
 use App\Models\Order;
 use App\OrderStatus;
 use App\Repositories\OrderRepository;
@@ -27,14 +29,20 @@ class CreateOrderAction
             foreach ($photos as $photo) {
                 $path = $photo->store("orders/{$order->id}/problem", 'public');
 
-                $order->photos()->create([
+                $record = $order->photos()->create([
                     'path' => $path,
                     'original_name' => $photo->getClientOriginalName(),
-                    'status' => 'done',
+                    'status' => 'pending',
                 ]);
+
+                ConvertOrderPhotoJob::dispatch($record->id);
             }
 
-            return $order->load(['city', 'category', 'photos']);
+            $order->load(['city', 'category', 'photos']);
+
+            OrderCreated::dispatch($order);
+
+            return $order;
         });
     }
 }

@@ -62,6 +62,7 @@ return [
         'master_assigned' => 'Usta üstünlikli bellenildi',
         'price_set' => 'Baha goýuldy',
         'status_updated' => 'Ýagdaý täzelendi',
+        'new_order' => ':client müşderisinden täze sargyt — :category',
     ],
 
     'errors' => [

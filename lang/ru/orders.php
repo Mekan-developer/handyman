@@ -62,6 +62,7 @@ return [
         'master_assigned' => 'Мастер успешно назначен',
         'price_set' => 'Стоимость установлена',
         'status_updated' => 'Статус обновлён',
+        'new_order' => 'Новая заявка от :client — :category',
     ],
 
     'errors' => [
