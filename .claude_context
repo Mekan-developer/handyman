@@ -1,0 +1,189 @@
+# .claude_context
+
+Шпаргалка для Claude по проекту Handyman.
+
+---
+
+## TL;DR
+Laravel 11 + Inertia v2 + Vue 3 + Tailwind v3 админ-панель для маркетплейса бытовых услуг + REST API v1 для мобильного приложения мастера (Flutter, ещё нет). Real-time через Laravel Reverb.
+
+---
+
+## Стек (уже подключено)
+
+### Backend (composer.json)
+- php ^8.2 (фактически 8.3)
+- laravel/framework ^11.0
+- inertiajs/inertia-laravel ^2.0
+- laravel/sanctum ^4.0 (мобильный API auth)
+- laravel/reverb ^1.10 (WebSocket)
+- tightenco/ziggy ^2.0
+- dev: pint, larastan/phpstan, breeze, boost, sail, ide-helper, phpunit ^10.5
+
+### Frontend (package.json)
+- vue ^3.4, @inertiajs/vue3 ^2.0
+- pinia ^3.0.4
+- vue-i18n ^11.4
+- tailwindcss ^3, @tailwindcss/forms
+- leaflet ^1.9.4, @vue-leaflet/vue-leaflet ^0.10
+- laravel-echo ^2.3, pusher-js ^8.5
+- vite ^5, laravel-vite-plugin
+
+---
+
+## НЕ ДУБЛИРОВАТЬ — уже реализовано
+
+### Архитектурный фундамент
+- ❌ Создавать `WithNotification` trait — есть в [app/Http/Traits/WithNotification.php](app/Http/Traits/WithNotification.php) (`notifySuccess`, `notifyError`, `notifyWarning`, `notifyInfo`)
+- ❌ Создавать Pinia stores темы / локали / уведомлений — есть [useThemeStore.js](resources/js/stores/useThemeStore.js), [useLocaleStore.js](resources/js/stores/useLocaleStore.js), [useNotificationStore.js](resources/js/stores/useNotificationStore.js)
+- ❌ Писать механизм передачи переводов из PHP в Vue — есть `HandleInertiaRequests::loadTranslations()` + `i18n.global.setLocaleMessage` в `app.js`. Translations пишутся в `lang/{ru,tk}/*.php` и автоматически попадают на фронт
+- ❌ Создавать `AdminLayout.vue` — есть, с sidebar/topbar/тема/локаль/flash-toast/Echo `orders` listener
+- ❌ Слушать `order.created` event в layout — уже сделано в AdminLayout `onMounted`
+
+### Enums (использовать существующие)
+- `App\OrderStatus`: Pending, Assigned, InProgress, Completed, Cancelled. Методы `label()`, `color()`, `isFinal()`
+- `App\PaymentModel`: Percentage, FixedPerJob, Salary, SalaryPercentage
+
+### Exceptions (typed factories)
+- `App\Exceptions\OrderException::masterAccessExpired() | cityMismatch() | categoryMismatch() | alreadyFinal() | invalidTransition($from, $to)`
+- `App\Exceptions\OtpException::invalid()`
+
+### Модели и миграции
+- Готовы: `User`, `City`, `Category` (с parent_id, древовидная), `Master`, `MasterLocation`, `Order`, `OrderPhoto`, `OrderTask`
+- Pivot `category_master` — связь many-to-many
+- Все модели имеют Factory; Seeders: City, Category, Master, MasterLocation, Order
+
+### Репозитории
+- `CityRepository`, `CategoryRepository`, `MasterRepository`, `OrderRepository`
+- `MasterRepository::forMap()`, `trajectory($master, $hours)`, `eligibleForOrder($cityId, $categoryId)` — НЕ переписывать
+- `OrderRepository::paginate($filters)`, `forMaster($master, $filter)`, `findForMasterOrFail($id, $master)` — есть
+
+### Actions (одно действие = один класс)
+Городá: Create/Update/Delete City | Category | Master
+Заказы: CreateOrder, AssignMaster, SetOrderFinalPrice, UpdateOrderStatus (со state-machine), DeleteOrder
+Мастер-API: RequestMasterOtp, VerifyMasterOtp, StartMasterOrder, CompleteMasterOrder, CreateOrderTask, UploadTaskPhoto, UpdateMasterLocation
+Финансы: CreditMasterBalance (по PaymentModel), ResetMasterBalance
+
+### Контроллеры (Web — Inertia)
+- City, Category, Master (+ map, trajectory, resetBalance), Order (index/show/store/destroy/assign/setPrice/updateStatus/masterTrajectoryForOrder), Client (заглушка), Payment (заглушка), Profile, Dashboard
+
+### Контроллеры API v1
+- MasterAuth, MasterLocation, MasterProfile, MasterOrder, MasterTask
+
+### Jobs (фото в WebP)
+- `ConvertOrderPhotoJob`, `ConvertTaskPhotoJob` (tries=3, backoff=30)
+- `App\Support\PhotoConverter::convert($absolutePath)` — JPEG/PNG/GIF/WebP → WebP, scaling до 1800px по высоте, quality 85. **Использовать готовый метод**, не писать свой.
+
+### Events / Broadcasting
+- `OrderCreated` → канал `orders`, alias `.order.created`
+- `MasterLocationUpdated` → канал `masters-map.{cityId}`, alias `.master.location.updated`
+- Channel auth в [routes/channels.php](routes/channels.php). Публичные (для прод — перевести в private, TODO)
+
+### Vue компоненты (Components/)
+- ApplicationLogo, Checkbox, DangerButton, Dropdown, DropdownLink, InputError, InputLabel, Modal, NavLink, PasswordInput, PrimaryButton, ResponsiveNavLink, SecondaryButton, TextInput
+- Перед написанием нового базового компонента — проверь, нет ли уже
+
+### Страницы Vue
+- Auth (Breeze), Dashboard, Profile (Edit + Partials), Cities/Index, Categories/Index, Masters/Index + Map, Orders/Index + Show, Clients/Index (заглушка), Payments/Index (заглушка)
+- Modals существуют: CityFormModal, CategoryFormModal, MasterFormModal, AssignMasterModal, SetPriceModal, ChangeStatusModal, OrderStatusBadge
+
+### Локализация
+- Файлы в `lang/{ru,tk}/`: auth, categories, cities, clients, dashboard, layout, masters, notifications, orders, payments, profile, resources
+- Использовать `__('key')` в PHP и `t('key')` в Vue. **Не хардкодить строки**
+
+---
+
+## Соглашения (обязательно соблюдать)
+
+### Backend
+- **Thin Controllers** → только HTTP, делегируй Actions
+- **Repository pattern** — никакого Eloquent в Controller/Service, всё через `*Repository`
+- **FormRequest всегда** — никаких `$request->all()`, только `$request->validated()`
+- **Actions: throw, не return false** — типизированные `*Exception` со статик-методами
+- **Enums для статусов**, не строки
+- **`findOrFail()`**, не `find()`
+- **PHP 8 constructor promotion**, return types обязательны
+- **Resources всегда** для ответа — никаких raw моделей
+- После правок PHP — `vendor/bin/pint --dirty --format agent`
+
+### Frontend
+- **Composition API** `<script setup>` всегда
+- **Pinia** для shared state
+- **Tailwind only**, dark mode через `dark:` префикс
+- **Modal backdrops** = `backdrop-blur-md bg-black/40` (из feedback)
+- **vue-i18n** для всех строк, никакого хардкода
+- **Ziggy `route('name', params)`** — не строить URL руками
+- **Уведомления** — только через `useNotificationStore` (auto-dismiss 6s)
+
+### API
+- Версионированный: `routes/api/v1.php`, префикс `/api/v1/`
+- Auth: Sanctum `auth:sanctum`, токены имя `mobile`
+- Resources в `app/Http/Resources/Api/V1/`, контроллеры в `app/Http/Controllers/Api/V1/`
+- **НЕ смешивать** Web (Inertia) и API контроллеры
+
+### Тесты
+- Feature-тесты для каждого нового Action / эндпоинта
+- `php artisan make:test --phpunit Name`
+- Запуск: `php artisan test --compact --filter=testName`
+- Использовать Factories, не ручную сборку моделей
+- Не удалять существующие тесты без одобрения
+
+### Git
+- `feat:` / `fix:` / `refactor:`
+- Сообщения по-русски, как в существующих коммитах
+
+---
+
+## Ключевые "ловушки" (specific quirks)
+
+1. **OrderStatus state machine** — переходы только: Pending→Assigned/Cancelled, Assigned→InProgress/Cancelled, InProgress→Completed/Cancelled. Логика в `UpdateOrderStatusAction::isValidTransition()`. Не дублируй проверки в других местах.
+
+2. **AssignMasterAction валидирует** 4 условия: статус не финал, мастер активен, city_id совпадает, категория мастера включает категорию заказа. Не пиши свою валидацию — используй экшен.
+
+3. **CreditMasterBalanceAction** автоматически вызывается из `UpdateOrderStatusAction` при `Completed`. Не вызывать вручную.
+
+4. **OTP** хранится в Cache: `master_otp:{phone}` на 5 минут. Сейчас **только Log::info** в `RequestMasterOtpAction` — TODO SMS-шлюз.
+
+5. **Public broadcast channels** для `orders` и `masters-map.*` — комментарий в `channels.php` уточняет: для прод нужен private + admin gate.
+
+6. **`POST /api/v1/master/{master}/location`** — публичный (без auth) по комментарию в `routes/api/v1.php`: "temporary open auth until OTP flow stabilises".
+
+7. **Фото-конвертация** возвращает .webp и УДАЛЯЕТ оригинал. Не плодить логику конвертации — использовать `PhotoConverter::convert()`.
+
+8. **Translations cache**: в production через дефолтный кэш-драйвер, в dev через `array` (см. `HandleInertiaRequests::loadTranslations`). Если переводы не подхватились — `php artisan cache:clear`.
+
+9. **MasterLocation `public $timestamps = false`** — таблица использует `recorded_at` вместо `created_at`/`updated_at`.
+
+10. **`Master extends Authenticatable`** + `HasApiTokens` — мастер сам по себе авторизуется через Sanctum (отдельно от `User`-админов).
+
+---
+
+## Полезные команды
+
+```bash
+php artisan master:simulate-movement              # эмуляция GPS-движения
+php artisan tinker --execute 'Master::count();'
+php artisan route:list --except-vendor            # все маршруты
+php artisan test --compact                        # все тесты
+vendor/bin/pint --dirty --format agent            # формат
+npm run dev                                       # vite
+```
+
+---
+
+## Bruno (тестирование API)
+
+Коллекция в [bruno/](bruno/): папки `01_auth`, `02_location`, `03_profile`, `04_orders`.
+
+---
+
+## Что НЕ реализовано (можно делать)
+
+- Клиенты (Clients) — пустая страница, без БД-логики
+- Платежи (Payments) — пустая страница
+- Edit Order (Web) — есть только создание/удаление, без редактирования
+- SMS-шлюз для OTP
+- Private broadcast channels + admin gate
+- Auth для `POST /master/{master}/location`
+- Policies / роли админов
+- Flutter-приложение мастера
