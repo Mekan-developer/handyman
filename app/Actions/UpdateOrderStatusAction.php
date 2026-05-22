@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Events\OrderStatusChanged;
 use App\Exceptions\OrderException;
 use App\Models\Order;
 use App\OrderStatus;
@@ -24,6 +25,7 @@ class UpdateOrderStatusAction
             throw OrderException::invalidTransition($order->status->value, $newStatus->value);
         }
 
+        $previousStatus = $order->status;
         $updated = $this->repository->changeStatus($order, $newStatus);
 
         if ($newStatus === OrderStatus::Cancelled && $cancelReason !== null) {
@@ -33,6 +35,8 @@ class UpdateOrderStatusAction
         if ($newStatus === OrderStatus::Completed) {
             $this->creditBalance->handle($updated->load('master'));
         }
+
+        OrderStatusChanged::dispatch($updated, $previousStatus, $newStatus);
 
         return $updated->fresh();
     }

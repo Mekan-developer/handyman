@@ -63,6 +63,8 @@ return [
         'price_set' => 'Baha goýuldy',
         'status_updated' => 'Ýagdaý täzelendi',
         'new_order' => ':client müşderisinden täze sargyt — :category',
+        'master_assigned_broadcast' => ':order sargydyna usta bellenildi: :master',
+        'status_changed_broadcast' => ':order sargydy: ýagdaý — :status',
     ],
 
     'errors' => [

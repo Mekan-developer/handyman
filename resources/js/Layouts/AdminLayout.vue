@@ -90,22 +90,13 @@ function logout() {
     router.post(route('logout'))
 }
 
-function playNewOrderBeep() {
+function playNewOrderSound() {
     try {
-        const ctx = new AudioContext()
-        const osc = ctx.createOscillator()
-        const gain = ctx.createGain()
-        osc.connect(gain)
-        gain.connect(ctx.destination)
-        osc.type = 'sine'
-        osc.frequency.setValueAtTime(880, ctx.currentTime)
-        osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3)
-        gain.gain.setValueAtTime(0.4, ctx.currentTime)
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6)
-        osc.start(ctx.currentTime)
-        osc.stop(ctx.currentTime + 0.6)
+        const audio = new Audio('/sounds/new-order.mp3')
+        audio.volume = 0.6
+        audio.play().catch(() => {})
     } catch {
-        // AudioContext not available
+        // Audio not available
     }
 }
 
@@ -117,13 +108,30 @@ function handleNewOrder(payload) {
     notificationStore.info(message)
 
     if (document.visibilityState === 'visible') {
-        playNewOrderBeep()
+        playNewOrderSound()
     }
+}
+
+function handleMasterAssigned(payload) {
+    notificationStore.success(t('orders.notifications.master_assigned_broadcast', {
+        order: `#${payload.order_id}`,
+        master: payload.master_name ?? '—',
+    }))
+}
+
+function handleOrderStatusChanged(payload) {
+    notificationStore.info(t('orders.notifications.status_changed_broadcast', {
+        order: `#${payload.order_id}`,
+        status: payload.to_label ?? payload.to,
+    }))
 }
 
 onMounted(() => {
     if (!window.Echo) { return }
-    window.Echo.channel('orders').listen('.order.created', handleNewOrder)
+    window.Echo.channel('orders')
+        .listen('.order.created', handleNewOrder)
+        .listen('.master.assigned', handleMasterAssigned)
+        .listen('.order.status.changed', handleOrderStatusChanged)
 })
 
 onBeforeUnmount(() => {

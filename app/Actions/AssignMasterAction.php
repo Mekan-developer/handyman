@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use App\Events\MasterAssigned;
 use App\Exceptions\OrderException;
 use App\Models\Order;
 use App\Repositories\MasterRepository;
@@ -35,6 +36,10 @@ class AssignMasterAction
             throw OrderException::categoryMismatch();
         }
 
-        return $this->orderRepository->assignMaster($order, $master->id);
+        $assigned = $this->orderRepository->assignMaster($order, $master->id);
+
+        MasterAssigned::dispatch($assigned->load('master'));
+
+        return $assigned;
     }
 }

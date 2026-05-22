@@ -63,6 +63,8 @@ return [
         'price_set' => 'Стоимость установлена',
         'status_updated' => 'Статус обновлён',
         'new_order' => 'Новая заявка от :client — :category',
+        'master_assigned_broadcast' => 'Заявка :order: назначен мастер :master',
+        'status_changed_broadcast' => 'Заявка :order: статус — :status',
     ],
 
     'errors' => [
