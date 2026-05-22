@@ -5,16 +5,17 @@ namespace App\Models;
 use App\PaymentModel;
 use Database\Factories\MasterFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
 
-class Master extends Model
+class Master extends Authenticatable
 {
     /** @use HasFactory<MasterFactory> */
-    use HasFactory;
+    use HasApiTokens, HasFactory;
 
     /** @var array<int, string> */
     protected $fillable = [
