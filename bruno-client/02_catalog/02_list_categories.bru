@@ -1,0 +1,38 @@
+meta {
+  name: List Categories
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{base_url}}/api/v1/client/categories
+  body: none
+  auth: none
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  # List Active Categories (tree)
+
+  Public endpoint. Returns active root categories with their active children.
+  Use this on the order creation screen.
+
+  **Response 200:**
+  ```json
+  {
+    "data": [
+      {
+        "id": 1,
+        "name": "Сантехника",
+        "children": [
+          { "id": 5, "name": "Замена труб" },
+          { "id": 6, "name": "Устранение засоров" }
+        ]
+      }
+    ]
+  }
+  ```
+}

@@ -11,8 +11,18 @@ class EnsureMaster
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->user() instanceof Master) {
+        $user = $request->user();
+
+        if (! $user instanceof Master) {
             return response()->json(['message' => 'Forbidden — master token required.'], 403);
+        }
+
+        if (! $user->is_active) {
+            return response()->json(['message' => 'Master account is disabled.'], 403);
+        }
+
+        if (! $user->hasActiveAccess()) {
+            return response()->json(['message' => 'Master access has expired.'], 403);
         }
 
         return $next($request);
