@@ -94,6 +94,10 @@ function handleLocationUpdate(payload) {
 
     addOrUpdateMarker(payload.master_id, master, payload.latitude, payload.longitude, true)
     lastUpdateAt.value[payload.master_id] = payload.recorded_at
+
+    if (activeTrajectories.value.has(payload.master_id) && trajectoryLayers[payload.master_id]) {
+        trajectoryLayers[payload.master_id].addLatLng([parseFloat(payload.latitude), parseFloat(payload.longitude)])
+    }
 }
 
 function addOrUpdateMarker(masterId, master, lat, lng, animated = false) {
