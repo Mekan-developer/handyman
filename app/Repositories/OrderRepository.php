@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\Client;
 use App\Models\Master;
 use App\Models\Order;
 use App\OrderStatus;
@@ -19,6 +20,23 @@ class OrderRepository
             ->latest()
             ->paginate($perPage)
             ->withQueryString();
+    }
+
+    public function forClient(Client $client, ?string $status = null): LengthAwarePaginator
+    {
+        return Order::with(['category', 'city', 'master'])
+            ->where('client_id', $client->id)
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+    }
+
+    public function findForClientOrFail(int $orderId, Client $client): Order
+    {
+        return Order::with(['category', 'city', 'master', 'photos', 'tasks'])
+            ->where('client_id', $client->id)
+            ->findOrFail($orderId);
     }
 
     public function forMaster(Master $master, string $filter = 'active'): LengthAwarePaginator

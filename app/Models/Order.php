@@ -19,6 +19,7 @@ class Order extends Model
         'city_id',
         'category_id',
         'master_id',
+        'client_id',
         'status',
         'client_name',
         'client_phone',
@@ -61,6 +62,11 @@ class Order extends Model
     public function master(): BelongsTo
     {
         return $this->belongsTo(Master::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function photos(): HasMany
