@@ -1,0 +1,19 @@
+meta {
+  name: Client — Get profile
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{base_url}}/api/v1/client/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+headers {
+  Accept: application/json
+}

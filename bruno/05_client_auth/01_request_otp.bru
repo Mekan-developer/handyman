@@ -1,0 +1,34 @@
+meta {
+  name: Client — Request OTP
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/v1/client/auth/request-otp
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "phone": "{{client_phone}}"
+  }
+}
+
+docs {
+  # Client — Request OTP
+
+  Sends a 4-digit OTP to the client's phone. Currently the code is
+  logged to `storage/logs/laravel.log` (TODO: SMS gateway).
+
+  **Response 200:**
+  ```json
+  { "message": "OTP sent." }
+  ```
+}

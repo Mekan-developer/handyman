@@ -1,0 +1,27 @@
+meta {
+  name: Client — Track order (show)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{base_url}}/api/v1/client/orders/{{client_order_id}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{client_token}}
+}
+
+headers {
+  Accept: application/json
+}
+
+docs {
+  # Client — Track order
+
+  Returns full order with city, category, master (when assigned),
+  photos and tasks (before/after). Use this endpoint for status
+  tracking on the client mobile app.
+}
