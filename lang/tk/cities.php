@@ -16,4 +16,6 @@ return [
     'delete_confirm' => 'Bu şäheri öçürmek isleýärsiňizmi?',
     'empty' => 'Şäherler tapylmady',
     'search' => 'Ada görä gözle',
+    'oblast' => 'Welaýat',
+    'oblast_placeholder' => 'Welaýaty saýlaň (hökmany däl)',
 ];

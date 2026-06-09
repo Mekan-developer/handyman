@@ -9,6 +9,7 @@ use App\Http\Requests\StoreCityRequest;
 use App\Http\Requests\UpdateCityRequest;
 use App\Http\Traits\WithNotification;
 use App\Repositories\CityRepository;
+use App\Repositories\OblastRepository;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,12 +18,16 @@ class CityController extends Controller
 {
     use WithNotification;
 
-    public function __construct(private readonly CityRepository $repository) {}
+    public function __construct(
+        private readonly CityRepository $repository,
+        private readonly OblastRepository $oblastRepository,
+    ) {}
 
     public function index(): Response
     {
         return Inertia::render('Cities/Index', [
             'cities' => $this->repository->paginate(),
+            'oblasts' => $this->oblastRepository->all(),
         ]);
     }
 

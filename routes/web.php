@@ -1,7 +1,10 @@
 <?php
 
+use App\Http\Controllers\BannerController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
+use App\Http\Controllers\OblastController;
+use App\Http\Controllers\RegionController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MasterController;
 use App\Http\Controllers\NotificationController;
@@ -30,12 +33,18 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::resource('oblasts', OblastController::class)->only(['index', 'store', 'update', 'destroy']);
+    Route::resource('regions', RegionController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('cities', CityController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::resource('categories', CategoryController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('masters/map', [MasterController::class, 'map'])->name('masters.map');
     Route::get('masters/{master}/trajectory', [MasterController::class, 'trajectory'])->name('masters.trajectory');
     Route::post('masters/{master}/reset-balance', [MasterController::class, 'resetBalance'])->name('masters.reset-balance');
     Route::resource('masters', MasterController::class)->only(['index', 'store', 'update', 'destroy']);
+
+    Route::resource('banners', BannerController::class)->only(['index', 'store', 'destroy']);
+    Route::post('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');
+    Route::post('banners/{banner}/toggle', [BannerController::class, 'toggle'])->name('banners.toggle');
 
     Route::get('clients', [ClientController::class, 'index'])->name('clients.index');
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');

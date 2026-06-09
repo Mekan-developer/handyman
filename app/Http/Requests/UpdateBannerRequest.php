@@ -3,9 +3,8 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateCityRequest extends FormRequest
+class UpdateBannerRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,9 +15,10 @@ class UpdateCityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('cities', 'name')->ignore($this->route('city'))],
-            'oblast_id' => ['nullable', 'integer', 'exists:oblasts,id'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'url' => ['nullable', 'url', 'max:2048'],
             'is_active' => ['required', 'boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:9999'],
         ];
     }
 }

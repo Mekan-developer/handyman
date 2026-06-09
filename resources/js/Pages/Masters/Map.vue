@@ -24,18 +24,21 @@ const subscribedChannels = []
 onMounted(async () => {
     L = (await import('leaflet')).default
 
-    delete L.Icon.Default.prototype._getIconUrl
-    L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    })
+    const TM_BOUNDS = L.latLngBounds([[35.1, 52.5], [42.8, 66.7]])
 
-    map = L.map(mapContainer.value).setView([37.95, 58.38], 11)
+    map = L.map(mapContainer.value, {
+        maxBounds: TM_BOUNDS,
+        maxBoundsViscosity: 1.0,
+        minZoom: 5,
+    }).setView([37.95, 58.38], 11)
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
+        minZoom: 5,
+        keepBuffer: 4,
+        updateWhenIdle: true,
+        updateWhenZooming: false,
     }).addTo(map)
 
     props.masters.forEach((master) => {

@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateCityRequest extends FormRequest
+class UpdateOblastRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,8 +16,7 @@ class UpdateCityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255', Rule::unique('cities', 'name')->ignore($this->route('city'))],
-            'oblast_id' => ['nullable', 'integer', 'exists:oblasts,id'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('oblasts', 'name')->ignore($this->route('oblast'))],
             'is_active' => ['required', 'boolean'],
         ];
     }

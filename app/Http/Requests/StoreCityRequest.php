@@ -16,6 +16,7 @@ class StoreCityRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255', 'unique:cities,name'],
+            'oblast_id' => ['nullable', 'integer', 'exists:oblasts,id'],
             'is_active' => ['required', 'boolean'],
         ];
     }
