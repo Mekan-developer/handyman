@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, watch } from 'vue'
+import axios from 'axios'
 
 export const useLocaleStore = defineStore('locale', () => {
     const locale = ref(localStorage.getItem('locale') || 'ru')
@@ -10,6 +11,7 @@ export const useLocaleStore = defineStore('locale', () => {
 
     watch(locale, (value) => {
         localStorage.setItem('locale', value)
+        axios.post(`/locale/${value}`)
     })
 
     return { locale, setLocale }

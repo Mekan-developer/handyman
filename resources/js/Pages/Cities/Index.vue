@@ -9,6 +9,7 @@ const { t } = useI18n()
 
 const props = defineProps({
     cities: Object,
+    oblasts: Array,
 })
 
 // ── Modal state ───────────────────────────────────────────────────────────────
@@ -17,6 +18,7 @@ const editingCity = ref(null)
 
 const form = useForm({
     name: '',
+    oblast_id: null,
     is_active: true,
 })
 
@@ -30,6 +32,7 @@ function openCreate() {
 function openEdit(city) {
     editingCity.value = city
     form.name = city.name
+    form.oblast_id = city.oblast_id ?? null
     form.is_active = city.is_active
     form.clearErrors()
     showModal.value = true
@@ -98,6 +101,9 @@ const cityList = computed(() => props.cities?.data ?? [])
                                     {{ t('cities.name') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
+                                    {{ t('cities.oblast') }}
+                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
                                     {{ t('cities.status') }}
                                 </th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">
@@ -110,7 +116,7 @@ const cityList = computed(() => props.cities?.data ?? [])
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                             <tr v-if="cityList.length === 0">
-                                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
+                                <td colspan="6" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
                                     {{ t('cities.empty') }}
                                 </td>
                             </tr>
@@ -124,6 +130,9 @@ const cityList = computed(() => props.cities?.data ?? [])
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-300">
                                     {{ city.name }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                    {{ city.oblast?.name ?? '—' }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span
@@ -196,6 +205,7 @@ const cityList = computed(() => props.cities?.data ?? [])
             :show="showModal"
             :form="form"
             :editing="editingCity"
+            :oblasts="oblasts ?? []"
             @close="closeModal"
             @submit="submit"
         />

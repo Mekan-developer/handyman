@@ -7,6 +7,7 @@ use App\Actions\DeleteCityAction;
 use App\Actions\UpdateCityAction;
 use App\Http\Requests\StoreCityRequest;
 use App\Http\Requests\UpdateCityRequest;
+use App\Http\Resources\CityResource;
 use App\Http\Traits\WithNotification;
 use App\Repositories\CityRepository;
 use App\Repositories\OblastRepository;
@@ -26,7 +27,7 @@ class CityController extends Controller
     public function index(): Response
     {
         return Inertia::render('Cities/Index', [
-            'cities' => $this->repository->paginate(),
+            'cities' => CityResource::collection($this->repository->paginate()),
             'oblasts' => $this->oblastRepository->all(),
         ]);
     }
@@ -36,7 +37,7 @@ class CityController extends Controller
         $action->handle($request->validated());
         $this->notifySuccess('notifications.created', ['resource' => __('resources.city')]);
 
-        return redirect()->route('cities.index');
+        return redirect()->route('oblasts.index');
     }
 
     public function update(UpdateCityRequest $request, int $id, UpdateCityAction $action): RedirectResponse
@@ -45,7 +46,7 @@ class CityController extends Controller
         $action->handle($city, $request->validated());
         $this->notifySuccess('notifications.updated', ['resource' => __('resources.city')]);
 
-        return redirect()->route('cities.index');
+        return redirect()->route('oblasts.index');
     }
 
     public function destroy(int $id, DeleteCityAction $action): RedirectResponse
@@ -54,6 +55,6 @@ class CityController extends Controller
         $action->handle($city);
         $this->notifySuccess('notifications.deleted', ['resource' => __('resources.city')]);
 
-        return redirect()->route('cities.index');
+        return redirect()->route('oblasts.index');
     }
 }

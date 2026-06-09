@@ -19,7 +19,15 @@ class Client extends Authenticatable
         'city_id',
         'name',
         'phone',
+        'is_blocked',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'is_blocked' => 'boolean',
+        ];
+    }
 
     public function city(): BelongsTo
     {

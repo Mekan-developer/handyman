@@ -7,7 +7,9 @@ use App\Actions\DeleteOblastAction;
 use App\Actions\UpdateOblastAction;
 use App\Http\Requests\StoreOblastRequest;
 use App\Http\Requests\UpdateOblastRequest;
+use App\Http\Resources\CityResource;
 use App\Http\Traits\WithNotification;
+use App\Repositories\CityRepository;
 use App\Repositories\OblastRepository;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -17,12 +19,16 @@ class OblastController extends Controller
 {
     use WithNotification;
 
-    public function __construct(private readonly OblastRepository $repository) {}
+    public function __construct(
+        private readonly OblastRepository $repository,
+        private readonly CityRepository $cityRepository,
+    ) {}
 
     public function index(): Response
     {
         return Inertia::render('Oblasts/Index', [
-            'oblasts' => $this->repository->paginate(),
+            'oblasts' => $this->repository->list(),
+            'cities' => CityResource::collection($this->cityRepository->all()),
         ]);
     }
 

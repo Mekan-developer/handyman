@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
         );
 
         $this->call([
+            OblastSeeder::class,
             CitySeeder::class,
             CategorySeeder::class,
             MasterSeeder::class,

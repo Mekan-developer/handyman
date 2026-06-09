@@ -79,6 +79,17 @@
 - `MasterLocationUpdated` → канал `masters-map.{cityId}` (для карты)
 - Channel auth в [routes/channels.php](routes/channels.php) (public для масштабирования карты, TODO — приватный)
 
+### Области (Oblasts) — CRUD
+- Migration `oblasts`, Model `Oblast` (hasMany Cities, hasMany Regions), Factory
+- Migration `add_oblast_id_to_cities_table` — FK в cities
+- `OblastRepository` (paginate, all, findOrFail, create, update, delete)
+- Actions: `CreateOblastAction`, `UpdateOblastAction`, `DeleteOblastAction`
+- FormRequests: `StoreOblastRequest`, `UpdateOblastRequest`
+- Web: `OblastController` (index/store/update/destroy)
+- Vue: [Pages/Oblasts/Index.vue](resources/js/Pages/Oblasts/Index.vue) + `OblastFormModal.vue`
+- Seeder: `OblastSeeder` — 6 областей: Aşgabat, Ahal, Mary, Daşoguz, Balkan, Lebap
+- Связь City → Oblast: `CityResource` отдаёт `oblast_id` + `oblast{id,name}`, CityRepository eager-load, CityFormModal dropdown
+
 ### Заглушки (страницы-индексы без логики)
 - `ClientController::index` → [Pages/Clients/Index.vue](resources/js/Pages/Clients/Index.vue)
 - `PaymentController::index` → [Pages/Payments/Index.vue](resources/js/Pages/Payments/Index.vue)
@@ -119,6 +130,7 @@
 - **SMS-шлюз для OTP**: `RequestMasterOtpAction::handle` сейчас просто `Log::info` — `// TODO: send via SMS gateway`
 - **Приватный канал карты**: `Broadcast::channel('masters-map.{cityId}', fn() => true)` — комментарий "In production, switch to private channel + admin auth gate"
 - **Открытый location ping**: `POST /master/{master}/location` без auth ("temporary open auth until OTP flow stabilises")
+- **Регионы (Regions)**: модель готова, репозиторий и контроллер есть, Vue-страница есть, но CRUD не подключён к форме города
 - **Клиенты (Clients)**: страница — пустая заглушка, бизнес-логика и БД не реализованы
 - **Платежи (Payments)**: страница — пустая заглушка
 - **Mobile App (Flutter)**: API готов, клиента нет

@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\OblastFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Oblast extends Model
 {
+    /** @use HasFactory<OblastFactory> */
+    use HasFactory;
+
     /** @var array<int, string> */
     protected $fillable = [
         'name',

@@ -13,6 +13,11 @@ class CityResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'oblast_id' => $this->oblast_id,
+            'oblast' => $this->whenLoaded('oblast', fn () => [
+                'id' => $this->oblast->id,
+                'name' => $this->oblast->name,
+            ]),
             'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toDateTimeString(),
         ];

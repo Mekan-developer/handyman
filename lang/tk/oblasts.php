@@ -15,4 +15,5 @@ return [
     'cancel' => 'Ýatyr',
     'delete_confirm' => 'Bu welaýaty öçürmek isleýärsiňizmi?',
     'empty' => 'Welaýatlar tapylmady',
+    'select_to_view_cities' => 'Şäherleri görmek üçin welaýat saýlaň',
 ];

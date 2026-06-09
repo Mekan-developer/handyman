@@ -43,7 +43,7 @@ class CityTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('cities.store'), ['name' => 'Ашхабад', 'is_active' => true])
-            ->assertRedirect(route('cities.index'));
+            ->assertRedirect(route('oblasts.index'));
 
         $this->assertDatabaseHas('cities', ['name' => 'Ашхабад', 'is_active' => true]);
     }
@@ -81,7 +81,7 @@ class CityTest extends TestCase
         $city = City::factory()->create(['name' => 'Старое название']);
 
         $this->put(route('cities.update', $city), ['name' => 'Новое название', 'is_active' => false])
-            ->assertRedirect(route('cities.index'));
+            ->assertRedirect(route('oblasts.index'));
 
         $this->assertDatabaseHas('cities', ['id' => $city->id, 'name' => 'Новое название', 'is_active' => false]);
     }
@@ -101,7 +101,7 @@ class CityTest extends TestCase
         $city = City::factory()->create(['name' => 'Дашогуз']);
 
         $this->put(route('cities.update', $city), ['name' => 'Дашогуз', 'is_active' => true])
-            ->assertRedirect(route('cities.index'));
+            ->assertRedirect(route('oblasts.index'));
     }
 
     public function test_update_fails_when_name_belongs_to_another_city(): void
@@ -122,7 +122,7 @@ class CityTest extends TestCase
         $city = City::factory()->create();
 
         $this->delete(route('cities.destroy', $city))
-            ->assertRedirect(route('cities.index'));
+            ->assertRedirect(route('oblasts.index'));
 
         $this->assertModelMissing($city);
     }

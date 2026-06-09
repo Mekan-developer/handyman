@@ -11,15 +11,19 @@ use Illuminate\Database\Eloquent\Factories\Factory;
  */
 class ClientFactory extends Factory
 {
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function definition(): array
     {
         return [
             'city_id' => City::factory(),
             'name' => fake()->name(),
             'phone' => fake()->unique()->numerify('+99361#######'),
+            'is_blocked' => false,
         ];
+    }
+
+    public function blocked(): static
+    {
+        return $this->state(['is_blocked' => true]);
     }
 }

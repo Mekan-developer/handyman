@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1\Client;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\City;
+use App\Models\Oblast;
+use App\Models\Region;
 use Illuminate\Http\JsonResponse;
 
 class ClientCatalogController extends Controller
@@ -14,7 +16,25 @@ class ClientCatalogController extends Controller
         return response()->json([
             'data' => City::where('is_active', true)
                 ->orderBy('name')
+                ->get(['id', 'name', 'oblast_id']),
+        ]);
+    }
+
+    public function oblasts(): JsonResponse
+    {
+        return response()->json([
+            'data' => Oblast::where('is_active', true)
+                ->orderBy('name')
                 ->get(['id', 'name']),
+        ]);
+    }
+
+    public function regions(): JsonResponse
+    {
+        return response()->json([
+            'data' => Region::where('is_active', true)
+                ->orderBy('name')
+                ->get(['id', 'name', 'oblast_id']),
         ]);
     }
 

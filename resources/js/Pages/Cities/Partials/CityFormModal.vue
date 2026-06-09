@@ -8,6 +8,7 @@ defineProps({
     show: { type: Boolean, required: true },
     form: { type: Object, required: true },
     editing: { type: Object, default: null },
+    oblasts: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['close', 'submit'])
@@ -55,6 +56,31 @@ const emit = defineEmits(['close', 'submit'])
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                         </svg>
                         {{ form.errors.name }}
+                    </p>
+                </div>
+
+                <!-- Oblast -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        {{ t('cities.oblast') }}
+                    </label>
+                    <select
+                        v-model="form.oblast_id"
+                        :class="form.errors.oblast_id
+                            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20 dark:border-red-500'
+                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-600 dark:focus:border-blue-500'"
+                        class="w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 shadow-sm focus:bg-white focus:outline-none focus:ring-4 dark:bg-slate-700/50 dark:text-white dark:focus:bg-slate-700 transition-all"
+                    >
+                        <option :value="null">{{ t('cities.oblast_placeholder') }}</option>
+                        <option v-for="oblast in oblasts" :key="oblast.id" :value="oblast.id">
+                            {{ oblast.name }}
+                        </option>
+                    </select>
+                    <p v-if="form.errors.oblast_id" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        {{ form.errors.oblast_id }}
                     </p>
                 </div>
 

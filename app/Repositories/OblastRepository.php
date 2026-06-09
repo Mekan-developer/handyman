@@ -18,6 +18,11 @@ class OblastRepository
         return Oblast::where('is_active', true)->orderBy('name')->get();
     }
 
+    public function list(): Collection
+    {
+        return Oblast::orderBy('name')->get();
+    }
+
     public function findOrFail(int $id): Oblast
     {
         return Oblast::findOrFail($id);

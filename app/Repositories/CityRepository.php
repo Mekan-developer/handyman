@@ -3,13 +3,19 @@
 namespace App\Repositories;
 
 use App\Models\City;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class CityRepository
 {
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return City::orderBy('name')->paginate($perPage);
+        return City::with('oblast')->orderBy('name')->paginate($perPage);
+    }
+
+    public function all(): Collection
+    {
+        return City::with('oblast')->orderBy('name')->get();
     }
 
     public function findOrFail(int $id): City

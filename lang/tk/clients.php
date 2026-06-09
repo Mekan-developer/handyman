@@ -2,32 +2,34 @@
 
 return [
     'title' => 'Müşderiler',
-    'subtitle' => 'Müşderi bazasyny dolandyrmak',
-    'in_development' => 'Işlenýär',
-    'roadmap_title' => 'Meýilleşdirilen funksiýalar',
-    'planned_label' => 'Meýilleşdirildi',
 
-    'stats' => [
-        'total' => 'Jemi müşderi',
-        'active_orders' => 'Işjeň sargytlar',
-        'cities_covered' => 'Şäherler',
-    ],
+    'add' => 'Müşderi goş',
+    'edit' => 'Müşderini redaktirle',
+    'save' => 'Sakla',
+    'cancel' => 'Ýatyr',
+    'actions' => 'Hereketler',
+    'empty' => 'Heniz müşderi ýok',
+    'select_city' => 'Şäher saýlaň',
+
+    'active' => 'Işjeň',
+    'blocked' => 'Petiklenen',
+    'block' => 'Petikle',
+    'unblock' => 'Açyk et',
+
+    'delete_confirm' => 'Bu müşderini pozmak isleýärsiňizmi?',
+    'block_confirm' => 'Müşderini petiklemek isleýärsiňizmi? Ol programma girip bilmez.',
+    'unblock_confirm' => 'Müşderini açmak isleýärsiňizmi?',
 
     'fields' => [
         'name' => 'Ady',
         'phone' => 'Telefon',
         'city' => 'Şäher',
         'orders_count' => 'Sargytlar',
+        'status' => 'Ýagdaý',
     ],
 
-    'planned' => [
-        'registration' => 'Müşderi hasaba alynmagy',
-        'registration_desc' => 'Müşderiler mobil goşundy arkaly telefon belgisi bilen hasaba alynýar.',
-        'orders' => 'Sargytlaryň taryhy',
-        'orders_desc' => 'Müşderiniň ähli sargytlaryny jikme-jik we ýagdaýlar bilen görüň.',
-        'geo' => 'Şäher saýlamak',
-        'geo_desc' => 'Müşderiňi şähere baglanyşdyrmak, zerur sebitde ussatları gözlemek üçin.',
-        'photos' => 'Meseläniň suratlary',
-        'photos_desc' => 'Arza döretmekde 4 surat, WebP-a awtomatik öwrülme bilen.',
+    'notifications' => [
+        'blocked' => 'Müşderi petiklendi',
+        'unblocked' => 'Müşderi açyldy',
     ],
 ];

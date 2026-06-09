@@ -1,101 +1,101 @@
-<script setup>
-import { computed } from 'vue'
+﻿<script setup>
+import { ref, computed } from 'vue'
+import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { Head } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import ClientFormModal from '@/Pages/Clients/Partials/ClientFormModal.vue'
 
 const { t } = useI18n()
 
 const props = defineProps({
     clients: { type: Object, default: null },
+    cities: { type: Array, default: () => [] },
 })
 
-const hasData = computed(() => props.clients?.data?.length > 0)
+const showModal = ref(false)
+const editingClient = ref(null)
 
-const stats = [
-    {
-        label: t('clients.stats.total'),
-        icon: 'M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z',
-        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
-        color: 'text-indigo-600 dark:text-indigo-400',
-    },
-    {
-        label: t('clients.stats.active_orders'),
-        icon: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z',
-        bg: 'bg-violet-50 dark:bg-violet-500/10',
-        color: 'text-violet-600 dark:text-violet-400',
-    },
-    {
-        label: t('clients.stats.cities_covered'),
-        icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z',
-        bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-        color: 'text-emerald-600 dark:text-emerald-400',
-    },
-]
+const form = useForm({
+    city_id: null,
+    name: '',
+    phone: '',
+})
 
-const features = [
-    {
-        title: t('clients.planned.registration'),
-        description: t('clients.planned.registration_desc'),
-        icon: 'M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z',
-        bg: 'bg-indigo-50 dark:bg-indigo-500/10',
-        color: 'text-indigo-600 dark:text-indigo-400',
-    },
-    {
-        title: t('clients.planned.orders'),
-        description: t('clients.planned.orders_desc'),
-        icon: 'M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z',
-        bg: 'bg-violet-50 dark:bg-violet-500/10',
-        color: 'text-violet-600 dark:text-violet-400',
-    },
-    {
-        title: t('clients.planned.geo'),
-        description: t('clients.planned.geo_desc'),
-        icon: 'M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z',
-        bg: 'bg-emerald-50 dark:bg-emerald-500/10',
-        color: 'text-emerald-600 dark:text-emerald-400',
-    },
-    {
-        title: t('clients.planned.photos'),
-        description: t('clients.planned.photos_desc'),
-        icon: 'M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z',
-        bg: 'bg-amber-50 dark:bg-amber-500/10',
-        color: 'text-amber-600 dark:text-amber-400',
-    },
-]
+function openCreate() {
+    editingClient.value = null
+    form.reset()
+    form.clearErrors()
+    showModal.value = true
+}
+
+function openEdit(client) {
+    editingClient.value = client
+    form.city_id = client.city_id
+    form.name = client.name
+    form.phone = client.phone
+    form.clearErrors()
+    showModal.value = true
+}
+
+function closeModal() {
+    showModal.value = false
+    editingClient.value = null
+    form.reset()
+    form.clearErrors()
+}
+
+function submit() {
+    if (editingClient.value) {
+        form.put(route('clients.update', editingClient.value.id), {
+            onSuccess: closeModal,
+        })
+    } else {
+        form.post(route('clients.store'), {
+            onSuccess: closeModal,
+        })
+    }
+}
+
+function destroy(client) {
+    if (!confirm(t('clients.delete_confirm'))) { return }
+    router.delete(route('clients.destroy', client.id))
+}
+
+function toggleBlock(client) {
+    const key = client.is_blocked ? 'clients.unblock_confirm' : 'clients.block_confirm'
+    if (!confirm(t(key))) { return }
+    router.post(route('clients.toggle-block', client.id))
+}
+
+const currentPage = computed(() => props.clients?.current_page ?? 1)
+const lastPage = computed(() => props.clients?.last_page ?? 1)
+const clientList = computed(() => props.clients?.data ?? [])
 </script>
 
 <template>
     <Head :title="t('clients.title')" />
 
     <AdminLayout :title="t('clients.title')">
-        <div class="space-y-6">
-
-            <!-- Page header -->
-            <div class="flex items-start justify-between gap-4">
-                <div>
-                    <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-                        {{ t('clients.title') }}
-                    </h1>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-slate-400">
-                        {{ t('clients.subtitle') }}
-                    </p>
-                </div>
-                <span
-                    v-if="!hasData"
-                    class="shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-400"
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
+                    {{ t('clients.title') }}
+                </h1>
+                <button
+                    @click="openCreate"
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
                 >
-                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
-                    {{ t('clients.in_development') }}
-                </span>
+                    {{ t('clients.add') }}
+                </button>
             </div>
 
-            <!-- ─── Has data: table ─── -->
-            <template v-if="hasData">
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 dark:bg-slate-800 dark:ring-slate-700/60">
-                    <table class="min-w-full divide-y divide-gray-100 dark:divide-slate-700">
+            <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                         <thead class="bg-gray-50 dark:bg-slate-700/50">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">#</th>
@@ -103,77 +103,117 @@ const features = [
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('clients.fields.phone') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('clients.fields.city') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('clients.fields.orders_count') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('clients.fields.status') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('clients.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
+                            <tr v-if="clientList.length === 0">
+                                <td colspan="7" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
+                                    {{ t('clients.empty') }}
+                                </td>
+                            </tr>
                             <tr
-                                v-for="(client, i) in clients.data"
+                                v-for="(client, index) in clientList"
                                 :key="client.id"
-                                class="hover:bg-gray-50 dark:hover:bg-slate-700/40"
+                                class="group cursor-default transition-colors duration-150 hover:bg-blue-50/60 dark:hover:bg-slate-700"
+                                :class="client.is_blocked ? 'opacity-60' : ''"
                             >
-                                <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">{{ i + 1 }}</td>
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-200">{{ client.name }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{{ client.phone }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{{ client.city?.name ?? '—' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{{ client.orders_count ?? 0 }}</td>
+                                <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">
+                                    {{ index + 1 + (currentPage - 1) * 20 }}
+                                </td>
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-200">
+                                    {{ client.name }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                    {{ client.phone }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                    {{ client.city?.name ?? '—' }}
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                    {{ client.orders_count }}
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span
+                                        :class="client.is_blocked
+                                            ? 'bg-red-100 text-red-600 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/30'
+                                            : 'bg-green-100 text-green-700 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30'"
+                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                    >
+                                        <span
+                                            :class="client.is_blocked ? 'bg-red-400' : 'bg-green-500 dark:bg-green-400'"
+                                            class="h-1.5 w-1.5 rounded-full"
+                                        />
+                                        {{ client.is_blocked ? t('clients.blocked') : t('clients.active') }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button
+                                            @click="toggleBlock(client)"
+                                            :title="client.is_blocked ? t('clients.unblock') : t('clients.block')"
+                                            :class="client.is_blocked
+                                                ? 'text-slate-400 hover:bg-green-100 hover:text-green-600 dark:hover:bg-green-500/15 dark:hover:text-green-400'
+                                                : 'text-slate-400 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-500/15 dark:hover:text-amber-400'"
+                                            class="rounded-lg p-2 transition-all duration-150"
+                                        >
+                                            <svg v-if="client.is_blocked" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                            <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click="openEdit(client)"
+                                            class="rounded-lg p-2 text-slate-400 hover:bg-blue-100 hover:text-blue-600 dark:hover:bg-blue-500/15 dark:hover:text-blue-400 transition-all duration-150"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            @click="destroy(client)"
+                                            class="rounded-lg p-2 text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-500/15 dark:hover:text-red-400 transition-all duration-150"
+                                        >
+                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </template>
 
-            <!-- ─── No data: description ─── -->
-            <template v-else>
-
-                <!-- Stats placeholder -->
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div
-                        v-for="stat in stats"
-                        :key="stat.label"
-                        class="flex items-center gap-4 rounded-xl bg-white p-5 shadow-sm ring-1 ring-gray-100 dark:bg-slate-800 dark:ring-slate-700/60"
-                    >
-                        <div :class="['flex h-11 w-11 shrink-0 items-center justify-center rounded-xl', stat.bg]">
-                            <svg :class="['h-5 w-5', stat.color]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" :d="stat.icon" />
-                            </svg>
-                        </div>
-                        <div>
-                            <p class="text-xl font-bold text-gray-300 dark:text-slate-600">—</p>
-                            <p class="text-sm text-gray-500 dark:text-slate-400">{{ stat.label }}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Roadmap -->
-                <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-100 dark:bg-slate-800 dark:ring-slate-700/60">
-                    <div class="border-b border-gray-100 px-6 py-4 dark:border-slate-700">
-                        <h2 class="text-sm font-semibold text-gray-700 dark:text-slate-300">
-                            {{ t('clients.roadmap_title') }}
-                        </h2>
-                    </div>
-                    <ul class="divide-y divide-gray-100 dark:divide-slate-700">
-                        <li
-                            v-for="f in features"
-                            :key="f.title"
-                            class="flex items-start gap-4 px-6 py-4"
+                <div v-if="lastPage > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-slate-700">
+                    <p class="text-sm text-gray-500 dark:text-slate-400">{{ t('clients.title') }}</p>
+                    <div class="flex gap-1">
+                        <Link
+                            v-for="page in lastPage"
+                            :key="page"
+                            :href="route('clients.index', { page })"
+                            :class="page === currentPage
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"
+                            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
                         >
-                            <div :class="['mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg', f.bg]">
-                                <svg :class="['h-5 w-5', f.color]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" :d="f.icon" />
-                                </svg>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-gray-900 dark:text-slate-100">{{ f.title }}</p>
-                                <p class="mt-0.5 text-sm text-gray-500 dark:text-slate-400">{{ f.description }}</p>
-                            </div>
-                            <span class="mt-0.5 shrink-0 inline-flex items-center rounded-md bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-slate-700 dark:text-slate-400">
-                                {{ t('clients.planned_label') }}
-                            </span>
-                        </li>
-                    </ul>
+                            {{ page }}
+                        </Link>
+                    </div>
                 </div>
-
-            </template>
+            </div>
         </div>
+
+        <ClientFormModal
+            :show="showModal"
+            :form="form"
+            :editing="editingClient"
+            :cities="cities"
+            @close="closeModal"
+            @submit="submit"
+        />
     </AdminLayout>
 </template>

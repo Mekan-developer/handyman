@@ -45,8 +45,8 @@ onMounted(async () => {
         minZoom: 5,
     }).setView([clientLat, clientLng], 13)
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    L.tileLayer('https://hyzmattm.com.tm/tiles/{z}/{x}/{y}.png', {
+        attribution: '',
         maxZoom: 19,
         minZoom: 5,
         keepBuffer: 4,

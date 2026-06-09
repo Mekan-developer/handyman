@@ -55,6 +55,8 @@ Route::prefix('master')->group(function () {
 Route::prefix('client')->group(function () {
 
     // Public catalog
+    Route::get('oblasts', [ClientCatalogController::class, 'oblasts'])->name('api.v1.client.oblasts');
+    Route::get('regions', [ClientCatalogController::class, 'regions'])->name('api.v1.client.regions');
     Route::get('cities', [ClientCatalogController::class, 'cities'])->name('api.v1.client.cities');
     Route::get('categories', [ClientCatalogController::class, 'categories'])->name('api.v1.client.categories');
 
