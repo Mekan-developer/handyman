@@ -289,6 +289,62 @@ class OrderTest extends TestCase
         $this->assertEquals('pending', $order->fresh()->status->value);
     }
 
+    // ── Update ───────────────────────────────────────────────────────────────
+
+    public function test_admin_can_update_pending_order(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+        $order = Order::factory()->create(['status' => 'pending']);
+
+        $this->put(route('orders.update', $order), [
+            'city_id' => $city->id,
+            'category_id' => $category->id,
+            'client_name' => 'Обновлённое имя',
+            'client_phone' => '+99362999888',
+            'description' => 'Новое описание проблемы',
+            'client_address' => 'ул. Новая, 5',
+            'client_lat' => 37.95,
+            'client_lng' => 58.38,
+        ])->assertRedirect(route('orders.show', $order));
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'client_name' => 'Обновлённое имя',
+            'city_id' => $city->id,
+        ]);
+    }
+
+    public function test_update_fails_on_assigned_order(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+        $order = Order::factory()->assigned()->create();
+
+        $this->put(route('orders.update', $order), [
+            'city_id' => $city->id,
+            'category_id' => $category->id,
+            'client_name' => 'Test',
+            'client_phone' => '+99362000000',
+            'description' => 'Test',
+            'client_lat' => 37.95,
+            'client_lng' => 58.38,
+        ])->assertRedirect();
+
+        $this->assertNotEquals('Test', $order->fresh()->client_name);
+    }
+
+    public function test_update_fails_without_required_fields(): void
+    {
+        $this->actingAsAdmin();
+        $order = Order::factory()->create(['status' => 'pending']);
+
+        $this->put(route('orders.update', $order), [])
+            ->assertSessionHasErrors(['city_id', 'category_id', 'client_name', 'client_phone', 'description', 'client_lat', 'client_lng']);
+    }
+
     // ── Destroy ───────────────────────────────────────────────────────────────
 
     public function test_admin_can_delete_order(): void

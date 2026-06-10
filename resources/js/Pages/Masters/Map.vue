@@ -23,6 +23,7 @@ const subscribedChannels = []
 
 onMounted(async () => {
     L = (await import('leaflet')).default
+    const { leafletLayer } = await import('protomaps-leaflet')
 
     const TM_BOUNDS = L.latLngBounds([[35.1, 52.5], [42.8, 66.7]])
 
@@ -32,14 +33,9 @@ onMounted(async () => {
         minZoom: 5,
     }).setView([37.95, 58.38], 11)
 
-    L.tileLayer('https://hyzmattm.com.tm/tiles/{z}/{x}/{y}.png', {
-        attribution: '',
-        maxZoom: 19,
-        minZoom: 5,
-        keepBuffer: 4,
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-    }).addTo(map)
+    leafletLayer({ url: '/tiles/turkmenistan.pmtiles', flavor: 'light' }).addTo(map)
+
+    setTimeout(() => map.invalidateSize(), 100)
 
     props.masters.forEach((master) => {
         if (!master.latest_location) { return }
@@ -62,32 +58,16 @@ onBeforeUnmount(() => {
 })
 
 function subscribeToCityChannels() {
-    if (!window.Echo) {
-        console.warn('[Map] Echo is not initialized — realtime updates disabled.')
-        return
-    }
-
-    console.log('[Map] subscribing to cityIds:', props.cityIds)
-
-    if (!props.cityIds?.length) {
-        console.warn('[Map] cityIds is empty — no subscriptions will be made.')
-        return
-    }
+    if (!window.Echo || !props.cityIds?.length) { return }
 
     props.cityIds.forEach((cityId) => {
         const channelName = `masters-map.${cityId}`
         subscribedChannels.push(channelName)
 
-        const channel = window.Echo.channel(channelName)
-        console.log('[Map] subscribed to', channelName)
-
-        channel.listen('.master.location.updated', (payload) => {
-            console.log('[Map] received event:', payload)
-            handleLocationUpdate(payload)
-        })
-
-        channel.subscribed(() => console.log('[Map] confirmed subscribe:', channelName))
-        channel.error((e) => console.error('[Map] channel error:', channelName, e))
+        window.Echo.channel(channelName)
+            .listen('.master.location.updated', (payload) => {
+                handleLocationUpdate(payload)
+            })
     })
 }
 
@@ -195,7 +175,7 @@ function escapeHtml(value) {
 
 <template>
     <AdminLayout :title="t('masters.map')">
-        <div class="space-y-4">
+        <div class="flex flex-col gap-4 h-full">
             <div class="flex items-center justify-between">
                 <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
                     {{ t('masters.map') }}
@@ -225,7 +205,7 @@ function escapeHtml(value) {
                 </p>
             </div>
 
-            <div class="overflow-hidden rounded-xl shadow-sm" style="height: 600px;">
+            <div class="flex-1 overflow-hidden rounded-xl shadow-sm min-h-0">
                 <div ref="mapContainer" class="h-full w-full" />
             </div>
         </div>

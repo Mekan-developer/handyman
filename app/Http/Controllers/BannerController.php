@@ -8,6 +8,7 @@ use App\Actions\ToggleBannerStatusAction;
 use App\Actions\UpdateBannerAction;
 use App\Http\Requests\StoreBannerRequest;
 use App\Http\Requests\UpdateBannerRequest;
+use App\Http\Resources\BannerResource;
 use App\Http\Traits\WithNotification;
 use App\Repositories\BannerRepository;
 use Illuminate\Http\RedirectResponse;
@@ -23,7 +24,7 @@ class BannerController extends Controller
     public function index(): Response
     {
         return Inertia::render('Banners/Index', [
-            'banners' => $this->repository->paginate(),
+            'banners' => BannerResource::collection($this->repository->paginate()),
         ]);
     }
 

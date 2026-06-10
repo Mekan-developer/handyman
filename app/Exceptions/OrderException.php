@@ -30,4 +30,9 @@ class OrderException extends RuntimeException
     {
         return new self("Invalid status transition: {$from} → {$to}.");
     }
+
+    public static function notEditable(): self
+    {
+        return new self('Order can only be edited when status is Pending.');
+    }
 }

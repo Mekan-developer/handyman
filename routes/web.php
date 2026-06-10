@@ -12,9 +12,10 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\TilesController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
+
+Route::get('/tiles/{file}', [TilesController::class, 'serve'])->where('file', '.+\.pmtiles');
 
 Route::post('/locale/{locale}', function (string $locale) {
     $supported = ['ru', 'tk'];
@@ -26,12 +27,7 @@ Route::post('/locale/{locale}', function (string $locale) {
 })->name('locale.set');
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return redirect()->route('login');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -60,7 +56,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('clients', ClientController::class)->only(['index', 'store', 'update', 'destroy']);
     Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
 
-    Route::resource('orders', OrderController::class)->only(['index', 'show', 'store', 'destroy']);
+    Route::resource('orders', OrderController::class)->only(['index', 'show', 'store', 'update', 'destroy']);
     Route::post('orders/{order}/assign', [OrderController::class, 'assign'])->name('orders.assign');
     Route::post('orders/{order}/price', [OrderController::class, 'setPrice'])->name('orders.set-price');
     Route::post('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.update-status');

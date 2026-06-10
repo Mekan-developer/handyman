@@ -7,12 +7,15 @@ import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
 import AssignMasterModal from '@/Pages/Orders/Partials/AssignMasterModal.vue'
 import SetPriceModal from '@/Pages/Orders/Partials/SetPriceModal.vue'
 import ChangeStatusModal from '@/Pages/Orders/Partials/ChangeStatusModal.vue'
+import EditOrderModal from '@/Pages/Orders/Partials/EditOrderModal.vue'
 import 'leaflet/dist/leaflet.css'
 
 const { t } = useI18n()
 
 const props = defineProps({
     order: { type: Object, required: true },
+    cities: { type: Array, default: () => [] },
+    categories: { type: Array, default: () => [] },
     eligibleMasters: { type: Array, default: () => [] },
     statuses: { type: Array, default: () => [] },
 })
@@ -20,6 +23,7 @@ const props = defineProps({
 const showAssignModal = ref(false)
 const showPriceModal = ref(false)
 const showStatusModal = ref(false)
+const showEditModal = ref(false)
 
 const mapContainer = ref(null)
 let map = null
@@ -43,7 +47,7 @@ onMounted(async () => {
         maxBounds: L.latLngBounds([[35.1, 52.5], [42.8, 66.7]]),
         maxBoundsViscosity: 1.0,
         minZoom: 5,
-    }).setView([clientLat, clientLng], 13)
+    }).setView([clientLat, clientLng], 14)
 
     L.tileLayer('https://hyzmattm.com.tm/tiles/{z}/{x}/{y}.png', {
         attribution: '',
@@ -54,29 +58,29 @@ onMounted(async () => {
         updateWhenZooming: false,
     }).addTo(map)
 
+    setTimeout(() => map?.invalidateSize(), 100)
+
     const allLatLngs = [[clientLat, clientLng]]
 
-    // Client marker (green)
     const clientIcon = L.divIcon({
         className: 'custom-marker-client',
-        html: '<div style="background:#22c55e;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;">К</div>',
-        iconSize: [28, 28],
-        iconAnchor: [14, 14],
+        html: '<div style="background:#22c55e;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:13px;">К</div>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
     })
     L.marker([clientLat, clientLng], { icon: clientIcon })
         .addTo(map)
         .bindPopup(`<b>${escapeHtml(props.order.client_name)}</b><br>${escapeHtml(props.order.client_phone)}`)
 
-    // Assigned master (blue) — when present
     if (props.order.master?.latest_location) {
         const masterLat = parseFloat(props.order.master.latest_location.latitude)
         const masterLng = parseFloat(props.order.master.latest_location.longitude)
 
         const masterIcon = L.divIcon({
             className: 'custom-marker-master',
-            html: '<div style="background:#2563eb;width:28px;height:28px;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:12px;">М</div>',
-            iconSize: [28, 28],
-            iconAnchor: [14, 14],
+            html: '<div style="background:#2563eb;width:32px;height:32px;border-radius:50%;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;color:white;font-weight:bold;font-size:13px;">М</div>',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
         })
 
         masterMarkerL = L.marker([masterLat, masterLng], { icon: masterIcon })
@@ -86,12 +90,10 @@ onMounted(async () => {
         allLatLngs.push([masterLat, masterLng])
         updateDistanceEta(masterLat, masterLng, clientLat, clientLng)
 
-        // Load trajectory polyline
         if (isTracking.value) {
             await fetchAndDrawTrajectory(L)
         }
     } else {
-        // No master assigned — show eligible candidates as gray dots
         props.eligibleMasters.forEach((m) => {
             if (!m.latest_location) { return }
 
@@ -101,9 +103,9 @@ onMounted(async () => {
 
             const candidateIcon = L.divIcon({
                 className: 'custom-marker-candidate',
-                html: `<div style="background:#94a3b8;width:24px;height:24px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:10px;">${escapeHtml(initialOf(m.name))}</div>`,
-                iconSize: [24, 24],
-                iconAnchor: [12, 12],
+                html: `<div style="background:#94a3b8;width:26px;height:26px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:11px;">${escapeHtml(initialOf(m.name))}</div>`,
+                iconSize: [26, 26],
+                iconAnchor: [13, 13],
             })
 
             const popupHtml = `
@@ -130,19 +132,14 @@ onMounted(async () => {
     }
 
     if (allLatLngs.length > 1) {
-        map.fitBounds(L.latLngBounds(allLatLngs), { padding: [60, 60] })
+        map.fitBounds(L.latLngBounds(allLatLngs), { padding: [80, 80] })
     }
 
-    // Wired to candidate "Assign" button in popups
     window.__assignFromMap = (masterId) => {
         router.post(route('orders.assign', props.order.id), { master_id: masterId })
     }
 
-    // Real-time master tracking via Reverb
     if (isTracking.value && window.Echo && props.order.city?.id) {
-        const clientLat = parseFloat(props.order.client_lat)
-        const clientLng = parseFloat(props.order.client_lng)
-
         window.Echo.channel(`masters-map.${props.order.city.id}`)
             .listen('.master.location.updated', (payload) => {
                 if (payload.master_id !== props.order.master.id) { return }
@@ -150,10 +147,8 @@ onMounted(async () => {
                 const lat = parseFloat(payload.latitude)
                 const lng = parseFloat(payload.longitude)
 
-                // Move marker
                 masterMarkerL?.setLatLng([lat, lng])
 
-                // Extend polyline
                 if (trajectoryLine) {
                     trajectoryLine.addLatLng([lat, lng])
                 } else {
@@ -259,42 +254,50 @@ const sortedEligibleMasters = computed(() => {
             return a.distance_km - b.distance_km
         })
 })
-
-const cardClass = 'rounded-xl bg-white shadow-sm dark:bg-slate-800'
 </script>
 
 <template>
     <AdminLayout :title="`${t('orders.show')} #${order.id}`">
-        <div class="space-y-4">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <Link
-                        :href="route('orders.index')"
-                        class="rounded-lg p-2 text-slate-500 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors"
-                    >
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
-                        </svg>
-                    </Link>
-                    <div>
-                        <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
-                            {{ t('orders.show') }} <span class="font-mono text-gray-400">#{{ order.id }}</span>
-                        </h1>
-                        <div class="mt-1">
-                            <OrderStatusBadge :status="order.status" :label="order.status_label" :color="order.status_color" />
-                        </div>
-                    </div>
+        <!-- Full-bleed monitoring layout: cancel AdminLayout padding -->
+        <div class="flex h-full flex-col overflow-hidden -m-4 lg:-m-6">
+
+            <!-- Compact header -->
+            <div class="flex shrink-0 items-center gap-3 border-b border-gray-200 bg-white px-4 py-2.5 dark:border-slate-700 dark:bg-slate-800 lg:px-6">
+                <Link
+                    :href="route('orders.index')"
+                    class="rounded-lg p-1.5 text-slate-500 transition-colors hover:bg-gray-100 dark:hover:bg-slate-700"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
+                </Link>
+
+                <div class="flex min-w-0 flex-1 items-center gap-3">
+                    <h1 class="shrink-0 text-base font-semibold text-gray-900 dark:text-white">
+                        {{ t('orders.show') }}
+                        <span class="font-mono text-gray-400">#{{ order.id }}</span>
+                    </h1>
+                    <OrderStatusBadge :status="order.status" :label="order.status_label" :color="order.status_color" />
                 </div>
 
-                <!-- Action buttons -->
-                <div class="flex flex-wrap gap-2">
+                <div class="flex items-center gap-2">
+                    <button
+                        v-if="order.status === 'pending'"
+                        @click="showEditModal = true"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                    >
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                        </svg>
+                        {{ t('orders.actions.edit') }}
+                    </button>
+
                     <button
                         v-if="!['completed', 'cancelled'].includes(order.status)"
                         @click="showAssignModal = true"
-                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                        class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-700"
                     >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
                         </svg>
                         {{ order.master ? t('orders.actions.change_master') : t('orders.actions.assign_master') }}
@@ -303,7 +306,7 @@ const cardClass = 'rounded-xl bg-white shadow-sm dark:bg-slate-800'
                     <button
                         v-if="!['completed', 'cancelled'].includes(order.status)"
                         @click="showPriceModal = true"
-                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                         {{ t('orders.actions.set_price') }}
                     </button>
@@ -311,178 +314,270 @@ const cardClass = 'rounded-xl bg-white shadow-sm dark:bg-slate-800'
                     <button
                         v-if="!['completed', 'cancelled'].includes(order.status)"
                         @click="showStatusModal = true"
-                        class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                        class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
                         {{ t('orders.actions.change_status') }}
                     </button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <!-- Body: sidebar + map -->
+            <div class="flex min-h-0 flex-1 overflow-hidden">
 
-                <!-- Left: details -->
-                <div class="space-y-4 lg:col-span-1">
-                    <!-- Client info -->
-                    <div :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.client_name') }}</h3>
-                        </div>
-                        <div class="space-y-2 px-5 py-4 text-sm">
-                            <div>
-                                <p class="text-base font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</p>
+                <!-- Left sidebar -->
+                <aside class="w-72 shrink-0 overflow-y-auto border-r border-gray-200 bg-gray-50 p-3 dark:border-slate-700 dark:bg-slate-900 lg:w-80">
+                    <div class="space-y-3">
+
+                        <!-- Client -->
+                        <div class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    {{ t('orders.fields.client_name') }}
+                                </h3>
+                            </div>
+                            <div class="px-4 py-3 text-sm">
+                                <p class="font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</p>
                                 <a :href="`tel:${order.client_phone}`" class="text-blue-600 hover:underline dark:text-blue-400">
                                     {{ order.client_phone }}
                                 </a>
-                            </div>
-                            <div v-if="order.client_address" class="text-gray-500 dark:text-slate-400">
-                                {{ order.client_address }}
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Order meta -->
-                    <div :class="cardClass">
-                        <div class="space-y-3 px-5 py-4 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.city') }}</span>
-                                <span class="font-medium text-gray-700 dark:text-slate-300">{{ order.city?.name }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.category') }}</span>
-                                <span class="font-medium text-gray-700 dark:text-slate-300">{{ order.category?.name }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.created_at') }}</span>
-                                <span class="font-medium text-gray-700 dark:text-slate-300">{{ order.created_at }}</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.final_price') }}</span>
-                                <span v-if="order.final_price" class="font-mono font-semibold text-green-600 dark:text-green-400">{{ order.final_price }}</span>
-                                <span v-else class="text-gray-300 dark:text-slate-600">{{ t('orders.no_price') }}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Master info -->
-                    <div :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.master') }}</h3>
-                        </div>
-                        <div class="px-5 py-4 text-sm">
-                            <div v-if="order.master">
-                                <p class="text-base font-medium text-gray-900 dark:text-slate-200">{{ order.master.name }}</p>
-                                <a :href="`tel:${order.master.phone}`" class="text-blue-600 hover:underline dark:text-blue-400">
-                                    {{ order.master.phone }}
-                                </a>
-                                <p v-if="order.assigned_at" class="mt-1 text-xs text-gray-400">
-                                    {{ t('orders.fields.assigned_at') }}: {{ order.assigned_at }}
+                                <p v-if="order.client_address" class="mt-1 text-xs text-gray-500 dark:text-slate-400">
+                                    {{ order.client_address }}
                                 </p>
+                            </div>
+                        </div>
 
-                                <!-- Live tracking info -->
-                                <div v-if="isTracking && liveDistance !== null" class="mt-3 space-y-1.5 rounded-lg bg-blue-50 px-3 py-2.5 dark:bg-blue-900/20">
-                                    <div class="flex items-center justify-between">
-                                        <div class="flex items-center gap-3">
-                                            <!-- Distance -->
-                                            <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
-                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                                                </svg>
-                                                <span class="text-sm font-semibold">{{ formatDistance(liveDistance) }}</span>
+                        <!-- Order meta -->
+                        <div class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="space-y-2 px-4 py-3 text-sm">
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.city') }}</span>
+                                    <span class="font-medium text-gray-700 dark:text-slate-300">{{ order.city?.name }}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.category') }}</span>
+                                    <span class="truncate font-medium text-gray-700 dark:text-slate-300">{{ order.category?.name }}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.created_at') }}</span>
+                                    <span class="text-xs font-medium text-gray-700 dark:text-slate-300">{{ order.created_at }}</span>
+                                </div>
+                                <div class="flex items-center justify-between gap-2">
+                                    <span class="text-gray-500 dark:text-slate-400">{{ t('orders.fields.final_price') }}</span>
+                                    <span v-if="order.final_price" class="font-mono font-semibold text-green-600 dark:text-green-400">
+                                        {{ order.final_price }}
+                                    </span>
+                                    <span v-else class="text-gray-300 dark:text-slate-600">{{ t('orders.no_price') }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div v-if="order.description" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    {{ t('orders.fields.description') }}
+                                </h3>
+                            </div>
+                            <div class="px-4 py-3 text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">
+                                {{ order.description }}
+                            </div>
+                        </div>
+
+                        <!-- Master -->
+                        <div class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    {{ t('orders.fields.master') }}
+                                </h3>
+                            </div>
+                            <div class="px-4 py-3 text-sm">
+                                <div v-if="order.master">
+                                    <p class="font-medium text-gray-900 dark:text-slate-200">{{ order.master.name }}</p>
+                                    <a :href="`tel:${order.master.phone}`" class="text-blue-600 hover:underline dark:text-blue-400">
+                                        {{ order.master.phone }}
+                                    </a>
+                                    <p v-if="order.assigned_at" class="mt-1 text-xs text-gray-400">
+                                        {{ t('orders.fields.assigned_at') }}: {{ order.assigned_at }}
+                                    </p>
+
+                                    <div v-if="isTracking && liveDistance !== null" class="mt-3 rounded-lg bg-blue-50 px-3 py-2.5 dark:bg-blue-900/20">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                                                    </svg>
+                                                    <span class="text-sm font-bold">{{ formatDistance(liveDistance) }}</span>
+                                                </div>
+                                                <div class="h-3 w-px bg-blue-200 dark:bg-blue-700" />
+                                                <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                                                    <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span class="text-sm font-bold">{{ formatEta(liveEta) }}</span>
+                                                </div>
                                             </div>
-                                            <div class="h-3 w-px bg-blue-200 dark:bg-blue-700" />
-                                            <!-- ETA -->
-                                            <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
-                                                <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                </svg>
-                                                <span class="text-sm font-semibold">{{ formatEta(liveEta) }}</span>
-                                            </div>
+                                            <span class="relative flex h-2 w-2">
+                                                <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                                                <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                                            </span>
                                         </div>
-                                        <!-- Ping dot -->
-                                        <span class="relative flex h-2 w-2">
-                                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
-                                            <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
-                                        </span>
+                                        <p class="mt-1 text-xs text-blue-500 dark:text-blue-400">при скорости {{ ETA_SPEED_KMH }} км/ч</p>
                                     </div>
-                                    <!-- Speed label -->
-                                    <p class="text-xs text-blue-500 dark:text-blue-400">при скорости {{ ETA_SPEED_KMH }} км/ч</p>
                                 </div>
+                                <p v-else class="text-gray-400 dark:text-slate-500">{{ t('orders.no_master') }}</p>
                             </div>
-                            <p v-else class="text-gray-400 dark:text-slate-500">{{ t('orders.no_master') }}</p>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Right: description + map + photos -->
-                <div class="space-y-4 lg:col-span-2">
-                    <!-- Description -->
-                    <div :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.description') }}</h3>
-                        </div>
-                        <div class="px-5 py-4 text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">
-                            {{ order.description }}
-                        </div>
-                    </div>
-
-                    <!-- Map -->
-                    <div :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.location') }}</h3>
-                        </div>
-                        <div ref="mapContainer" class="h-96 w-full rounded-b-xl" />
-                    </div>
-
-                    <!-- Problem photos -->
-                    <div v-if="order.photos?.length" :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.photos') }}</h3>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4">
-                            <a
-                                v-for="photo in order.photos"
-                                :key="photo.id"
-                                :href="photo.url"
-                                target="_blank"
-                                class="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-700"
-                            >
-                                <img :src="photo.url" :alt="`photo-${photo.id}`" class="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                            </a>
-                        </div>
-                    </div>
-
-                    <!-- Tasks (Before/After) -->
-                    <div v-if="order.tasks?.length" :class="cardClass">
-                        <div class="border-b border-gray-100 px-5 py-3 dark:border-slate-700">
-                            <h3 class="text-sm font-semibold text-gray-700 dark:text-slate-300">{{ t('orders.fields.tasks') }}</h3>
-                        </div>
-                        <div class="space-y-4 p-5">
-                            <div v-for="task in order.tasks" :key="task.id" class="rounded-lg border border-gray-200 p-4 dark:border-slate-700">
-                                <p class="mb-3 text-sm font-medium text-gray-900 dark:text-slate-200">{{ task.title }}</p>
-                                <div class="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <p class="mb-1 text-xs text-gray-500 dark:text-slate-400">Before</p>
-                                        <a v-if="task.before_photo_url" :href="task.before_photo_url" target="_blank">
-                                            <img :src="task.before_photo_url" class="aspect-square w-full rounded-lg object-cover" />
-                                        </a>
-                                        <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
+                        <!-- Eligible masters list -->
+                        <div v-if="sortedEligibleMasters.length > 0" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    Доступные мастера
+                                    <span class="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500 dark:bg-slate-700 dark:text-slate-400">
+                                        {{ sortedEligibleMasters.length }}
+                                    </span>
+                                </h3>
+                            </div>
+                            <div class="divide-y divide-gray-100 dark:divide-slate-700">
+                                <div
+                                    v-for="master in sortedEligibleMasters"
+                                    :key="master.id"
+                                    class="flex items-center gap-3 px-4 py-3"
+                                >
+                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                                        {{ initialOf(master.name) }}
                                     </div>
-                                    <div>
-                                        <p class="mb-1 text-xs text-gray-500 dark:text-slate-400">After</p>
-                                        <a v-if="task.after_photo_url" :href="task.after_photo_url" target="_blank">
-                                            <img :src="task.after_photo_url" class="aspect-square w-full rounded-lg object-cover" />
-                                        </a>
-                                        <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-sm font-medium text-gray-900 dark:text-slate-200">{{ master.name }}</p>
+                                        <p v-if="master.distance_km !== null" class="text-xs font-medium text-blue-600 dark:text-blue-400">
+                                            {{ formatDistance(master.distance_km) }}
+                                        </p>
+                                        <p v-else class="text-xs text-gray-400">нет координат</p>
                                     </div>
+                                    <button
+                                        @click="router.post(route('orders.assign', order.id), { master_id: master.id })"
+                                        class="shrink-0 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700"
+                                    >
+                                        {{ t('orders.actions.assign_master') }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Photos -->
+                        <div v-if="order.photos?.length" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    {{ t('orders.fields.photos') }}
+                                </h3>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 p-3">
+                                <a
+                                    v-for="photo in order.photos"
+                                    :key="photo.id"
+                                    :href="photo.url"
+                                    target="_blank"
+                                    class="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-700"
+                                >
+                                    <img :src="photo.url" :alt="`photo-${photo.id}`" class="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Tasks -->
+                        <div v-if="order.tasks?.length" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
+                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
+                                    {{ t('orders.fields.tasks') }}
+                                </h3>
+                            </div>
+                            <div class="space-y-3 p-3">
+                                <div
+                                    v-for="task in order.tasks"
+                                    :key="task.id"
+                                    class="rounded-lg border border-gray-200 p-3 dark:border-slate-700"
+                                >
+                                    <p class="mb-2 text-xs font-medium text-gray-900 dark:text-slate-200">{{ task.title }}</p>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <p class="mb-1 text-xs text-gray-400">Before</p>
+                                            <a v-if="task.before_photo_url" :href="task.before_photo_url" target="_blank">
+                                                <img :src="task.before_photo_url" class="aspect-square w-full rounded-lg object-cover" />
+                                            </a>
+                                            <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
+                                        </div>
+                                        <div>
+                                            <p class="mb-1 text-xs text-gray-400">After</p>
+                                            <a v-if="task.after_photo_url" :href="task.after_photo_url" target="_blank">
+                                                <img :src="task.after_photo_url" class="aspect-square w-full rounded-lg object-cover" />
+                                            </a>
+                                            <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
-                </div>
+                </aside>
+
+                <!-- Map panel: fills all remaining space -->
+                <section class="relative flex-1 overflow-hidden">
+                    <div ref="mapContainer" class="absolute inset-0" />
+
+                    <!-- Live tracking overlay — top right -->
+                    <div
+                        v-if="isTracking && liveDistance !== null"
+                        class="absolute right-4 top-4 z-[1001] flex items-center gap-3 rounded-xl bg-white/90 px-4 py-3 shadow-lg backdrop-blur-sm dark:bg-slate-800/90"
+                    >
+                        <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0zM19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
+                            <span class="text-sm font-bold">{{ formatDistance(liveDistance) }}</span>
+                        </div>
+                        <div class="h-4 w-px bg-gray-200 dark:bg-slate-600" />
+                        <div class="flex items-center gap-1.5 text-blue-700 dark:text-blue-300">
+                            <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <span class="text-sm font-bold">{{ formatEta(liveEta) }}</span>
+                        </div>
+                        <span class="relative flex h-2.5 w-2.5 shrink-0">
+                            <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                            <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-blue-500" />
+                        </span>
+                    </div>
+
+                    <!-- Legend — bottom left -->
+                    <div class="absolute bottom-6 left-4 z-[1001] flex items-center gap-3 rounded-xl bg-white/90 px-3 py-2 text-xs shadow-md backdrop-blur-sm dark:bg-slate-800/90">
+                        <div class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-full bg-green-500 ring-2 ring-white dark:ring-slate-700" />
+                            <span class="text-gray-600 dark:text-slate-300">{{ t('orders.fields.client_name') }}</span>
+                        </div>
+                        <div v-if="order.master" class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-700" />
+                            <span class="text-gray-600 dark:text-slate-300">{{ t('orders.fields.master') }}</span>
+                        </div>
+                        <div v-if="!order.master && sortedEligibleMasters.length > 0" class="flex items-center gap-1.5">
+                            <span class="h-3 w-3 rounded-full bg-slate-400 ring-2 ring-white dark:ring-slate-700" />
+                            <span class="text-gray-600 dark:text-slate-300">Кандидаты</span>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </div>
 
         <!-- Modals -->
+        <EditOrderModal
+            :show="showEditModal"
+            :order="order"
+            :cities="cities"
+            :categories="categories"
+            @close="showEditModal = false"
+        />
         <AssignMasterModal
             :show="showAssignModal"
             :order-id="order.id"

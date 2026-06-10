@@ -6,15 +6,18 @@ use App\Actions\AssignMasterAction;
 use App\Actions\CreateOrderAction;
 use App\Actions\DeleteOrderAction;
 use App\Actions\SetOrderFinalPriceAction;
+use App\Actions\UpdateOrderAction;
 use App\Actions\UpdateOrderStatusAction;
 use App\Exceptions\OrderException;
 use App\Http\Requests\AssignMasterToOrderRequest;
 use App\Http\Requests\SetOrderFinalPriceRequest;
 use App\Http\Requests\StoreOrderRequest;
+use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Traits\WithNotification;
 use App\OrderStatus;
+use App\Repositories\CategoryRepository;
 use App\Repositories\CityRepository;
 use App\Repositories\MasterRepository;
 use App\Repositories\OrderRepository;
@@ -53,8 +56,12 @@ class OrderController extends Controller
     {
         $order = $this->repository->findOrFail($id);
 
+        $isPending = $order->status === OrderStatus::Pending;
+
         return Inertia::render('Orders/Show', [
             'order' => (new OrderResource($order))->resolve(),
+            'cities' => $isPending ? app(CityRepository::class)->all()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]) : [],
+            'categories' => $isPending ? app(CategoryRepository::class)->roots()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]) : [],
             'eligibleMasters' => $this->masterRepository
                 ->eligibleForOrder($order->city_id, $order->category_id)
                 ->map(fn ($m) => [
@@ -85,6 +92,20 @@ class OrderController extends Controller
         $this->notifySuccess('notifications.created', ['resource' => __('resources.order')]);
 
         return redirect()->route('orders.index');
+    }
+
+    public function update(UpdateOrderRequest $request, int $id, UpdateOrderAction $action): RedirectResponse
+    {
+        $order = $this->repository->findOrFail($id);
+
+        try {
+            $action->handle($order, $request->validated());
+            $this->notifySuccess('notifications.updated', ['resource' => __('resources.order')]);
+        } catch (OrderException $e) {
+            $this->notifyError($this->mapExceptionMessage($e));
+        }
+
+        return redirect()->route('orders.show', $id);
     }
 
     public function destroy(int $id, DeleteOrderAction $action): RedirectResponse
@@ -158,6 +179,7 @@ class OrderController extends Controller
             'Master city does not match the order city.' => __('orders.errors.city_mismatch'),
             'Master is not registered in the order category.' => __('orders.errors.category_mismatch'),
             'Order is already in a final status.' => __('orders.errors.already_final'),
+            'Order can only be edited when status is Pending.' => __('orders.errors.not_editable'),
             default => __('orders.errors.invalid_transition'),
         };
     }
