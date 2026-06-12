@@ -19,7 +19,7 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'phone' => ['required', 'string', 'exists:masters,phone'],
-            'code' => ['required', 'string', 'size:4'],
+            'code' => ['required', 'string', 'size:6'],
         ];
     }
 }

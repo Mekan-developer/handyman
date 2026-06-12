@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'failed' => 'Maglumatlar nädogry.',
+    'password' => 'Açar söz nädogry.',
+    'throttle' => 'Giriş synanyşyklary köp. :seconds sekunddan soň synanyşyň.',
+
     'login' => [
         'title' => 'Giriş',
         'subtitle' => 'Dolandyryş paneline giriň',

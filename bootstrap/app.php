@@ -29,6 +29,10 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
         ]);
 
+        $middleware->api(append: [
+            SetLocale::class,
+        ]);
+
         $middleware->alias([
             'ensure.client' => EnsureClient::class,
             'ensure.master' => EnsureMaster::class,

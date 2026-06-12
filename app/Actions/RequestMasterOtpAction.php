@@ -19,7 +19,7 @@ class RequestMasterOtpAction
             throw MasterDisabledException::accessExpired();
         }
 
-        $code = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         Cache::put("master_otp:{$master->phone}", $code, now()->addMinutes(5));
 

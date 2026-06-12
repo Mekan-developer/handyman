@@ -9,7 +9,7 @@ class RequestClientOtpAction
 {
     public function handle(string $phone): void
     {
-        $code = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
         Cache::put("client_otp:{$phone}", $code, now()->addMinutes(5));
 

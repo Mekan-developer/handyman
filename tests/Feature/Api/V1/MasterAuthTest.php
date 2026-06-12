@@ -47,11 +47,11 @@ class MasterAuthTest extends TestCase
     public function test_active_master_can_verify_otp_and_receive_token(): void
     {
         $master = Master::factory()->create();
-        Cache::put("master_otp:{$master->phone}", '1234', now()->addMinutes(5));
+        Cache::put("master_otp:{$master->phone}", '123456', now()->addMinutes(5));
 
         $response = $this->postJson(route('api.v1.master.auth.verify-otp'), [
             'phone' => $master->phone,
-            'code' => '1234',
+            'code' => '123456',
         ]);
 
         $response->assertOk()
@@ -63,33 +63,33 @@ class MasterAuthTest extends TestCase
     public function test_inactive_master_cannot_verify_otp(): void
     {
         $master = Master::factory()->inactive()->create();
-        Cache::put("master_otp:{$master->phone}", '1234', now()->addMinutes(5));
+        Cache::put("master_otp:{$master->phone}", '123456', now()->addMinutes(5));
 
         $this->postJson(route('api.v1.master.auth.verify-otp'), [
             'phone' => $master->phone,
-            'code' => '1234',
+            'code' => '123456',
         ])->assertForbidden();
     }
 
     public function test_expired_master_cannot_verify_otp(): void
     {
         $master = Master::factory()->expired()->create();
-        Cache::put("master_otp:{$master->phone}", '1234', now()->addMinutes(5));
+        Cache::put("master_otp:{$master->phone}", '123456', now()->addMinutes(5));
 
         $this->postJson(route('api.v1.master.auth.verify-otp'), [
             'phone' => $master->phone,
-            'code' => '1234',
+            'code' => '123456',
         ])->assertForbidden();
     }
 
     public function test_invalid_otp_returns_422(): void
     {
         $master = Master::factory()->create();
-        Cache::put("master_otp:{$master->phone}", '1234', now()->addMinutes(5));
+        Cache::put("master_otp:{$master->phone}", '123456', now()->addMinutes(5));
 
         $this->postJson(route('api.v1.master.auth.verify-otp'), [
             'phone' => $master->phone,
-            'code' => '9999',
+            'code' => '999999',
         ])->assertUnprocessable();
     }
 
