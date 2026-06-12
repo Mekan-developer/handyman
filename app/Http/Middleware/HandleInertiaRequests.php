@@ -37,6 +37,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
             ],
             'locale' => session('locale', config('app.locale', 'ru')),
+            'tilesStyleUrl' => config('services.tiles.style_url'),
             'notification' => session('notification'),
             'translations' => $this->loadTranslations(),
             'unreadNotificationsCount' => $request->user()

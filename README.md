@@ -13,7 +13,7 @@ A platform for clients to search and book handyman services. Administrators mana
 | Backend API | Laravel 11 + Sanctum |
 | WebSocket | Laravel Reverb |
 | Database | MySQL |
-| Maps | OpenStreetMap |
+| Maps | Self-hosted vector tiles (tileserver-gl) + MapLibre GL |
 
 ---
 
@@ -32,6 +32,9 @@ A platform for clients to search and book handyman services. Administrators mana
 | WebSocket | Laravel Reverb |
 | Testing | PHPUnit v10 |
 | Code Style | Laravel Pint v1 |
+| Basemap Renderer | MapLibre GL (`maplibre-gl`) via `@maplibre/maplibre-gl-leaflet` bridge on Leaflet |
+| Map Tiles (masters map) | Self-hosted **tileserver-gl** — style + tiles + glyphs + sprites; URL via `TILES_STYLE_URL` |
+| Map Tiles (order picker) | `protomaps-leaflet` + offline `pmtiles` (`turkmenistan.pmtiles`, `TilesController` w/ HTTP Range) |
 
 ---
 
@@ -400,6 +403,31 @@ The admin map (`/masters/map`) shows masters in real-time. When a master mobile 
 2. Backend stores it and dispatches `MasterLocationUpdated` event
 3. Event broadcasts to public channel `masters-map.{cityId}`
 4. Admin's open map subscribes to relevant city channels and animates the marker smoothly
+
+### Basemap Rendering (`Pages/Masters/Map.vue`)
+
+The base layer is rendered by **MapLibre GL** (GPU vector rendering — sharp at any zoom and on HiDPI), mounted into Leaflet via the `L.maplibreGL` bridge so all markers, popups, trajectories and Reverb channel code stay pure Leaflet.
+
+- **Source**: a **self-hosted [tileserver-gl](https://github.com/maptiler/tileserver-gl)** instance serving the whole MapLibre stack (style + vector tiles + glyphs + sprites) from one origin. This is deliberate — public OSM tile servers are blocked in Turkmenistan, so the basemap must be self-hosted.
+- **Style URL** is **not hardcoded**: `TILES_STYLE_URL` → `config('services.tiles.style_url')` → shared by `HandleInertiaRequests` as the `tilesStyleUrl` Inertia prop → read in the component via `usePage().props.tilesStyleUrl`.
+- The component is renderer-agnostic about flavors now — tileserver serves a single style; to support dark mode / multiple styles, add them on the tileserver and switch the URL.
+- `maplibre-gl` is a lazy chunk — `@maplibre/maplibre-gl-leaflet` (which pulls in `maplibre-gl`) is dynamically imported in `onMounted`, so it loads only on the map page.
+
+Run a tileserver-gl instance (dev):
+
+```bash
+cd /path/to/openmaptiles   # dir holding your tiles.mbtiles
+docker run --rm -it -v $(pwd)/data:/data -p 8080:8080 \
+  maptiler/tileserver-gl --file tiles.mbtiles
+# style:   http://localhost:8080/styles/basic-preview/style.json
+# tilejson: http://localhost:8080/data/tiles.json
+```
+
+> **Production**: serve the tileserver over **HTTPS** behind nginx (e.g. `https://tiles.example.tm`) — an HTTP tile origin is blocked as mixed content on an HTTPS admin panel. tileserver-gl already sends permissive CORS headers. Set `TILES_STYLE_URL` per environment.
+
+> The order-detail picker (`Pages/Orders/Partials/CreateOrderModal.vue`) still uses `protomaps-leaflet` + the offline `pmtiles` file — migrate it to the same tileserver style if needed.
+
+> The order-detail picker (`Pages/Orders/Partials/CreateOrderModal.vue`) still uses `protomaps-leaflet` — migrate it the same way if pixel-crispness is needed there too.
 
 ### Per-Order Live Tracking (Orders → Show)
 

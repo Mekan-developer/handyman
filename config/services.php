@@ -31,4 +31,8 @@ return [
         ],
     ],
 
+    'tiles' => [
+        'style_url' => env('TILES_STYLE_URL', 'http://localhost:8080/styles/basic-preview/style.json'),
+    ],
+
 ];

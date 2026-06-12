@@ -1,11 +1,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 const { t } = useI18n()
+const page = usePage()
 
 const props = defineProps({
     masters: Array,
@@ -15,25 +17,36 @@ const props = defineProps({
 const mapContainer = ref(null)
 let map = null
 let L = null
+let baseLayer = null
+let locateMarker = null
 const markers = {}
 const trajectoryLayers = {}
 const activeTrajectories = ref(new Set())
 const lastUpdateAt = ref({})
 const subscribedChannels = []
 
+const TM_CENTER = [37.95, 58.38]
+
 onMounted(async () => {
     L = (await import('leaflet')).default
-    const { leafletLayer } = await import('protomaps-leaflet')
+    // Side-effect: добавляет L.maplibreGL — мост Leaflet ↔ MapLibre GL (сам тянет maplibre-gl).
+    await import('@maplibre/maplibre-gl-leaflet')
 
     const TM_BOUNDS = L.latLngBounds([[35.1, 52.5], [42.8, 66.7]])
 
     map = L.map(mapContainer.value, {
         maxBounds: TM_BOUNDS,
         maxBoundsViscosity: 1.0,
-        minZoom: 5,
-    }).setView([37.95, 58.38], 11)
+        minZoom: 7,
+        maxZoom: 20,
+        zoomControl: true,
+    }).setView(TM_CENTER, 11)
 
-    leafletLayer({ url: '/tiles/turkmenistan.pmtiles', flavor: 'light' }).addTo(map)
+    baseLayer = createBaseLayer().addTo(map)
+    if (typeof baseLayer.bringToBack === 'function') { baseLayer.bringToBack() }
+
+    setupControls()
+    registerLocateHandlers()
 
     setTimeout(() => map.invalidateSize(), 100)
 
@@ -42,6 +55,8 @@ onMounted(async () => {
         addOrUpdateMarker(master.id, master, master.latest_location.latitude, master.latest_location.longitude)
         lastUpdateAt.value[master.id] = master.latest_location.recorded_at
     })
+
+    fitAllMasters()
 
     window.__showTrajectory = (masterId) => toggleTrajectory(masterId)
 
@@ -56,6 +71,89 @@ onBeforeUnmount(() => {
         map = null
     }
 })
+
+// Базовый слой — внешний MapLibre-стиль с self-hosted tileserver-gl.
+// URL приходит из .env через Inertia (config/services.php → HandleInertiaRequests), не хардкодим.
+function createBaseLayer() {
+    return L.maplibreGL({ style: page.props.tilesStyleUrl })
+}
+
+function setupControls() {
+    L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map)
+
+    addButtonControl('topright', [
+        {
+            title: t('masters.fit_all'),
+            html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9V5a2 2 0 012-2h4M21 9V5a2 2 0 00-2-2h-4M3 15v4a2 2 0 002 2h4M21 15v4a2 2 0 01-2 2h-4"/></svg>',
+            onClick: fitAllMasters,
+        },
+        {
+            title: t('masters.my_location'),
+            html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path stroke-linecap="round" d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>',
+            onClick: locateMe,
+        },
+        {
+            title: t('masters.fullscreen'),
+            html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>',
+            onClick: toggleFullscreen,
+        },
+    ])
+}
+
+function addButtonControl(position, buttons) {
+    const ButtonControl = L.Control.extend({
+        onAdd() {
+            const container = L.DomUtil.create('div', 'leaflet-bar')
+            buttons.forEach(({ title, html, onClick }) => {
+                const link = L.DomUtil.create('a', '', container)
+                link.href = '#'
+                link.title = title
+                link.role = 'button'
+                link.innerHTML = html
+                link.style.display = 'flex'
+                link.style.alignItems = 'center'
+                link.style.justifyContent = 'center'
+                L.DomEvent.on(link, 'click', L.DomEvent.stop).on(link, 'click', onClick)
+            })
+            L.DomEvent.disableClickPropagation(container)
+            return container
+        },
+    })
+
+    new ButtonControl({ position }).addTo(map)
+}
+
+function fitAllMasters() {
+    const latLngs = Object.values(markers).map((marker) => marker.getLatLng())
+    if (!latLngs.length) { return }
+    map.fitBounds(L.latLngBounds(latLngs), { padding: [60, 60], maxZoom: 15 })
+}
+
+function locateMe() {
+    map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true })
+}
+
+function registerLocateHandlers() {
+    map.on('locationfound', (event) => {
+        if (locateMarker) {
+            locateMarker.setLatLng(event.latlng)
+            return
+        }
+        locateMarker = L.circleMarker(event.latlng, {
+            radius: 8, color: '#7c3aed', fillColor: '#a855f7', fillOpacity: 0.9, weight: 3,
+        }).addTo(map)
+    })
+}
+
+function toggleFullscreen() {
+    const element = mapContainer.value?.parentElement ?? mapContainer.value
+    if (document.fullscreenElement) {
+        document.exitFullscreen?.()
+    } else {
+        element?.requestFullscreen?.()
+    }
+    setTimeout(() => map.invalidateSize(), 200)
+}
 
 function subscribeToCityChannels() {
     if (!window.Echo || !props.cityIds?.length) { return }

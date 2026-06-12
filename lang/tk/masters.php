@@ -31,6 +31,18 @@ return [
     'trajectory' => 'Ugur',
     'no_location' => 'Ýerleşiş maglumaty ýok',
     'last_seen' => 'Soňky ýerleşiş',
+    'fit_all' => 'Ähli ussatlary görkez',
+    'my_location' => 'Meniň ýerleşişim',
+    'fullscreen' => 'Doly ekran',
+    'mode' => 'Režim',
+    'modes' => [
+        'auto' => 'Awto (tema boýunça)',
+        'light' => 'Açyk',
+        'dark' => 'Garaňky',
+        'white' => 'Ak',
+        'grayscale' => 'Çal reňk',
+        'black' => 'Gara',
+    ],
     'reset_balance' => 'Balansy nola getir',
     'reset_balance_confirm' => 'Balans nola getirilýär. Töleg geçirilenden soň etmek isleýärsiňizmi?',
 
