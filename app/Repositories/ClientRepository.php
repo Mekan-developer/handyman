@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Client;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ClientRepository
@@ -13,6 +14,18 @@ class ClientRepository
             ->withCount('orders')
             ->latest()
             ->paginate($perPage);
+    }
+
+    /**
+     * Active (non-blocked) clients for selection in forms.
+     *
+     * @return Collection<int, Client>
+     */
+    public function allForSelect(): Collection
+    {
+        return Client::where('is_blocked', false)
+            ->orderBy('name')
+            ->get(['id', 'name', 'phone', 'city_id']);
     }
 
     public function findOrFail(int $id): Client

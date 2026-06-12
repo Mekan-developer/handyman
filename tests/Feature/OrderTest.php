@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\City;
+use App\Models\Client;
 use App\Models\Master;
 use App\Models\Order;
 use App\Models\User;
@@ -101,6 +102,48 @@ class OrderTest extends TestCase
         $this->assertDatabaseHas('orders', [
             'client_name' => 'Aman Jumayev',
             'status' => 'pending',
+        ]);
+    }
+
+    public function test_admin_can_create_order_for_existing_client(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+        $client = Client::factory()->create();
+
+        $payload = array_merge($this->validPayload($city, $category), [
+            'client_id' => $client->id,
+        ]);
+
+        $this->post(route('orders.store'), $payload)
+            ->assertRedirect(route('orders.index'));
+
+        $this->assertDatabaseHas('orders', [
+            'client_id' => $client->id,
+            'client_phone' => $client->phone,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_creating_order_for_unknown_phone_creates_client(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+
+        $this->post(route('orders.store'), $this->validPayload($city, $category))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('clients', [
+            'phone' => '+99362111222',
+            'name' => 'Aman Jumayev',
+        ]);
+
+        $client = Client::where('phone', '+99362111222')->firstOrFail();
+        $this->assertDatabaseHas('orders', [
+            'client_id' => $client->id,
+            'client_name' => 'Aman Jumayev',
         ]);
     }
 

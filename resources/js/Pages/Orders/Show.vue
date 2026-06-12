@@ -8,6 +8,7 @@ import AssignMasterModal from '@/Pages/Orders/Partials/AssignMasterModal.vue'
 import SetPriceModal from '@/Pages/Orders/Partials/SetPriceModal.vue'
 import ChangeStatusModal from '@/Pages/Orders/Partials/ChangeStatusModal.vue'
 import EditOrderModal from '@/Pages/Orders/Partials/EditOrderModal.vue'
+import ImageLightbox from '@/Components/ImageLightbox.vue'
 import 'leaflet/dist/leaflet.css'
 
 const { t } = useI18n()
@@ -24,6 +25,16 @@ const showAssignModal = ref(false)
 const showPriceModal = ref(false)
 const showStatusModal = ref(false)
 const showEditModal = ref(false)
+
+const lightbox = ref({ show: false, images: [], index: 0 })
+
+function openLightbox(images, index = 0) {
+    lightbox.value = { show: true, images, index }
+}
+
+function taskImages(task) {
+    return [task.before_photo_url, task.after_photo_url].filter(Boolean)
+}
 
 const mapContainer = ref(null)
 let map = null
@@ -473,15 +484,15 @@ const sortedEligibleMasters = computed(() => {
                                 </h3>
                             </div>
                             <div class="grid grid-cols-3 gap-2 p-3">
-                                <a
-                                    v-for="photo in order.photos"
+                                <button
+                                    v-for="(photo, idx) in order.photos"
                                     :key="photo.id"
-                                    :href="photo.url"
-                                    target="_blank"
-                                    class="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-700"
+                                    type="button"
+                                    @click="openLightbox(order.photos, idx)"
+                                    class="group relative aspect-square cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-700"
                                 >
                                     <img :src="photo.url" :alt="`photo-${photo.id}`" class="h-full w-full object-cover transition-transform group-hover:scale-105" />
-                                </a>
+                                </button>
                             </div>
                         </div>
 
@@ -502,16 +513,16 @@ const sortedEligibleMasters = computed(() => {
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">Before</p>
-                                            <a v-if="task.before_photo_url" :href="task.before_photo_url" target="_blank">
+                                            <button v-if="task.before_photo_url" type="button" class="block w-full cursor-zoom-in" @click="openLightbox(taskImages(task), 0)">
                                                 <img :src="task.before_photo_url" class="aspect-square w-full rounded-lg object-cover" />
-                                            </a>
+                                            </button>
                                             <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
                                         </div>
                                         <div>
                                             <p class="mb-1 text-xs text-gray-400">After</p>
-                                            <a v-if="task.after_photo_url" :href="task.after_photo_url" target="_blank">
+                                            <button v-if="task.after_photo_url" type="button" class="block w-full cursor-zoom-in" @click="openLightbox(taskImages(task), taskImages(task).length - 1)">
                                                 <img :src="task.after_photo_url" class="aspect-square w-full rounded-lg object-cover" />
-                                            </a>
+                                            </button>
                                             <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
                                         </div>
                                     </div>
@@ -596,6 +607,13 @@ const sortedEligibleMasters = computed(() => {
             :current-status="order.status"
             :statuses="statuses"
             @close="showStatusModal = false"
+        />
+
+        <ImageLightbox
+            :show="lightbox.show"
+            :images="lightbox.images"
+            :start-index="lightbox.index"
+            @close="lightbox.show = false"
         />
     </AdminLayout>
 </template>

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\AssignMasterAction;
-use App\Actions\CreateOrderAction;
+use App\Actions\CreateOrderForClientAction;
 use App\Actions\DeleteOrderAction;
 use App\Actions\SetOrderFinalPriceAction;
 use App\Actions\UpdateOrderAction;
@@ -19,6 +19,7 @@ use App\Http\Traits\WithNotification;
 use App\OrderStatus;
 use App\Repositories\CategoryRepository;
 use App\Repositories\CityRepository;
+use App\Repositories\ClientRepository;
 use App\Repositories\MasterRepository;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
@@ -43,6 +44,8 @@ class OrderController extends Controller
         return Inertia::render('Orders/Index', [
             'orders' => OrderResource::collection($this->repository->paginate($filters)),
             'cities' => app(CityRepository::class)->paginate(100)->items(),
+            'categories' => app(CategoryRepository::class)->roots(),
+            'clients' => app(ClientRepository::class)->allForSelect(),
             'statuses' => collect(OrderStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
@@ -82,7 +85,7 @@ class OrderController extends Controller
         ]);
     }
 
-    public function store(StoreOrderRequest $request, CreateOrderAction $action): RedirectResponse
+    public function store(StoreOrderRequest $request, CreateOrderForClientAction $action): RedirectResponse
     {
         $data = $request->validated();
         $photos = $request->file('photos', []);

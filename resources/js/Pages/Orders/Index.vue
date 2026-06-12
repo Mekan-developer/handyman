@@ -4,15 +4,20 @@ import { Link, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
+import CreateOrderModal from '@/Pages/Orders/Partials/CreateOrderModal.vue'
 
 const { t } = useI18n()
 
 const props = defineProps({
     orders: Object,
     cities: Array,
+    categories: Array,
+    clients: Array,
     statuses: Array,
     filters: Object,
 })
+
+const showCreate = ref(false)
 
 const statusFilter = ref(props.filters?.status ?? '')
 const cityFilter = ref(props.filters?.city_id ?? '')
@@ -42,6 +47,16 @@ function destroy(order) {
                 <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
                     {{ t('orders.title') }}
                 </h1>
+                <button
+                    type="button"
+                    @click="showCreate = true"
+                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 transition-colors"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                    </svg>
+                    {{ t('orders.add') }}
+                </button>
             </div>
 
             <!-- Filters -->
@@ -152,5 +167,13 @@ function destroy(order) {
                 </div>
             </div>
         </div>
+
+        <CreateOrderModal
+            :show="showCreate"
+            :cities="cities"
+            :categories="categories"
+            :clients="clients"
+            @close="showCreate = false"
+        />
     </AdminLayout>
 </template>

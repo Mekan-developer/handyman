@@ -65,11 +65,24 @@ return [
         'price_title' => 'Jemi bahany goý',
         'price_placeholder' => 'Bahany giriziň',
         'edit_title' => 'Sargydy redaktirle',
+        'create_title' => 'Müşderiden täze sargyt',
         'select_city' => 'Şäheri saýlaň',
         'select_category' => 'Kategoriýany saýlaň',
         'status_title' => 'Sargydyň ýagdaýyny üýtget',
         'cancel_reason' => 'Ýatyrylan sebäbi',
         'no_eligible_masters' => 'Bu şäher we kategoriýa üçin elýeterli ussa ýok',
+    ],
+
+    'create' => [
+        'client_section' => 'Müşderi',
+        'search_client' => 'Ady ýa-da telefony boýunça müşderi gözle',
+        'no_clients_found' => 'Müşderi tapylmady',
+        'new_client_hint' => 'Müşderi bazada ýok — täzesi dörediler',
+        'selected_client' => 'Bar bolan müşderi saýlandy',
+        'deselect' => 'Aýyr',
+        'pick_location' => 'Ýerleşişi görkezmek üçin kartada basyň',
+        'add_photos' => 'Surat goş',
+        'photos_hint' => '4-e çenli surat',
     ],
 
     'notifications' => [
