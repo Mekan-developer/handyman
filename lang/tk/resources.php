@@ -10,4 +10,5 @@ return [
     'order' => 'Sargyt',
     'payment' => 'Töleg',
     'banner' => 'Banner',
+    'content' => 'Mazmun',
 ];

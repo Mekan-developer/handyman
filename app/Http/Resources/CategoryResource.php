@@ -20,6 +20,10 @@ class CategoryResource extends JsonResource
                 'name' => $this->parent->name,
             ]),
             'created_at' => $this->created_at?->toDateTimeString(),
+            'content' => $this->whenLoaded('content', fn () => $this->content
+                ? new CategoryContentResource($this->content)
+                : null
+            ),
         ];
     }
 }

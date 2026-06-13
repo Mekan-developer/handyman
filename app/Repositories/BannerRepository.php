@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Banner;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class BannerRepository
@@ -10,6 +11,12 @@ class BannerRepository
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
         return Banner::orderBy('sort_order')->orderBy('id')->paginate($perPage);
+    }
+
+    /** @return Collection<int, Banner> */
+    public function activeSorted(): Collection
+    {
+        return Banner::where('is_active', true)->orderBy('sort_order')->orderBy('id')->get();
     }
 
     public function findOrFail(int $id): Banner

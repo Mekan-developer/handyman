@@ -10,4 +10,5 @@ return [
     'order' => 'Заказ',
     'payment' => 'Платёж',
     'banner' => 'Баннер',
+    'content' => 'Контент',
 ];

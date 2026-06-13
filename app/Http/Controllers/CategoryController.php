@@ -7,6 +7,7 @@ use App\Actions\DeleteCategoryAction;
 use App\Actions\UpdateCategoryAction;
 use App\Http\Requests\StoreCategoryRequest;
 use App\Http\Requests\UpdateCategoryRequest;
+use App\Http\Resources\CategoryResource;
 use App\Http\Traits\WithNotification;
 use App\Repositories\CategoryRepository;
 use Illuminate\Http\RedirectResponse;
@@ -22,7 +23,7 @@ class CategoryController extends Controller
     public function index(): Response
     {
         return Inertia::render('Categories/Index', [
-            'categories' => $this->repository->paginate(),
+            'categories' => CategoryResource::collection($this->repository->paginate()),
             'parentCategories' => $this->repository->roots(),
         ]);
     }
@@ -47,8 +48,13 @@ class CategoryController extends Controller
     public function destroy(int $id, DeleteCategoryAction $action): RedirectResponse
     {
         $category = $this->repository->findOrFail($id);
-        $action->handle($category);
-        $this->notifySuccess('notifications.deleted', ['resource' => __('resources.category')]);
+
+        try {
+            $action->handle($category);
+            $this->notifySuccess('notifications.deleted', ['resource' => __('resources.category')]);
+        } catch (\RuntimeException $e) {
+            $this->notifyError($e->getMessage());
+        }
 
         return redirect()->route('categories.index');
     }

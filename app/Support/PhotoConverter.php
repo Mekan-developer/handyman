@@ -10,6 +10,12 @@ class PhotoConverter
 
     private const WEBP_QUALITY = 85;
 
+    private const CONTENT_MAX_WIDTH = 700;
+
+    private const CONTENT_SIZE_THRESHOLD = 800 * 1024; // 800 KB
+
+    private const CONTENT_WIDTH_THRESHOLD = 800;
+
     /**
      * Convert an image file to WebP, scaling down if height > 1080px.
      * Returns the absolute path of the new .webp file.
@@ -30,6 +36,41 @@ class PhotoConverter
 
         if ($height > self::MAX_HEIGHT) {
             $image = self::scaleDown($image, $width, $height);
+        }
+
+        $webpPath = preg_replace('/\.[^.]+$/', '.webp', $absolutePath);
+
+        if (imagewebp($image, $webpPath, self::WEBP_QUALITY) === false) {
+            imagedestroy($image);
+            throw new RuntimeException("Failed to write WebP: {$webpPath}");
+        }
+
+        imagedestroy($image);
+
+        return $webpPath;
+    }
+
+    /**
+     * Convert a category content image to WebP.
+     * Resizes to 700 px wide (height proportional) when file > 800 KB AND width > 800 px.
+     */
+    public static function convertContent(string $absolutePath): string
+    {
+        $info = @getimagesize($absolutePath);
+
+        if ($info === false) {
+            throw new RuntimeException("Cannot read image: {$absolutePath}");
+        }
+
+        $width = $info[0];
+        $height = $info[1];
+        $mimeType = $info['mime'];
+        $fileSize = (int) filesize($absolutePath);
+
+        $image = self::loadImage($absolutePath, $mimeType);
+
+        if ($fileSize > self::CONTENT_SIZE_THRESHOLD && $width > self::CONTENT_WIDTH_THRESHOLD) {
+            $image = self::scaleToWidth($image, $width, $height, self::CONTENT_MAX_WIDTH);
         }
 
         $webpPath = preg_replace('/\.[^.]+$/', '.webp', $absolutePath);
@@ -76,6 +117,24 @@ class PhotoConverter
         }
 
         imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, self::MAX_HEIGHT, $width, $height);
+        imagedestroy($image);
+
+        return $resized;
+    }
+
+    /** @param \GdImage $image */
+    private static function scaleToWidth(mixed $image, int $width, int $height, int $newWidth): mixed
+    {
+        $newHeight = (int) round($height * ($newWidth / $width));
+
+        $resized = imagecreatetruecolor($newWidth, $newHeight);
+
+        if ($resized === false) {
+            imagedestroy($image);
+            throw new RuntimeException('Failed to create resized canvas.');
+        }
+
+        imagecopyresampled($resized, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
         imagedestroy($image);
 
         return $resized;

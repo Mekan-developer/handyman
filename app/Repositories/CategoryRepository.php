@@ -10,9 +10,9 @@ class CategoryRepository
 {
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
-        return Category::with('parent')
-            ->orderByRaw('COALESCE(parent_id, id)')
-            ->orderBy('parent_id')
+        return Category::with(['parent', 'content.images'])
+            ->orderByRaw('COALESCE(parent_id, id) DESC')
+            ->orderByRaw('parent_id IS NOT NULL')
             ->orderBy('name')
             ->paginate($perPage);
     }
