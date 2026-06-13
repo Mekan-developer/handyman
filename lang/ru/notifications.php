@@ -5,4 +5,5 @@ return [
     'updated' => ':resource успешно обновлён',
     'deleted' => ':resource успешно удалён',
     'saved' => ':resource успешно сохранён',
+    'not_found' => 'Запись не найдена',
 ];

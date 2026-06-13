@@ -4,17 +4,22 @@ namespace App\Http\Controllers\Api\V1\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\Client\BannerResource;
+use App\Http\Resources\Api\V1\Client\CategoryContentResource;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Oblast;
 use App\Models\Region;
 use App\Repositories\BannerRepository;
+use App\Repositories\CategoryContentRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ClientCatalogController extends Controller
 {
-    public function __construct(private readonly BannerRepository $bannerRepository) {}
+    public function __construct(
+        private readonly BannerRepository $bannerRepository,
+        private readonly CategoryContentRepository $contentRepository,
+    ) {}
 
     public function banners(): AnonymousResourceCollection
     {
@@ -46,6 +51,21 @@ class ClientCatalogController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'oblast_id']),
         ]);
+    }
+
+    public function categoryContent(Category $category): CategoryContentResource
+    {
+        if (! $category->is_active) {
+            abort(404, __('categories.content_not_found'));
+        }
+
+        $content = $this->contentRepository->findByCategory($category);
+
+        if ($content === null) {
+            abort(404, __('categories.content_not_found'));
+        }
+
+        return new CategoryContentResource($content);
     }
 
     public function categories(): JsonResponse

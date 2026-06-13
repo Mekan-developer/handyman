@@ -28,6 +28,9 @@ return [
     'content_add' => 'Mazmun goş',
     'content_edit' => 'Mazmuny üýtget',
     'content_images' => 'Suratlar',
+    'content_image' => 'Surat',
+    'content_image_change' => 'Üýtget',
+    'content_image_upload' => 'Surat ýükle',
     'content_title' => 'Sözbaşy',
     'content_title_placeholder' => 'Sözbaşy giriziň',
     'content_description' => 'Beýan',
@@ -37,4 +40,5 @@ return [
     'content_images_required' => 'Azyndan bir surat goşuň',
     'content_images_max' => 'Iň köp 12 surat',
     'content_subcategory_only' => 'Mazmun diňe çaga kategoriýa üçin goşulýar',
+    'content_not_found' => 'Bu kategoriýa üçin mazmun tapylmady',
 ];

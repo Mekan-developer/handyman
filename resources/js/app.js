@@ -10,10 +10,30 @@ import i18n from './i18n';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+// PHP lang files use Laravel-style `:placeholder`, but vue-i18n interpolates `{placeholder}`.
+// Bridge the two so `t('key', { placeholder })` works on the frontend while PHP stays the
+// single source of truth. The negative lookbehind keeps vue-i18n linked messages (`@:key`) intact.
+const PLACEHOLDER_RE = /(?<!@):([a-zA-Z][a-zA-Z0-9_]*)/g;
+
+function normalizePlaceholders(value) {
+    if (typeof value === 'string') {
+        return value.replace(PLACEHOLDER_RE, '{$1}');
+    }
+    if (Array.isArray(value)) {
+        return value.map(normalizePlaceholders);
+    }
+    if (value && typeof value === 'object') {
+        return Object.fromEntries(
+            Object.entries(value).map(([key, val]) => [key, normalizePlaceholders(val)]),
+        );
+    }
+    return value;
+}
+
 function applyTranslations(translations) {
     if (!translations) { return; }
     Object.entries(translations).forEach(([locale, messages]) => {
-        i18n.global.setLocaleMessage(locale, messages);
+        i18n.global.setLocaleMessage(locale, normalizePlaceholders(messages));
     });
 }
 

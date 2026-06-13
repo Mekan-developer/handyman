@@ -14,15 +14,15 @@ class EnsureMaster
         $user = $request->user();
 
         if (! $user instanceof Master) {
-            return response()->json(['message' => 'Forbidden — master token required.'], 403);
+            return response()->json(['message' => __('api.master.token_required')], 403);
         }
 
         if (! $user->is_active) {
-            return response()->json(['message' => 'Master account is disabled.'], 403);
+            return response()->json(['message' => __('api.master.disabled')], 403);
         }
 
         if (! $user->hasActiveAccess()) {
-            return response()->json(['message' => 'Master access has expired.'], 403);
+            return response()->json(['message' => __('api.master.access_expired')], 403);
         }
 
         return $next($request);

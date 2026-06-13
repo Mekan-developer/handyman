@@ -20,6 +20,14 @@ return [
     'block_confirm' => 'Müşderini petiklemek isleýärsiňizmi? Ol programma girip bilmez.',
     'unblock_confirm' => 'Müşderini açmak isleýärsiňizmi?',
 
+    'filters' => [
+        'all_oblasts' => 'Ähli welaýatlar',
+        'all_cities' => 'Ähli şäherler',
+        'by_oblast' => 'Welaýat boýunça',
+        'by_city' => 'Şäher boýunça',
+        'reset' => 'Arassala',
+    ],
+
     'fields' => [
         'name' => 'Ady',
         'phone' => 'Telefon',

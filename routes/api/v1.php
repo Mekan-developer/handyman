@@ -21,8 +21,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('master')->group(function () {
 
     // Public — location ping (temporary open auth until OTP flow stabilises)
-    Route::post('{master}/location', [MasterLocationController::class, 'store'])
-        ->name('api.v1.master.location.store');
+    Route::post('{master}/location', [MasterLocationController::class, 'store'])->name('api.v1.master.location.store');
 
     // Auth
     Route::prefix('auth')->name('api.v1.master.auth.')->group(function () {
@@ -59,18 +58,19 @@ Route::prefix('client')->group(function () {
     Route::get('regions', [ClientCatalogController::class, 'regions'])->name('api.v1.client.regions');
     Route::get('cities', [ClientCatalogController::class, 'cities'])->name('api.v1.client.cities');
     Route::get('categories', [ClientCatalogController::class, 'categories'])->name('api.v1.client.categories');
+    Route::get('categories/{category}/content', [ClientCatalogController::class, 'categoryContent'])->name('api.v1.client.categories.content');
     Route::get('banners', [ClientCatalogController::class, 'banners'])->name('api.v1.client.banners');
 
     // Auth
     Route::prefix('auth')->name('api.v1.client.auth.')->group(function () {
         Route::post('request-otp', [ClientAuthController::class, 'requestOtp'])->name('request-otp');
         Route::post('verify-otp', [ClientAuthController::class, 'verifyOtp'])->name('verify-otp');
-        Route::post('complete-registration', [ClientAuthController::class, 'completeRegistration'])
-            ->middleware(['auth:sanctum', 'ensure.client'])
-            ->name('complete-registration');
-        Route::post('logout', [ClientAuthController::class, 'logout'])
-            ->middleware(['auth:sanctum', 'ensure.client'])
-            ->name('logout');
+
+        // Require the token issued by verify-otp.
+        Route::middleware(['auth:sanctum', 'ensure.client'])->group(function () {
+            Route::post('complete-registration', [ClientAuthController::class, 'completeRegistration'])->name('complete-registration');
+            Route::post('logout', [ClientAuthController::class, 'logout'])->name('logout');
+        });
     });
 
     // Protected — requires Sanctum token + client tokenable
@@ -83,6 +83,7 @@ Route::prefix('client')->group(function () {
             Route::get('/', [ClientOrderController::class, 'index'])->name('index');
             Route::get('{order}', [ClientOrderController::class, 'show'])->name('show');
             Route::post('/', [ClientOrderController::class, 'store'])->name('store');
+            Route::post('{order}/cancel', [ClientOrderController::class, 'cancel'])->name('cancel');
         });
     });
 });

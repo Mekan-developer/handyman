@@ -14,6 +14,8 @@ class DashboardController extends Controller
     {
         return Inertia::render('Dashboard', [
             'stats' => $this->repository->stats(),
+            'ordersByStatus' => $this->repository->ordersByStatus(),
+            'recentOrders' => $this->repository->recentOrders(),
         ]);
     }
 }

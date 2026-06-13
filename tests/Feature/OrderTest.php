@@ -68,6 +68,44 @@ class OrderTest extends TestCase
             ->assertInertia(fn ($page) => $page->where('orders.data.0.status', 'completed'));
     }
 
+    public function test_orders_index_can_be_searched_by_client_name(): void
+    {
+        $this->actingAsAdmin();
+        Order::factory()->create(['client_name' => 'Aman Jumayev']);
+        Order::factory()->create(['client_name' => 'Merdan Saparov']);
+
+        $this->get(route('orders.index', ['search' => 'Jumayev']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('orders.data', fn ($orders) => count($orders) === 1)
+                ->where('orders.data.0.client_name', 'Aman Jumayev'));
+    }
+
+    public function test_orders_index_can_be_searched_by_client_phone(): void
+    {
+        $this->actingAsAdmin();
+        Order::factory()->create(['client_phone' => '+99362111222']);
+        Order::factory()->create(['client_phone' => '+99365999888']);
+
+        $this->get(route('orders.index', ['search' => '111222']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('orders.data', fn ($orders) => count($orders) === 1)
+                ->where('orders.data.0.client_phone', '+99362111222'));
+    }
+
+    public function test_orders_index_can_be_filtered_by_date_range(): void
+    {
+        $this->actingAsAdmin();
+        Order::factory()->create(['created_at' => '2026-01-10 12:00:00']);
+        Order::factory()->create(['created_at' => '2026-03-20 12:00:00']);
+
+        $this->get(route('orders.index', ['date_from' => '2026-03-01', 'date_to' => '2026-03-31']))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('orders.data', fn ($orders) => count($orders) === 1));
+    }
+
     // ── Show ──────────────────────────────────────────────────────────────────
 
     public function test_admin_can_view_order_details(): void

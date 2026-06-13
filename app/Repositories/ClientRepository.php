@@ -8,10 +8,21 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class ClientRepository
 {
-    public function paginate(int $perPage = 20): LengthAwarePaginator
+    /**
+     * @param  array{oblast_id?: int|string, city_id?: int|string}  $filters
+     */
+    public function paginate(int $perPage = 20, array $filters = []): LengthAwarePaginator
     {
         return Client::with('city')
             ->withCount('orders')
+            ->when(
+                ! empty($filters['city_id']),
+                fn ($q) => $q->where('city_id', $filters['city_id'])
+            )
+            ->when(
+                ! empty($filters['oblast_id']) && empty($filters['city_id']),
+                fn ($q) => $q->whereHas('city', fn ($cq) => $cq->where('oblast_id', $filters['oblast_id']))
+            )
             ->latest()
             ->paginate($perPage);
     }

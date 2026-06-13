@@ -469,6 +469,29 @@ const sortedEligibleMasters = computed(() => {
                             </div>
                         </div>
 
+                        <!-- Cancellation -->
+                        <div v-if="order.status === 'cancelled'" class="rounded-xl border border-red-200 bg-red-50 shadow-sm dark:border-red-900/50 dark:bg-red-950/30">
+                            <div class="flex items-center gap-2 border-b border-red-200/70 px-4 py-2.5 dark:border-red-900/50">
+                                <svg class="h-4 w-4 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-red-600 dark:text-red-400">
+                                    {{ t('orders.fields.cancel_reason') }}
+                                </h3>
+                            </div>
+                            <div class="px-4 py-3 text-sm">
+                                <p v-if="order.cancel_reason" class="text-red-800 dark:text-red-200 whitespace-pre-wrap">
+                                    {{ order.cancel_reason }}
+                                </p>
+                                <p v-else class="italic text-red-400 dark:text-red-500/80">
+                                    {{ t('orders.no_reason') }}
+                                </p>
+                                <p v-if="order.cancelled_at" class="mt-2 text-xs text-red-500/80 dark:text-red-400/70">
+                                    {{ t('orders.fields.cancelled_at') }}: {{ order.cancelled_at }}
+                                </p>
+                            </div>
+                        </div>
+
                         <!-- Description -->
                         <div v-if="order.description" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
                             <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">

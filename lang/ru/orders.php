@@ -51,6 +51,15 @@ return [
 
     'no_master' => 'Не назначен',
     'no_price' => 'Не установлена',
+    'no_reason' => 'Причина не указана',
+
+    'statuses' => [
+        'pending' => 'Новая',
+        'assigned' => 'Назначен мастер',
+        'in_progress' => 'В работе',
+        'completed' => 'Завершён',
+        'cancelled' => 'Отменён',
+    ],
 
     'filters' => [
         'all' => 'Все',
@@ -58,6 +67,10 @@ return [
         'all_cities' => 'Все города',
         'by_status' => 'По статусу',
         'by_city' => 'По городу',
+        'search_placeholder' => 'Поиск по имени или телефону',
+        'date_from' => 'Дата с',
+        'date_to' => 'Дата по',
+        'reset' => 'Сбросить',
     ],
 
     'modals' => [
@@ -103,5 +116,6 @@ return [
         'already_final' => 'Заявка уже в финальном статусе',
         'invalid_transition' => 'Недопустимая смена статуса',
         'not_editable' => 'Заявку можно редактировать только в статусе «Ожидание»',
+        'cannot_cancel_assigned' => 'Заявку нельзя отменить — уже назначен мастер',
     ],
 ];

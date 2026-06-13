@@ -2,37 +2,40 @@
 
 namespace App\Exceptions;
 
-use RuntimeException;
-
-class OrderException extends RuntimeException
+class OrderException extends ApiException
 {
     public static function masterAccessExpired(): self
     {
-        return new self('Master access expired or master is inactive.');
+        return new self((string) __('orders.errors.master_inactive'));
     }
 
     public static function cityMismatch(): self
     {
-        return new self('Master city does not match the order city.');
+        return new self((string) __('orders.errors.city_mismatch'));
     }
 
     public static function categoryMismatch(): self
     {
-        return new self('Master is not registered in the order category.');
+        return new self((string) __('orders.errors.category_mismatch'));
     }
 
     public static function alreadyFinal(): self
     {
-        return new self('Order is already in a final status.');
+        return new self((string) __('orders.errors.already_final'));
     }
 
     public static function invalidTransition(string $from, string $to): self
     {
-        return new self("Invalid status transition: {$from} → {$to}.");
+        return new self((string) __('orders.errors.invalid_transition', ['from' => $from, 'to' => $to]));
     }
 
     public static function notEditable(): self
     {
-        return new self('Order can only be edited when status is Pending.');
+        return new self((string) __('orders.errors.not_editable'));
+    }
+
+    public static function cannotCancelAssignedOrder(): self
+    {
+        return new self((string) __('orders.errors.cannot_cancel_assigned'));
     }
 }

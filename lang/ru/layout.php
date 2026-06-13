@@ -3,7 +3,7 @@
 return [
     'nav' => [
         'dashboard' => 'Дашборд',
-        'oblasts' => 'Области',
+        'oblasts' => 'Велаяты',
         'regions' => 'Районы',
         'cities' => 'Города',
         'categories' => 'Категории',

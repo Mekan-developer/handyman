@@ -17,6 +17,12 @@ class OrderRepository
             ->when($filters['status'] ?? null, fn ($q, $status) => $q->where('status', $status))
             ->when($filters['city_id'] ?? null, fn ($q, $cityId) => $q->where('city_id', $cityId))
             ->when($filters['master_id'] ?? null, fn ($q, $masterId) => $q->where('master_id', $masterId))
+            ->when($filters['search'] ?? null, fn ($q, $search) => $q->where(
+                fn ($sub) => $sub->where('client_name', 'like', "%{$search}%")
+                    ->orWhere('client_phone', 'like', "%{$search}%")
+            ))
+            ->when($filters['date_from'] ?? null, fn ($q, $from) => $q->whereDate('created_at', '>=', $from))
+            ->when($filters['date_to'] ?? null, fn ($q, $to) => $q->whereDate('created_at', '<=', $to))
             ->latest()
             ->paginate($perPage)
             ->withQueryString();

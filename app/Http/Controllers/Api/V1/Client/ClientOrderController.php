@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Api\V1\Client;
 
+use App\Actions\CancelClientOrderAction;
 use App\Actions\CreateClientOrderAction;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Client\CancelClientOrderRequest;
 use App\Http\Requests\Api\V1\Client\CreateClientOrderRequest;
 use App\Http\Resources\Api\V1\Client\ClientOrderResource;
 use App\Models\Client;
@@ -50,5 +52,17 @@ class ClientOrderController extends Controller
         return (new ClientOrderResource($order->load(['city', 'category', 'photos'])))
             ->response()
             ->setStatusCode(201);
+    }
+
+    public function cancel(CancelClientOrderRequest $request, int $id, CancelClientOrderAction $action): JsonResponse
+    {
+        /** @var Client $client */
+        $client = $request->user();
+
+        $order = $this->repository->findForClientOrFail($id, $client);
+
+        $cancelled = $action->handle($order, $request->validated('reason'));
+
+        return (new ClientOrderResource($cancelled->load(['city', 'category', 'master', 'photos'])))->response();
     }
 }

@@ -28,6 +28,9 @@ return [
     'content_add' => 'Добавить контент',
     'content_edit' => 'Редактировать контент',
     'content_images' => 'Изображения',
+    'content_image' => 'Изображение',
+    'content_image_change' => 'Изменить',
+    'content_image_upload' => 'Загрузить изображение',
     'content_title' => 'Заголовок',
     'content_title_placeholder' => 'Введите заголовок',
     'content_description' => 'Описание',
@@ -37,4 +40,5 @@ return [
     'content_images_required' => 'Добавьте хотя бы одно изображение',
     'content_images_max' => 'Максимум 12 изображений',
     'content_subcategory_only' => 'Контент можно добавить только для подкатегории',
+    'content_not_found' => 'Контент для данной категории не найден',
 ];

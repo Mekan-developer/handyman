@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\RequestMasterOtpAction;
 use App\Actions\VerifyMasterOtpAction;
-use App\Exceptions\MasterDisabledException;
-use App\Exceptions\OtpException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\RequestOtpRequest;
 use App\Http\Requests\Api\V1\VerifyOtpRequest;
@@ -20,11 +18,7 @@ class MasterAuthController extends Controller
     {
         $master = Master::where('phone', $request->validated('phone'))->firstOrFail();
 
-        try {
-            $action->handle($master);
-        } catch (MasterDisabledException $e) {
-            return response()->json(['message' => $e->getMessage()], 403);
-        }
+        $action->handle($master);
 
         return response()->json(['message' => 'OTP sent.']);
     }
@@ -33,13 +27,7 @@ class MasterAuthController extends Controller
     {
         $master = Master::where('phone', $request->validated('phone'))->firstOrFail();
 
-        try {
-            $token = $action->handle($master, $request->validated('code'));
-        } catch (MasterDisabledException $e) {
-            return response()->json(['message' => $e->getMessage()], 403);
-        } catch (OtpException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $token = $action->handle($master, $request->validated('code'));
 
         return response()->json([
             'token' => $token->plainTextToken,

@@ -18,6 +18,14 @@ class OblastRepository
         return Oblast::where('is_active', true)->orderBy('name')->get();
     }
 
+    public function allWithCities(): Collection
+    {
+        return Oblast::where('is_active', true)
+            ->with(['cities' => fn ($q) => $q->where('is_active', true)->orderBy('name')])
+            ->orderBy('name')
+            ->get();
+    }
+
     public function list(): Collection
     {
         return Oblast::orderBy('name')->get();

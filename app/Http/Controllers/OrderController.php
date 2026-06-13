@@ -39,7 +39,7 @@ class OrderController extends Controller
 
     public function index(Request $request): Response
     {
-        $filters = $request->only(['status', 'city_id']);
+        $filters = $request->only(['status', 'city_id', 'search', 'date_from', 'date_to']);
 
         return Inertia::render('Orders/Index', [
             'orders' => OrderResource::collection($this->repository->paginate($filters)),
@@ -105,7 +105,7 @@ class OrderController extends Controller
             $action->handle($order, $request->validated());
             $this->notifySuccess('notifications.updated', ['resource' => __('resources.order')]);
         } catch (OrderException $e) {
-            $this->notifyError($this->mapExceptionMessage($e));
+            $this->notifyError($e->getMessage());
         }
 
         return redirect()->route('orders.show', $id);
@@ -128,7 +128,7 @@ class OrderController extends Controller
             $action->handle($order, (int) $request->validated()['master_id']);
             $this->notifySuccess('orders.notifications.master_assigned');
         } catch (OrderException $e) {
-            $this->notifyError($this->mapExceptionMessage($e));
+            $this->notifyError($e->getMessage());
         }
 
         return redirect()->route('orders.show', $order->id);
@@ -142,7 +142,7 @@ class OrderController extends Controller
             $action->handle($order, (float) $request->validated()['final_price']);
             $this->notifySuccess('orders.notifications.price_set');
         } catch (OrderException $e) {
-            $this->notifyError($this->mapExceptionMessage($e));
+            $this->notifyError($e->getMessage());
         }
 
         return redirect()->route('orders.show', $order->id);
@@ -158,7 +158,7 @@ class OrderController extends Controller
             $action->handle($order, $newStatus, $data['cancel_reason'] ?? null);
             $this->notifySuccess('orders.notifications.status_updated');
         } catch (OrderException $e) {
-            $this->notifyError($this->mapExceptionMessage($e));
+            $this->notifyError($e->getMessage());
         }
 
         return redirect()->route('orders.show', $order->id);
@@ -173,17 +173,5 @@ class OrderController extends Controller
             ->get(['latitude', 'longitude', 'recorded_at']);
 
         return response()->json(['points' => $points]);
-    }
-
-    private function mapExceptionMessage(OrderException $e): string
-    {
-        return match ($e->getMessage()) {
-            'Master access expired or master is inactive.' => __('orders.errors.master_inactive'),
-            'Master city does not match the order city.' => __('orders.errors.city_mismatch'),
-            'Master is not registered in the order category.' => __('orders.errors.category_mismatch'),
-            'Order is already in a final status.' => __('orders.errors.already_final'),
-            'Order can only be edited when status is Pending.' => __('orders.errors.not_editable'),
-            default => __('orders.errors.invalid_transition'),
-        };
     }
 }

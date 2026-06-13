@@ -12,7 +12,7 @@ class EnsureClient
     public function handle(Request $request, Closure $next): Response
     {
         if (! $request->user() instanceof Client) {
-            return response()->json(['message' => 'Forbidden — client token required.'], 403);
+            return response()->json(['message' => __('api.client.token_required')], 403);
         }
 
         return $next($request);

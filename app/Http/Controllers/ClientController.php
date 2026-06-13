@@ -12,7 +12,9 @@ use App\Http\Resources\ClientResource;
 use App\Http\Traits\WithNotification;
 use App\Repositories\CityRepository;
 use App\Repositories\ClientRepository;
+use App\Repositories\OblastRepository;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -22,11 +24,15 @@ class ClientController extends Controller
 
     public function __construct(private readonly ClientRepository $repository) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = $request->only(['oblast_id', 'city_id']);
+
         return Inertia::render('Clients/Index', [
-            'clients' => ClientResource::collection($this->repository->paginate()),
+            'clients' => ClientResource::collection($this->repository->paginate(20, $filters)),
             'cities' => app(CityRepository::class)->paginate(100)->items(),
+            'oblasts' => app(OblastRepository::class)->allWithCities(),
+            'filters' => $filters,
         ]);
     }
 

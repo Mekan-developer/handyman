@@ -13,7 +13,49 @@ const { t } = useI18n()
 const props = defineProps({
     clients: { type: Object, default: null },
     cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
+    filters: { type: Object, default: () => ({}) },
 })
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+const selectedOblastId = ref(props.filters.oblast_id ? Number(props.filters.oblast_id) : null)
+const selectedCityId = ref(props.filters.city_id ? Number(props.filters.city_id) : null)
+
+const selectedOblast = computed(() =>
+    props.oblasts.find((o) => o.id === selectedOblastId.value) ?? null,
+)
+
+const showCityFilter = computed(() =>
+    selectedOblast.value !== null && selectedOblast.value.cities.length > 1,
+)
+
+const oblastCities = computed(() => selectedOblast.value?.cities ?? [])
+
+function applyFilters() {
+    router.get(
+        route('clients.index'),
+        {
+            ...(selectedOblastId.value ? { oblast_id: selectedOblastId.value } : {}),
+            ...(selectedCityId.value ? { city_id: selectedCityId.value } : {}),
+        },
+        { preserveScroll: true, preserveState: true },
+    )
+}
+
+function onOblastChange() {
+    selectedCityId.value = null
+    applyFilters()
+}
+
+function onCityChange() {
+    applyFilters()
+}
+
+function resetFilters() {
+    selectedOblastId.value = null
+    selectedCityId.value = null
+    router.get(route('clients.index'), {}, { preserveScroll: true, preserveState: true })
+}
 
 const showModal = ref(false)
 const editingClient = ref(null)
@@ -111,6 +153,49 @@ const clientList = computed(() => props.clients?.data ?? [])
                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                     </svg>
                     {{ t('clients.add') }}
+                </button>
+            </div>
+
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-3">
+                <select
+                    v-model="selectedOblastId"
+                    @change="onOblastChange"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                    <option :value="null">{{ t('clients.filters.all_oblasts') }}</option>
+                    <option v-for="oblast in oblasts" :key="oblast.id" :value="oblast.id">
+                        {{ oblast.name }}
+                    </option>
+                </select>
+
+                <Transition
+                    enter-active-class="transition-all duration-200"
+                    enter-from-class="opacity-0 -translate-x-2"
+                    enter-to-class="opacity-100 translate-x-0"
+                    leave-active-class="transition-all duration-150"
+                    leave-from-class="opacity-100 translate-x-0"
+                    leave-to-class="opacity-0 -translate-x-2"
+                >
+                    <select
+                        v-if="showCityFilter"
+                        v-model="selectedCityId"
+                        @change="onCityChange"
+                        class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    >
+                        <option :value="null">{{ t('clients.filters.all_cities') }}</option>
+                        <option v-for="city in oblastCities" :key="city.id" :value="city.id">
+                            {{ city.name }}
+                        </option>
+                    </select>
+                </Transition>
+
+                <button
+                    v-if="selectedOblastId"
+                    @click="resetFilters"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+                >
+                    {{ t('clients.filters.reset') }}
                 </button>
             </div>
 

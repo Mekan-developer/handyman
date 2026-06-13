@@ -23,12 +23,38 @@ const showCreate = ref(false)
 
 const statusFilter = ref(props.filters?.status ?? '')
 const cityFilter = ref(props.filters?.city_id ?? '')
+const search = ref(props.filters?.search ?? '')
+const dateFrom = ref(props.filters?.date_from ?? '')
+const dateTo = ref(props.filters?.date_to ?? '')
 
-watch([statusFilter, cityFilter], () => {
+const hasActiveFilters = computed(() =>
+    Boolean(statusFilter.value || cityFilter.value || search.value || dateFrom.value || dateTo.value)
+)
+
+function applyFilters() {
     router.get(route('orders.index'), {
         status: statusFilter.value || undefined,
         city_id: cityFilter.value || undefined,
-    }, { preserveState: true, replace: true })
+        search: search.value || undefined,
+        date_from: dateFrom.value || undefined,
+        date_to: dateTo.value || undefined,
+    }, { preserveState: true, preserveScroll: true, replace: true })
+}
+
+function resetFilters() {
+    statusFilter.value = ''
+    cityFilter.value = ''
+    search.value = ''
+    dateFrom.value = ''
+    dateTo.value = ''
+}
+
+watch([statusFilter, cityFilter, dateFrom, dateTo], applyFilters)
+
+let searchTimer = null
+watch(search, () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(applyFilters, 350)
 })
 
 const currentPage = computed(() => props.orders?.meta?.current_page ?? props.orders?.current_page ?? 1)
@@ -72,7 +98,20 @@ function confirmDelete() {
             </div>
 
             <!-- Filters -->
-            <div class="flex flex-wrap gap-3 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
+            <div class="flex flex-wrap items-end gap-3 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
+                <!-- Search -->
+                <div class="relative min-w-[16rem] flex-1">
+                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <input
+                        v-model="search"
+                        type="search"
+                        :placeholder="t('orders.filters.search_placeholder')"
+                        class="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                    />
+                </div>
+
                 <select
                     v-model="statusFilter"
                     class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
@@ -87,6 +126,38 @@ function confirmDelete() {
                     <option value="">{{ t('orders.filters.all_cities') }}</option>
                     <option v-for="c in cities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
+
+                <!-- Date range -->
+                <div class="flex flex-col">
+                    <label class="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">{{ t('orders.filters.date_from') }}</label>
+                    <input
+                        v-model="dateFrom"
+                        type="date"
+                        :max="dateTo || undefined"
+                        class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:[color-scheme:dark]"
+                    />
+                </div>
+                <div class="flex flex-col">
+                    <label class="mb-1 text-xs font-medium text-gray-500 dark:text-slate-400">{{ t('orders.filters.date_to') }}</label>
+                    <input
+                        v-model="dateTo"
+                        type="date"
+                        :min="dateFrom || undefined"
+                        class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:[color-scheme:dark]"
+                    />
+                </div>
+
+                <button
+                    v-if="hasActiveFilters"
+                    type="button"
+                    @click="resetFilters"
+                    class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    {{ t('orders.filters.reset') }}
+                </button>
             </div>
 
             <!-- Table -->
@@ -168,7 +239,7 @@ function confirmDelete() {
                     <Link
                         v-for="page in lastPage"
                         :key="page"
-                        :href="route('orders.index', { page, status: filters?.status, city_id: filters?.city_id })"
+                        :href="route('orders.index', { page, ...filters })"
                         :class="page === currentPage
                             ? 'bg-blue-600 text-white'
                             : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"

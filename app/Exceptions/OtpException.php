@@ -2,12 +2,10 @@
 
 namespace App\Exceptions;
 
-use RuntimeException;
-
-class OtpException extends RuntimeException
+class OtpException extends ApiException
 {
     public static function invalid(): self
     {
-        return new self('Invalid or expired OTP code.');
+        return new self((string) __('api.otp.invalid'));
     }
 }

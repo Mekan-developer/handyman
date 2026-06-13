@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\V1\Client;
 
 use App\Actions\RequestClientOtpAction;
 use App\Actions\VerifyClientOtpAction;
-use App\Exceptions\OtpException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Client\CompleteRegistrationRequest;
 use App\Http\Requests\Api\V1\Client\RequestOtpRequest;
@@ -25,14 +24,10 @@ class ClientAuthController extends Controller
 
     public function verifyOtp(VerifyOtpRequest $request, VerifyClientOtpAction $action): JsonResponse
     {
-        try {
-            $result = $action->handle(
-                $request->validated('phone'),
-                $request->validated('code'),
-            );
-        } catch (OtpException $e) {
-            return response()->json(['message' => $e->getMessage()], 422);
-        }
+        $result = $action->handle(
+            $request->validated('phone'),
+            $request->validated('code'),
+        );
 
         return response()->json([
             'token' => $result['token']->plainTextToken,

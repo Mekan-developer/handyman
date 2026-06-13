@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use Database\Factories\CategoryContentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CategoryContent extends Model
 {
+    /** @use HasFactory<CategoryContentFactory> */
+    use HasFactory;
+
     /** @var array<int, string> */
     protected $fillable = [
         'category_id',

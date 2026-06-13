@@ -51,6 +51,15 @@ return [
 
     'no_master' => 'Bellenilmedi',
     'no_price' => 'Kesgitlenilmedi',
+    'no_reason' => 'Sebäbi görkezilmedi',
+
+    'statuses' => [
+        'pending' => 'Täze',
+        'assigned' => 'Usta bellenildi',
+        'in_progress' => 'Işde',
+        'completed' => 'Tamamlandy',
+        'cancelled' => 'Ýatyryldy',
+    ],
 
     'filters' => [
         'all' => 'Hemmesi',
@@ -58,6 +67,10 @@ return [
         'all_cities' => 'Hemme şäherler',
         'by_status' => 'Ýagdaý boýunça',
         'by_city' => 'Şäher boýunça',
+        'search_placeholder' => 'Ady ýa-da telefony boýunça gözleg',
+        'date_from' => 'Senesi (başlangyç)',
+        'date_to' => 'Senesi (ahyr)',
+        'reset' => 'Arassala',
     ],
 
     'modals' => [
@@ -103,5 +116,6 @@ return [
         'already_final' => 'Sargyt eýýäm jemleýji ýagdaýda',
         'invalid_transition' => 'Ýagdaý üýtgetmek mümkin däl',
         'not_editable' => 'Sargydy diňe «Garaşylýar» ýagdaýynda redaktirläp bolýar',
+        'cannot_cancel_assigned' => 'Sargydy ýatyryp bolmaýar — eýýäm usta bellenildi',
     ],
 ];
