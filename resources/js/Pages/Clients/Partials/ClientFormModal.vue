@@ -1,6 +1,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import PhoneInput from '@/Components/PhoneInput.vue'
 
 const { t } = useI18n()
 
@@ -16,7 +17,8 @@ const emit = defineEmits(['close', 'submit'])
 
 <template>
     <Modal :show="show" max-width="md" @close="emit('close')">
-        <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
+        <div class="flex h-full flex-col">
+        <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ editing ? t('clients.edit') : t('clients.add') }}
             </h2>
@@ -31,8 +33,8 @@ const emit = defineEmits(['close', 'submit'])
             </button>
         </div>
 
-        <form @submit.prevent="emit('submit')">
-            <div class="space-y-4 px-6 py-5">
+        <form @submit.prevent="emit('submit')" class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
                 <!-- Name -->
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
@@ -55,14 +57,9 @@ const emit = defineEmits(['close', 'submit'])
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
                         {{ t('clients.fields.phone') }} <span class="text-red-400">*</span>
                     </label>
-                    <input
+                    <PhoneInput
                         v-model="form.phone"
-                        type="text"
-                        placeholder="+993 XX XXX XXXX"
-                        :class="form.errors.phone
-                            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20 dark:border-red-500'
-                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-600 dark:focus:border-blue-500'"
-                        class="w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:bg-white focus:outline-none focus:ring-4 dark:bg-slate-700/50 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-700 transition-all"
+                        :has-error="!!form.errors.phone"
                     />
                     <p v-if="form.errors.phone" class="mt-1.5 text-xs text-red-500">{{ form.errors.phone }}</p>
                 </div>
@@ -86,22 +83,23 @@ const emit = defineEmits(['close', 'submit'])
                 </div>
             </div>
 
-            <div class="flex justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
+            <div class="flex shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
                 <button
                     type="button"
                     @click="emit('close')"
                     class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
-                    {{ t('clients.cancel') }}
+                    {{ t('layout.actions.cancel') }}
                 </button>
                 <button
                     type="submit"
                     :disabled="form.processing"
                     class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                    {{ form.processing ? '...' : t('clients.save') }}
+                    {{ form.processing ? '...' : (editing ? t('layout.actions.update') : t('layout.actions.save')) }}
                 </button>
             </div>
         </form>
+        </div>
     </Modal>
 </template>

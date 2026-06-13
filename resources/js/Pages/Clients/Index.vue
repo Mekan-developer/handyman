@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { Head } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ClientFormModal from '@/Pages/Clients/Partials/ClientFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
+import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
 
@@ -57,15 +59,34 @@ function submit() {
     }
 }
 
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(client) {
-    if (!confirm(t('clients.delete_confirm'))) { return }
-    router.delete(route('clients.destroy', client.id))
+    deleteTarget.value = client
 }
 
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('clients.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
+}
+
+const blockTarget = ref(null)
+const blocking = ref(false)
+
 function toggleBlock(client) {
-    const key = client.is_blocked ? 'clients.unblock_confirm' : 'clients.block_confirm'
-    if (!confirm(t(key))) { return }
-    router.post(route('clients.toggle-block', client.id))
+    blockTarget.value = client
+}
+
+function confirmToggleBlock() {
+    blocking.value = true
+    router.post(route('clients.toggle-block', blockTarget.value.id), {}, {
+        onSuccess: () => { blockTarget.value = null },
+        onFinish: () => { blocking.value = false },
+    })
 }
 
 const currentPage = computed(() => props.clients?.current_page ?? 1)
@@ -126,7 +147,7 @@ const clientList = computed(() => props.clients?.data ?? [])
                                     {{ client.name }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
-                                    {{ client.phone }}
+                                    {{ formatPhone(client.phone) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                     {{ client.city?.name ?? '—' }}
@@ -214,6 +235,23 @@ const clientList = computed(() => props.clients?.data ?? [])
             :cities="cities"
             @close="closeModal"
             @submit="submit"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('clients.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
+        />
+
+        <ConfirmModal
+            :show="blockTarget !== null"
+            :message="blockTarget ? t(blockTarget.is_blocked ? 'clients.unblock_confirm' : 'clients.block_confirm') : ''"
+            :processing="blocking"
+            :danger="false"
+            @confirm="confirmToggleBlock"
+            @close="blockTarget = null"
         />
     </AdminLayout>
 </template>

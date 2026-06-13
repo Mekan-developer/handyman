@@ -5,6 +5,8 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
 import CreateOrderModal from '@/Pages/Orders/Partials/CreateOrderModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
+import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
 
@@ -33,9 +35,19 @@ const currentPage = computed(() => props.orders?.meta?.current_page ?? props.ord
 const lastPage = computed(() => props.orders?.meta?.last_page ?? props.orders?.last_page ?? 1)
 const orderList = computed(() => props.orders?.data ?? [])
 
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(order) {
-    if (!confirm(t('orders.delete_confirm'))) { return }
-    router.delete(route('orders.destroy', order.id))
+    deleteTarget.value = order
+}
+
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('orders.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
 }
 </script>
 
@@ -83,7 +95,7 @@ function destroy(order) {
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                         <thead class="bg-gray-50 dark:bg-slate-700/50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.id') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">№</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.client_name') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.city') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.category') }}</th>
@@ -101,15 +113,15 @@ function destroy(order) {
                                 </td>
                             </tr>
                             <tr
-                                v-for="order in orderList"
+                                v-for="(order, index) in orderList"
                                 :key="order.id"
                                 class="cursor-pointer transition-colors hover:bg-blue-50/60 dark:hover:bg-slate-700"
                                 @click="router.visit(route('orders.show', order.id))"
                             >
-                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">#{{ order.id }}</td>
+                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ index + 1 }}</td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</div>
-                                    <div class="text-xs text-gray-400">{{ order.client_phone }}</div>
+                                    <div class="text-xs text-gray-400">{{ formatPhone(order.client_phone) }}</div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{{ order.city?.name ?? '—' }}</td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">{{ order.category?.name ?? '—' }}</td>
@@ -174,6 +186,14 @@ function destroy(order) {
             :categories="categories"
             :clients="clients"
             @close="showCreate = false"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('orders.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
         />
     </AdminLayout>
 </template>

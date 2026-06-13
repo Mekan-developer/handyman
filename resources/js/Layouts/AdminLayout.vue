@@ -90,7 +90,8 @@ function safeRoute(name) {
 
 function isCurrentRoute(name) {
     try {
-        return route().current(name)
+        const prefix = name.split('.')[0]
+        return route().current(name) || route().current(`${prefix}.*`)
     } catch {
         return false
     }

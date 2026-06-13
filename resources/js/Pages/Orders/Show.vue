@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { Link, router, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
@@ -9,9 +9,12 @@ import SetPriceModal from '@/Pages/Orders/Partials/SetPriceModal.vue'
 import ChangeStatusModal from '@/Pages/Orders/Partials/ChangeStatusModal.vue'
 import EditOrderModal from '@/Pages/Orders/Partials/EditOrderModal.vue'
 import ImageLightbox from '@/Components/ImageLightbox.vue'
+import { formatPhone } from '@/utils/formatPhone'
 import 'leaflet/dist/leaflet.css'
+import 'maplibre-gl/dist/maplibre-gl.css'
 
 const { t } = useI18n()
+const page = usePage()
 
 const props = defineProps({
     order: { type: Object, required: true },
@@ -36,8 +39,21 @@ function taskImages(task) {
     return [task.before_photo_url, task.after_photo_url].filter(Boolean)
 }
 
+const MAP_MODES = ['auto', 'light', 'grayscale', 'black'] //'dark', 'white',
+const MAP_FILTERS = {
+    light: '',
+    dark: 'invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95)',
+    white: 'grayscale(1) brightness(1.18) contrast(0.92)',
+    grayscale: 'grayscale(1)',
+    black: 'invert(1) grayscale(1) brightness(0.85) contrast(1.1)',
+}
+const MAP_MODE_STORAGE_KEY = 'masters-map-mode'
+const currentMode = ref('auto')
+
 const mapContainer = ref(null)
 let map = null
+let baseLayer = null
+let themeObserver = null
 let masterMarkerL = null
 let trajectoryLine = null
 
@@ -50,6 +66,7 @@ const isTracking = computed(() =>
 
 onMounted(async () => {
     const L = (await import('leaflet')).default
+    await import('@maplibre/maplibre-gl-leaflet')
 
     const clientLat = parseFloat(props.order.client_lat)
     const clientLng = parseFloat(props.order.client_lng)
@@ -58,16 +75,15 @@ onMounted(async () => {
         maxBounds: L.latLngBounds([[35.1, 52.5], [42.8, 66.7]]),
         maxBoundsViscosity: 1.0,
         minZoom: 5,
+        attributionControl: false,
     }).setView([clientLat, clientLng], 14)
 
-    L.tileLayer('https://hyzmattm.com.tm/tiles/{z}/{x}/{y}.png', {
-        attribution: '',
-        maxZoom: 19,
-        minZoom: 5,
-        keepBuffer: 4,
-        updateWhenIdle: true,
-        updateWhenZooming: false,
-    }).addTo(map)
+    baseLayer = L.maplibreGL({ style: page.props.tilesStyleUrl }).addTo(map)
+    currentMode.value = localStorage.getItem(MAP_MODE_STORAGE_KEY) ?? 'auto'
+    applyMapMode()
+    baseLayer.getMaplibreMap?.()?.on('load', applyMapMode)
+    watchTheme()
+    setupMapControls(L)
 
     setTimeout(() => map?.invalidateSize(), 100)
 
@@ -81,7 +97,7 @@ onMounted(async () => {
     })
     L.marker([clientLat, clientLng], { icon: clientIcon })
         .addTo(map)
-        .bindPopup(`<b>${escapeHtml(props.order.client_name)}</b><br>${escapeHtml(props.order.client_phone)}`)
+        .bindPopup(`<b>${escapeHtml(props.order.client_name)}</b><br>${escapeHtml(formatPhone(props.order.client_phone))}`)
 
     if (props.order.master?.latest_location) {
         const masterLat = parseFloat(props.order.master.latest_location.latitude)
@@ -96,7 +112,7 @@ onMounted(async () => {
 
         masterMarkerL = L.marker([masterLat, masterLng], { icon: masterIcon })
             .addTo(map)
-            .bindPopup(`<b>${escapeHtml(props.order.master.name)}</b><br>${escapeHtml(props.order.master.phone)}`)
+            .bindPopup(`<b>${escapeHtml(props.order.master.name)}</b><br>${escapeHtml(formatPhone(props.order.master.phone))}`)
 
         allLatLngs.push([masterLat, masterLng])
         updateDistanceEta(masterLat, masterLng, clientLat, clientLng)
@@ -122,7 +138,7 @@ onMounted(async () => {
             const popupHtml = `
                 <div style="min-width:180px;">
                     <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${escapeHtml(m.name)}</div>
-                    <div style="color:#6b7280;font-size:12px;">${escapeHtml(m.phone)}</div>
+                    <div style="color:#6b7280;font-size:12px;">${escapeHtml(formatPhone(m.phone))}</div>
                     <div style="display:flex;align-items:center;gap:4px;color:#2563eb;font-size:12px;font-weight:500;margin:4px 0 8px;">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.5-7-12.5A7 7 0 0112 1a7 7 0 017 7.5C19 13.5 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.5"/></svg>
                         ${formatDistance(distanceKm)}
@@ -181,11 +197,82 @@ onBeforeUnmount(() => {
     if (props.order.city?.id) {
         window.Echo?.leave(`masters-map.${props.order.city.id}`)
     }
+    themeObserver?.disconnect()
     if (map) {
         map.remove()
         map = null
     }
 })
+
+function resolveFilter(mode) {
+    if (mode === 'auto') {
+        return document.documentElement.classList.contains('dark') ? MAP_FILTERS.dark : MAP_FILTERS.light
+    }
+    return MAP_FILTERS[mode] ?? ''
+}
+
+function applyMapMode() {
+    const canvas = baseLayer?.getCanvas?.()
+    if (!canvas) { return }
+    canvas.style.transition = 'filter 0.25s ease'
+    canvas.style.filter = resolveFilter(currentMode.value)
+}
+
+function watchTheme() {
+    themeObserver = new MutationObserver(() => {
+        if (currentMode.value === 'auto') { applyMapMode() }
+    })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+}
+
+function setMapMode(mode) {
+    currentMode.value = mode
+    localStorage.setItem(MAP_MODE_STORAGE_KEY, mode)
+    applyMapMode()
+}
+
+function cycleMapMode() {
+    setMapMode(MAP_MODES[(MAP_MODES.indexOf(currentMode.value) + 1) % MAP_MODES.length])
+}
+
+function styleButtonTitle() {
+    return `${t('masters.mode')}: ${t(`masters.modes.${currentMode.value}`)}`
+}
+
+function addButtonControl(L, position, buttons) {
+    const ButtonControl = L.Control.extend({
+        onAdd() {
+            const container = L.DomUtil.create('div', 'leaflet-bar')
+            buttons.forEach(({ title, html, onClick }) => {
+                const link = L.DomUtil.create('a', '', container)
+                link.href = '#'
+                link.title = title
+                link.role = 'button'
+                link.innerHTML = html
+                link.style.display = 'flex'
+                link.style.alignItems = 'center'
+                link.style.justifyContent = 'center'
+                L.DomEvent.on(link, 'click', L.DomEvent.stop).on(link, 'click', () => onClick(link))
+            })
+            L.DomEvent.disableClickPropagation(container)
+            return container
+        },
+    })
+    new ButtonControl({ position }).addTo(map)
+}
+
+function setupMapControls(L) {
+    addButtonControl(L, 'topright', [
+        {
+            title: styleButtonTitle(),
+            html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 2 2 0 002-2 2 2 0 012-2h1a4 4 0 004-4 9 9 0 00-9-10z"/></svg>',
+            onClick: (link) => {
+                cycleMapMode()
+                link.title = styleButtonTitle()
+            },
+        },
+    ])
+}
 
 function initialOf(name) {
     return (name?.trim()?.charAt(0) ?? '?').toUpperCase()
@@ -349,7 +436,7 @@ const sortedEligibleMasters = computed(() => {
                             <div class="px-4 py-3 text-sm">
                                 <p class="font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</p>
                                 <a :href="`tel:${order.client_phone}`" class="text-blue-600 hover:underline dark:text-blue-400">
-                                    {{ order.client_phone }}
+                                    {{ formatPhone(order.client_phone) }}
                                 </a>
                                 <p v-if="order.client_address" class="mt-1 text-xs text-gray-500 dark:text-slate-400">
                                     {{ order.client_address }}
@@ -405,7 +492,7 @@ const sortedEligibleMasters = computed(() => {
                                 <div v-if="order.master">
                                     <p class="font-medium text-gray-900 dark:text-slate-200">{{ order.master.name }}</p>
                                     <a :href="`tel:${order.master.phone}`" class="text-blue-600 hover:underline dark:text-blue-400">
-                                        {{ order.master.phone }}
+                                        {{ formatPhone(order.master.phone) }}
                                     </a>
                                     <p v-if="order.assigned_at" class="mt-1 text-xs text-gray-400">
                                         {{ t('orders.fields.assigned_at') }}: {{ order.assigned_at }}

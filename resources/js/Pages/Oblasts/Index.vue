@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import OblastFormModal from '@/Pages/Oblasts/Partials/OblastFormModal.vue'
 import CityFormModal from '@/Pages/Cities/Partials/CityFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
 
 const { t } = useI18n()
 
@@ -77,14 +78,24 @@ function submitOblast() {
     }
 }
 
+const deleteOblastTarget = ref(null)
+const deletingOblast = ref(false)
+
 function destroyOblast(oblast) {
-    if (!confirm(t('oblasts.delete_confirm'))) return
+    deleteOblastTarget.value = oblast
+}
+
+function confirmDestroyOblast() {
+    const oblast = deleteOblastTarget.value
     const wasSelected = selectedOblastId.value === oblast.id
+    deletingOblast.value = true
     router.delete(route('oblasts.destroy', oblast.id), {
         preserveState: true,
         onSuccess: () => {
             if (wasSelected) { selectedOblastId.value = null }
+            deleteOblastTarget.value = null
         },
+        onFinish: () => { deletingOblast.value = false },
     })
 }
 
@@ -136,9 +147,20 @@ function submitCity() {
     }
 }
 
+const deleteCityTarget = ref(null)
+const deletingCity = ref(false)
+
 function destroyCity(city) {
-    if (!confirm(t('cities.delete_confirm'))) return
-    router.delete(route('cities.destroy', city.id), { preserveState: true })
+    deleteCityTarget.value = city
+}
+
+function confirmDestroyCity() {
+    deletingCity.value = true
+    router.delete(route('cities.destroy', deleteCityTarget.value.id), {
+        preserveState: true,
+        onSuccess: () => { deleteCityTarget.value = null },
+        onFinish: () => { deletingCity.value = false },
+    })
 }
 </script>
 
@@ -333,6 +355,22 @@ function destroyCity(city) {
             :oblasts="oblasts ?? []"
             @close="closeCityModal"
             @submit="submitCity"
+        />
+
+        <ConfirmModal
+            :show="deleteOblastTarget !== null"
+            :message="t('oblasts.delete_confirm')"
+            :processing="deletingOblast"
+            @confirm="confirmDestroyOblast"
+            @close="deleteOblastTarget = null"
+        />
+
+        <ConfirmModal
+            :show="deleteCityTarget !== null"
+            :message="t('cities.delete_confirm')"
+            :processing="deletingCity"
+            @confirm="confirmDestroyCity"
+            @close="deleteCityTarget = null"
         />
     </AdminLayout>
 </template>

@@ -4,6 +4,7 @@ import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import RegionFormModal from '@/Pages/Regions/Partials/RegionFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
 
 const { t } = useI18n()
 
@@ -56,9 +57,19 @@ function submit() {
     }
 }
 
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(region) {
-    if (!confirm(t('regions.delete_confirm'))) { return }
-    router.delete(route('regions.destroy', region.id))
+    deleteTarget.value = region
+}
+
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('regions.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
 }
 
 const currentPage = computed(() => props.regions?.current_page ?? 1)
@@ -185,6 +196,14 @@ const regionList = computed(() => props.regions?.data ?? [])
             :oblasts="oblasts"
             @close="closeModal"
             @submit="submit"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('regions.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
         />
     </AdminLayout>
 </template>

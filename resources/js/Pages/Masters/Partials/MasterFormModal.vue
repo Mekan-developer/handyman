@@ -1,6 +1,7 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import PhoneInput from '@/Components/PhoneInput.vue'
 
 const { t } = useI18n()
 
@@ -22,8 +23,9 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
 
 <template>
     <Modal :show="show" max-width="lg" @close="emit('close')">
+        <div class="flex h-full flex-col">
         <!-- Header -->
-        <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
+        <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ editing ? t('masters.edit') : t('masters.add') }}
             </h2>
@@ -39,8 +41,8 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
         </div>
 
         <!-- Body -->
-        <form @submit.prevent="emit('submit')">
-            <div class="space-y-4 px-6 py-5">
+        <form @submit.prevent="emit('submit')" class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex-1 space-y-4 overflow-y-auto px-6 py-5">
 
                 <!-- Name + Phone row -->
                 <div class="grid grid-cols-2 gap-4">
@@ -67,11 +69,9 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
                             {{ t('masters.phone') }} <span class="text-red-400">*</span>
                         </label>
-                        <input
+                        <PhoneInput
                             v-model="form.phone"
-                            type="text"
-                            :placeholder="t('masters.phone_placeholder')"
-                            :class="[inputBase, form.errors.phone ? inputError : inputNormal]"
+                            :has-error="!!form.errors.phone"
                         />
                         <p v-if="form.errors.phone" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -237,22 +237,23 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
             </div>
 
             <!-- Footer -->
-            <div class="flex justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
+            <div class="flex shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
                 <button
                     type="button"
                     @click="emit('close')"
                     class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
-                    {{ t('masters.cancel') }}
+                    {{ t('layout.actions.cancel') }}
                 </button>
                 <button
                     type="submit"
                     :disabled="form.processing"
                     class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                    {{ form.processing ? '...' : t('masters.save') }}
+                    {{ form.processing ? '...' : (editing ? t('layout.actions.update') : t('layout.actions.save')) }}
                 </button>
             </div>
         </form>
+        </div>
     </Modal>
 </template>

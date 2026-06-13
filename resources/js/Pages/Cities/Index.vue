@@ -4,6 +4,7 @@ import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import CityFormModal from '@/Pages/Cities/Partials/CityFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
 
 const { t } = useI18n()
 
@@ -58,9 +59,19 @@ function submit() {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(city) {
-    if (!confirm(t('cities.delete_confirm'))) { return }
-    router.delete(route('cities.destroy', city.id))
+    deleteTarget.value = city
+}
+
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('cities.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────
@@ -208,6 +219,14 @@ const cityList = computed(() => props.cities?.data ?? [])
             :oblasts="oblasts ?? []"
             @close="closeModal"
             @submit="submit"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('cities.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
         />
     </AdminLayout>
 </template>

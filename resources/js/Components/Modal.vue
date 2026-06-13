@@ -42,42 +42,44 @@ onUnmounted(() => {
 
 <template>
     <Teleport to="body">
-        <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0"
-            enter-to-class="opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100"
-            leave-to-class="opacity-0"
-        >
+        <!-- Backdrop -->
+        <Transition name="modal-backdrop">
             <div
                 v-if="show"
-                class="fixed inset-0 z-[9999] flex items-center justify-center px-4 py-8"
-            >
-                <!-- Backdrop -->
-                <div
-                    class="absolute inset-0 bg-black/25 backdrop-blur-md"
-                    @click="close"
-                />
+                class="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-md"
+                @click="close"
+            />
+        </Transition>
 
-                <!-- Dialog panel -->
-                <Transition
-                    enter-active-class="transition duration-200 ease-out"
-                    enter-from-class="opacity-0 scale-95 translate-y-2"
-                    enter-to-class="opacity-100 scale-100 translate-y-0"
-                    leave-active-class="transition duration-150 ease-in"
-                    leave-from-class="opacity-100 scale-100 translate-y-0"
-                    leave-to-class="opacity-0 scale-95 translate-y-2"
-                >
-                    <div
-                        v-if="show"
-                        class="relative w-full rounded-2xl bg-white shadow-2xl dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
-                        :class="maxWidthClass"
-                    >
-                        <slot />
-                    </div>
-                </Transition>
+        <!-- Panel — slides in from right -->
+        <Transition name="modal-panel">
+            <div
+                v-if="show"
+                class="fixed inset-y-0 right-0 z-[99999] flex w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-slate-800 dark:ring-1 dark:ring-slate-700"
+                :class="maxWidthClass"
+            >
+                <slot />
             </div>
         </Transition>
     </Teleport>
 </template>
+
+<style scoped>
+.modal-backdrop-enter-active,
+.modal-backdrop-leave-active {
+    transition: opacity 0.25s ease;
+}
+.modal-backdrop-enter-from,
+.modal-backdrop-leave-to {
+    opacity: 0;
+}
+
+.modal-panel-enter-active,
+.modal-panel-leave-active {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-panel-enter-from,
+.modal-panel-leave-to {
+    transform: translateX(100%);
+}
+</style>

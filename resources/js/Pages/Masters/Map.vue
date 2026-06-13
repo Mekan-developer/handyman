@@ -27,6 +27,20 @@ const subscribedChannels = []
 
 const TM_CENTER = [37.95, 58.38]
 
+// tileserver-gl отдаёт один стиль (basic-preview) и только на чтение, поэтому
+// «режимы» — это CSS-фильтры поверх WebGL-канваса MapLibre, а не разные стили.
+const MAP_MODES = ['auto', 'light', 'dark', 'white', 'grayscale', 'black']
+const MAP_FILTERS = {
+    light: '',
+    dark: 'invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.95)',
+    white: 'grayscale(1) brightness(1.18) contrast(0.92)',
+    grayscale: 'grayscale(1)',
+    black: 'invert(1) grayscale(1) brightness(0.85) contrast(1.1)',
+}
+const MAP_MODE_STORAGE_KEY = 'masters-map-mode'
+const currentMode = ref('auto')
+let themeObserver = null
+
 onMounted(async () => {
     L = (await import('leaflet')).default
     // Side-effect: добавляет L.maplibreGL — мост Leaflet ↔ MapLibre GL (сам тянет maplibre-gl).
@@ -40,10 +54,16 @@ onMounted(async () => {
         minZoom: 7,
         maxZoom: 20,
         zoomControl: true,
+        attributionControl: false,
     }).setView(TM_CENTER, 11)
 
     baseLayer = createBaseLayer().addTo(map)
     if (typeof baseLayer.bringToBack === 'function') { baseLayer.bringToBack() }
+
+    currentMode.value = localStorage.getItem(MAP_MODE_STORAGE_KEY) ?? 'auto'
+    applyMapMode()
+    baseLayer.getMaplibreMap?.()?.on('load', applyMapMode)
+    watchTheme()
 
     setupControls()
     registerLocateHandlers()
@@ -66,11 +86,42 @@ onMounted(async () => {
 onBeforeUnmount(() => {
     delete window.__showTrajectory
     subscribedChannels.forEach((channel) => window.Echo?.leave(channel))
+    themeObserver?.disconnect()
     if (map) {
         map.remove()
         map = null
     }
 })
+
+// Фильтр вешаем на сам канвас MapLibre — Leaflet-маркеры/попапы в других панелях не затрагиваются.
+function resolveFilter(mode) {
+    if (mode === 'auto') {
+        return document.documentElement.classList.contains('dark') ? MAP_FILTERS.dark : MAP_FILTERS.light
+    }
+
+    return MAP_FILTERS[mode] ?? ''
+}
+
+function applyMapMode() {
+    const canvas = baseLayer?.getCanvas?.()
+    if (!canvas) { return }
+    canvas.style.transition = 'filter 0.25s ease'
+    canvas.style.filter = resolveFilter(currentMode.value)
+}
+
+function setMapMode(mode) {
+    currentMode.value = mode
+    localStorage.setItem(MAP_MODE_STORAGE_KEY, mode)
+    applyMapMode()
+}
+
+// В режиме «авто» подхватываем переключение темы (класс dark на <html>).
+function watchTheme() {
+    themeObserver = new MutationObserver(() => {
+        if (currentMode.value === 'auto') { applyMapMode() }
+    })
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+}
 
 // Базовый слой — внешний MapLibre-стиль с self-hosted tileserver-gl.
 // URL приходит из .env через Inertia (config/services.php → HandleInertiaRequests), не хардкодим.
@@ -97,6 +148,14 @@ function setupControls() {
             html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"/></svg>',
             onClick: toggleFullscreen,
         },
+        {
+            title: styleButtonTitle(),
+            html: '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="1.5"/><circle cx="17.5" cy="10.5" r="1.5"/><circle cx="8.5" cy="7.5" r="1.5"/><circle cx="6.5" cy="12.5" r="1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 2a10 10 0 100 20 2 2 0 002-2 2 2 0 012-2h1a4 4 0 004-4 9 9 0 00-9-10z"/></svg>',
+            onClick: (link) => {
+                cycleMapMode()
+                link.title = styleButtonTitle()
+            },
+        },
     ])
 }
 
@@ -113,7 +172,7 @@ function addButtonControl(position, buttons) {
                 link.style.display = 'flex'
                 link.style.alignItems = 'center'
                 link.style.justifyContent = 'center'
-                L.DomEvent.on(link, 'click', L.DomEvent.stop).on(link, 'click', onClick)
+                L.DomEvent.on(link, 'click', L.DomEvent.stop).on(link, 'click', () => onClick(link))
             })
             L.DomEvent.disableClickPropagation(container)
             return container
@@ -121,6 +180,16 @@ function addButtonControl(position, buttons) {
     })
 
     new ButtonControl({ position }).addTo(map)
+}
+
+// Подпись кнопки = текущий режим; на каждый клик режим переключается по кругу.
+function styleButtonTitle() {
+    return `${t('masters.mode')}: ${t(`masters.modes.${currentMode.value}`)}`
+}
+
+function cycleMapMode() {
+    const next = MAP_MODES[(MAP_MODES.indexOf(currentMode.value) + 1) % MAP_MODES.length]
+    setMapMode(next)
 }
 
 function fitAllMasters() {

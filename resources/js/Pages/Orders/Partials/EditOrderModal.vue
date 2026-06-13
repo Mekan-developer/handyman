@@ -4,6 +4,7 @@ import { useForm } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import InputError from '@/Components/InputError.vue'
+import PhoneInput from '@/Components/PhoneInput.vue'
 
 const { t } = useI18n()
 
@@ -54,7 +55,8 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
 
 <template>
     <Modal :show="show" max-width="2xl" @close="emit('close')">
-        <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
+        <div class="flex h-full flex-col">
+        <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ t('orders.modals.edit_title') }}
             </h2>
@@ -69,7 +71,8 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
             </button>
         </div>
 
-        <form @submit.prevent="submit">
+        <form @submit.prevent="submit" class="flex flex-1 flex-col overflow-hidden">
+            <div class="flex-1 overflow-y-auto">
             <div class="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">
 
                 <!-- City -->
@@ -106,10 +109,10 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                 <!-- Client Phone -->
                 <div class="space-y-1">
                     <label :class="labelClass">{{ t('orders.fields.client_phone') }}</label>
-                    <input
+                    <PhoneInput
                         v-model="form.client_phone"
-                        type="text"
-                        :class="[inputClass, form.errors.client_phone ? errorInputClass : '']"
+                        :has-error="!!form.errors.client_phone"
+                        size="sm"
                     />
                     <InputError :message="form.errors.client_phone" />
                 </div>
@@ -159,23 +162,25 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                     <InputError :message="form.errors.description" />
                 </div>
             </div>
+            </div>
 
-            <div class="flex justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
+            <div class="flex shrink-0 justify-end gap-2 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
                 <button
                     type="button"
                     @click="emit('close')"
                     class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
                 >
-                    {{ t('orders.cancel') }}
+                    {{ t('layout.actions.cancel') }}
                 </button>
                 <button
                     type="submit"
                     :disabled="form.processing"
                     class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
-                    {{ form.processing ? '...' : t('orders.save') }}
+                    {{ form.processing ? '...' : t('layout.actions.update') }}
                 </button>
             </div>
         </form>
+        </div>
     </Modal>
 </template>

@@ -4,6 +4,7 @@ import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import BannerFormModal from '@/Pages/Banners/Partials/BannerFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
 
 const { t } = useI18n()
 
@@ -64,9 +65,19 @@ function toggle(banner) {
 }
 
 // ── Delete ────────────────────────────────────────────────────────────────────
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(banner) {
-    if (!confirm(t('banners.delete_confirm'))) { return }
-    router.delete(route('banners.destroy', banner.id))
+    deleteTarget.value = banner
+}
+
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('banners.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
 }
 
 // ── Pagination ────────────────────────────────────────────────────────────────
@@ -258,6 +269,14 @@ const bannerList = computed(() => props.banners?.data ?? [])
             :editing="editingBanner"
             @close="closeModal"
             @submit="submit"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('banners.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
         />
     </AdminLayout>
 </template>

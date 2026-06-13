@@ -4,6 +4,8 @@ import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MasterFormModal from '@/Pages/Masters/Partials/MasterFormModal.vue'
+import ConfirmModal from '@/Components/ConfirmModal.vue'
+import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
 
@@ -71,14 +73,34 @@ function submit() {
     }
 }
 
+const deleteTarget = ref(null)
+const deleting = ref(false)
+
 function destroy(master) {
-    if (!confirm(t('masters.delete_confirm'))) { return }
-    router.delete(route('masters.destroy', master.id))
+    deleteTarget.value = master
 }
 
+function confirmDelete() {
+    deleting.value = true
+    router.delete(route('masters.destroy', deleteTarget.value.id), {
+        onSuccess: () => { deleteTarget.value = null },
+        onFinish: () => { deleting.value = false },
+    })
+}
+
+const resetBalanceTarget = ref(null)
+const resettingBalance = ref(false)
+
 function resetBalance(master) {
-    if (!confirm(t('masters.reset_balance_confirm'))) { return }
-    router.post(route('masters.reset-balance', master.id))
+    resetBalanceTarget.value = master
+}
+
+function confirmResetBalance() {
+    resettingBalance.value = true
+    router.post(route('masters.reset-balance', resetBalanceTarget.value.id), {}, {
+        onSuccess: () => { resetBalanceTarget.value = null },
+        onFinish: () => { resettingBalance.value = false },
+    })
 }
 
 const currentPage = computed(() => props.masters?.current_page ?? 1)
@@ -162,7 +184,7 @@ const masterList = computed(() => props.masters?.data ?? [])
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
-                                    {{ master.phone }}
+                                    {{ formatPhone(master.phone) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                     {{ master.city?.name ?? '—' }}
@@ -263,6 +285,23 @@ const masterList = computed(() => props.masters?.data ?? [])
             :payment-models="paymentModels"
             @close="closeModal"
             @submit="submit"
+        />
+
+        <ConfirmModal
+            :show="deleteTarget !== null"
+            :message="t('masters.delete_confirm')"
+            :processing="deleting"
+            @confirm="confirmDelete"
+            @close="deleteTarget = null"
+        />
+
+        <ConfirmModal
+            :show="resetBalanceTarget !== null"
+            :message="t('masters.reset_balance_confirm')"
+            :processing="resettingBalance"
+            :danger="false"
+            @confirm="confirmResetBalance"
+            @close="resetBalanceTarget = null"
         />
     </AdminLayout>
 </template>

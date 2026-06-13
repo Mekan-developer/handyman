@@ -50,7 +50,8 @@ function formatDistance(km) {
 
 <template>
     <Modal :show="show" max-width="lg" @close="emit('close')">
-        <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
+        <div class="flex h-full flex-col">
+        <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
                 {{ t('orders.modals.assign_title') }}
             </h2>
@@ -65,19 +66,19 @@ function formatDistance(km) {
             </button>
         </div>
 
-        <div class="px-6 py-5">
+        <div class="flex flex-1 flex-col overflow-hidden px-6 py-5">
             <input
                 v-model="search"
                 type="text"
                 :placeholder="t('orders.fields.master')"
-                class="mb-3 w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
+                class="mb-3 w-full shrink-0 rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
             />
 
             <p v-if="masters.length === 0" class="rounded-lg bg-yellow-50 px-4 py-6 text-center text-sm text-yellow-700 dark:bg-yellow-500/10 dark:text-yellow-300">
                 {{ t('orders.modals.no_eligible_masters') }}
             </p>
 
-            <div v-else class="max-h-96 space-y-2 overflow-y-auto">
+            <div v-else class="flex-1 space-y-2 overflow-y-auto">
                 <button
                     v-for="m in filteredMasters()"
                     :key="m.id"
@@ -125,6 +126,7 @@ function formatDistance(km) {
                     </a>
                 </button>
             </div>
+        </div>
         </div>
     </Modal>
 </template>
