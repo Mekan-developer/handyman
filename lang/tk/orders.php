@@ -81,6 +81,8 @@ return [
         'selected_client' => 'Bar bolan müşderi saýlandy',
         'deselect' => 'Aýyr',
         'pick_location' => 'Ýerleşişi görkezmek üçin kartada basyň',
+        'clear_location' => 'Aýyr',
+        'my_location' => 'Meniň ýerleşişime gönükdir',
         'add_photos' => 'Surat goş',
         'photos_hint' => '4-e çenli surat',
     ],

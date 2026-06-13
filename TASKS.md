@@ -64,11 +64,11 @@
 
 ## 🚧 Текущая незакоммиченная работа
 
-**PMTiles / Offline векторные карты:**
-- `TilesController.php` — раздаёт `.pmtiles` файлы с Range-запросами (HTTP 206)
-- `Map.vue` — переходит с OSM на `protomaps-leaflet` (offline vector tiles)
-- `routes/web.php` — добавлен `/tiles/{file}`, `/` редиректит на login
-- `package.json` — добавлен `protomaps-leaflet ^5.1.0`, vite поднят до v8
+**PhoneInput — единый компонент телефона:**
+- `Components/PhoneInput.vue` — поле с префиксом +993, форматирование `XX XX-XX-XX`
+- `utils/formatPhone.js` — утилита отображения `+993 XX XX-XX-XX`
+- Применено в: MasterFormModal, ClientFormModal, CreateOrderModal, EditOrderModal
+- Форматирование в таблицах: Masters/Index, Clients/Index, Orders/Index, Orders/Show (карточки + map popups)
 
 ---
 
@@ -78,13 +78,12 @@
 |---|--------|-----------|
 | 1 | **OblastTest.php** — тесты CRUD для областей | Высокий |
 | 2 | **RegionTest.php** — тесты CRUD для районов | Высокий |
-| 3 | **Edit Order** — нет маршрута/экшена/формы update заказа | Высокий |
-| 4 | **Payments модуль** — нет модели, миграции, Repository, логики | Средний |
-| 5 | **SMS-шлюз OTP** — `RequestMasterOtpAction` только Log::info | Низкий |
-| 6 | **Приватные Broadcast каналы** — `orders` и `masters-map.*` публичные | Низкий |
-| 7 | **Auth для location ping** — `/master/{master}/location` без auth | Низкий |
-| 8 | **OrderStatus enum location** — лежит в `app/OrderStatus.php`, а не `app/Enums/` | Низкий |
-| 9 | **Flutter-приложение** — API готов, мобильного клиента нет | — |
+| 3 | **Payments модуль** — нет модели, миграции, Repository, логики | Средний |
+| 4 | **SMS-шлюз OTP** — `RequestMasterOtpAction` только Log::info | Низкий |
+| 5 | **Приватные Broadcast каналы** — `orders` и `masters-map.*` публичные | Низкий |
+| 6 | **Auth для location ping** — `/master/{master}/location` без auth | Низкий |
+| 7 | **OrderStatus enum location** — лежит в `app/OrderStatus.php`, а не `app/Enums/` | Низкий |
+| 8 | **Flutter-приложение** — API готов, мобильного клиента нет | — |
 
 ---
 
