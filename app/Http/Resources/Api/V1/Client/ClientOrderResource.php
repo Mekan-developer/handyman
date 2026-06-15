@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1\Client;
 
+use App\OrderStatus;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +33,7 @@ class ClientOrderResource extends JsonResource
                 'id' => $this->master->id,
                 'name' => $this->master->name,
                 'phone' => $this->master->phone,
+                'location' => $this->masterLocationForClient(),
             ] : null),
 
             'photos' => $this->whenLoaded('photos', fn () => $this->photos->map(fn ($p) => [
@@ -55,6 +57,28 @@ class ClientOrderResource extends JsonResource
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'cancelled_at' => $this->cancelled_at?->toDateTimeString(),
             'created_at' => $this->created_at->toDateTimeString(),
+        ];
+    }
+
+    /** @return array<string, mixed>|null */
+    private function masterLocationForClient(): ?array
+    {
+        $trackableStatuses = [OrderStatus::Assigned, OrderStatus::InProgress];
+
+        if (! in_array($this->status, $trackableStatuses, true)) {
+            return null;
+        }
+
+        $location = $this->master->latestLocation ?? null;
+
+        if ($location === null) {
+            return null;
+        }
+
+        return [
+            'lat' => (float) $location->latitude,
+            'lng' => (float) $location->longitude,
+            'recorded_at' => $location->recorded_at->toDateTimeString(),
         ];
     }
 }

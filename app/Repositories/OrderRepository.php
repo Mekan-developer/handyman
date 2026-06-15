@@ -30,7 +30,7 @@ class OrderRepository
 
     public function forClient(Client $client, ?string $status = null): LengthAwarePaginator
     {
-        return Order::with(['category', 'city', 'master'])
+        return Order::with(['category', 'city', 'master.latestLocation'])
             ->where('client_id', $client->id)
             ->when($status, fn ($q) => $q->where('status', $status))
             ->latest()
@@ -40,7 +40,7 @@ class OrderRepository
 
     public function findForClientOrFail(int $orderId, Client $client): Order
     {
-        return Order::with(['category', 'city', 'master', 'photos', 'tasks'])
+        return Order::with(['category', 'city', 'master.latestLocation', 'photos', 'tasks'])
             ->where('client_id', $client->id)
             ->findOrFail($orderId);
     }
