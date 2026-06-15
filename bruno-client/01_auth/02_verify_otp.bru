@@ -18,7 +18,7 @@ headers {
 body:json {
   {
     "phone": "{{client_phone}}",
-    "code": "1234"
+    "code": "310894"
   }
 }
 
@@ -30,11 +30,11 @@ script:post-response {
 
 docs {
   # Verify OTP
-
+  
   Verifies the OTP code. Auto-registers the client on first login.
   Returns a Sanctum token with name `mobile-client`.
   The script saves the token to `client_token` env var.
-
+  
   **Response 200:**
   ```json
   {
@@ -48,9 +48,9 @@ docs {
     }
   }
   ```
-
+  
   Use `is_new: true` to redirect to the profile setup screen in Flutter.
-
+  
   **Errors:**
   - `422` — invalid or expired OTP
 }

@@ -1,6 +1,6 @@
 # TASKS
 
-Актуальное состояние задач по проекту (обновлено 2026-06-10).
+Актуальное состояние задач по проекту (обновлено 2026-06-15).
 
 ---
 
@@ -14,22 +14,25 @@
 - Dark/Light тема через Pinia + LocalStorage
 - `WithNotification` trait + автоподхват flash в AdminLayout
 - Ziggy v2, Laravel Sanctum, Laravel Reverb + Echo
+- Единый API error handler в `bootstrap/app.php` → локализованный JSON по заголовку locale
 
 ### Admin Panel — CRUD-модули (все полностью реализованы)
 
 | Модуль | Маршруты | Vue | Тест |
 |--------|---------|-----|------|
-| Oblasts | ✅ CRUD | ✅ Index + Modal | ❌ нет |
-| Regions | ✅ CRUD | ✅ Index + Modal | ❌ нет |
+| Oblasts | ✅ CRUD | ✅ Index + Modal | ✅ OblastTest |
+| Regions | ✅ CRUD | ✅ Index + Modal | ✅ RegionTest |
 | Cities | ✅ CRUD | ✅ Index + Modal | ✅ CityTest |
 | Categories | ✅ CRUD | ✅ Index + Modal | ✅ CategoryTest |
+| CategoryContent | ✅ upsert | ✅ CategoryContentModal | ✅ CategoryContentTest |
 | Masters | ✅ CRUD + Map + Trajectory + Balance | ✅ Index + Map | ✅ MasterTest |
-| Orders | ✅ index/show/store/destroy/assign/setPrice/updateStatus | ✅ Index + Show | ✅ OrderTest |
+| Orders | ✅ index/show/store/update/destroy/assign/setPrice/updateStatus/masterTrajectory | ✅ Index + Show + EditOrderModal | ✅ OrderTest |
 | Clients | ✅ CRUD + toggleBlock | ✅ Index + Modal | ✅ ClientTest |
 | Banners | ✅ CRUD + toggle | ✅ Index + Modal | ✅ BannerTest |
-| Notifications | ✅ read/delete | ✅ есть в AdminLayout | ❌ нет |
+| Notifications | ✅ read/readAll/delete/deleteAll | ✅ есть в AdminLayout | ❌ нет |
 | Dashboard | ✅ реальные данные через DashboardRepository | ✅ 4 stat-карточки | ❌ нет |
 | Payments | ❌ заглушка | ✅ страница-заглушка | ❌ нет |
+| Users | ✅ CRUD + роли (Administrator/Manager/Operator) | ✅ Index + Modal | ✅ UserTest (26 тестов) |
 
 ### Mobile API (api/v1)
 
@@ -42,33 +45,46 @@
 
 #### Client API
 - OTP auth: request-otp, verify-otp, logout, complete-registration
-- GET/PATCH /api/v1/client/me
-- Catalog: GET oblasts, regions, cities, categories
-- Orders: index, show, store
+- GET/PATCH /api/v1/client/me (ClientProfileController)
+- Catalog: GET oblasts, regions, cities, categories, category content, banners
+- Orders: index, show, store, cancel
 
 ### Backend Infrastructure
-- Модели: User, Oblast, Region, City, Category, Master, MasterLocation, Order, OrderTask, OrderPhoto, Client, Banner
-- Enums: `OrderStatus` (в `app/OrderStatus.php`), `PaymentModel`
+- Модели: User (с ролями), Oblast, Region, City, Category, CategoryContent, CategoryContentImage, Master, MasterLocation, Order, OrderTask, OrderPhoto, Client, Banner
+- Enums: `OrderStatus` (`app/OrderStatus.php`), `PaymentModel` (`app/PaymentModel.php`), `UserRole` (`app/Enums/UserRole.php`)
+- Exceptions: OrderException, OtpException, MasterDisabledException, ApiException
 - Events: OrderCreated, OrderStatusChanged, MasterAssigned, MasterLocationUpdated
 - Jobs: ConvertOrderPhotoJob, ConvertTaskPhotoJob (WebP, tries=3, backoff=30)
-- Repositories: Oblast, Region, City, Category, Master, Order, Client, Banner, Dashboard
-- Actions: полный набор для всех модулей (40+ классов)
-- Resources: Admin + API V1 (Master + Client)
+- Repositories: Oblast, Region, City, Category, CategoryContent, Master, Order, Client, Banner, Dashboard, User
+- Actions: полный набор для всех модулей (46+ классов, включая Create/Update/DeleteUserAction)
+- Policies: `UserPolicy` (`app/Policies/`) — авторизация управления пользователями
+- Middleware: `CheckRole` (`role:administrator,manager`) — роль-based контроль доступа
+- Resources: Admin + API V1 (Master + Client) + UserResource
+- Lang: `lang/{ru,tk}/` — api, auth, banners, categories, cities, clients, dashboard, layout, masters, notifications, oblasts, orders, payments, profile, regions, resources, users, validation (18 файлов каждый)
 
-### Тесты
-- ✅ CityTest, CategoryTest, MasterTest, OrderTest, BannerTest, ClientTest
+### UI компоненты
+- PhoneInput.vue — поле телефона с +993, форматом `XX XX-XX-XX`
+- `formatPhone` утилита в utils/formatPhone.js
+- Применено во всех формах (MasterFormModal, ClientFormModal, CreateOrderModal, EditOrderModal) и таблицах (Masters/Index, Clients/Index, Orders/Index, Orders/Show)
+
+### Тесты (Feature)
+- ✅ OblastTest, RegionTest, CityTest, CategoryTest, CategoryContentTest
+- ✅ MasterTest, OrderTest, BannerTest, ClientTest
 - ✅ CreditMasterBalanceActionTest, ConvertOrderPhotoJobTest, PhotoConverterTest
-- ✅ MasterLocationApiTest (в ClientTest — mobile API catalog)
+- ✅ MasterLocationApiTest, MasterAuthTest
+- ✅ ClientOrderCancelTest, ClientCatalogCategoryContentTest
+- ✅ ApiExceptionHandlingTest
 
 ---
 
 ## 🚧 Текущая незакоммиченная работа
 
-**PhoneInput — единый компонент телефона:**
-- `Components/PhoneInput.vue` — поле с префиксом +993, форматирование `XX XX-XX-XX`
-- `utils/formatPhone.js` — утилита отображения `+993 XX XX-XX-XX`
-- Применено в: MasterFormModal, ClientFormModal, CreateOrderModal, EditOrderModal
-- Форматирование в таблицах: Masters/Index, Clients/Index, Orders/Index, Orders/Show (карточки + map popups)
+- **User Management** — полностью реализовано, не закоммичено
+  - Migration, Enum, Model, Repository, Actions, Policy, Middleware
+  - UserController, StoreUserRequest, UpdateUserRequest, UserResource
+  - Routes реструктурированы (роль-based доступ)
+  - Users/Index.vue, UserFormModal.vue, AdminLayout.vue обновлён
+  - 26 тестов в UserTest.php
 
 ---
 
@@ -76,13 +92,13 @@
 
 | # | Задача | Приоритет |
 |---|--------|-----------|
-| 1 | **OblastTest.php** — тесты CRUD для областей | Высокий |
-| 2 | **RegionTest.php** — тесты CRUD для районов | Высокий |
-| 3 | **Payments модуль** — нет модели, миграции, Repository, логики | Средний |
-| 4 | **SMS-шлюз OTP** — `RequestMasterOtpAction` только Log::info | Низкий |
-| 5 | **Приватные Broadcast каналы** — `orders` и `masters-map.*` публичные | Низкий |
-| 6 | **Auth для location ping** — `/master/{master}/location` без auth | Низкий |
-| 7 | **OrderStatus enum location** — лежит в `app/OrderStatus.php`, а не `app/Enums/` | Низкий |
+| 1 | **Payments модуль** — нет модели, миграции, Repository, логики | Средний |
+| 2 | **SMS-шлюз OTP** — `RequestMasterOtpAction` и `RequestClientOtpAction` только Log::info | Низкий |
+| 3 | **Приватные Broadcast каналы** — `orders` и `masters-map.*` публичные | Низкий |
+| 4 | **Auth для location ping** — `/master/{master}/location` без auth | Низкий |
+| 5 | **OrderStatus enum location** — лежит в `app/OrderStatus.php`, а не `app/Enums/` | Низкий |
+| 6 | **Dashboard тесты** — нет тестов для DashboardController/Repository | Низкий |
+| 7 | **Notification тесты** — нет тестов для NotificationController | Низкий |
 | 8 | **Flutter-приложение** — API готов, мобильного клиента нет | — |
 
 ---
