@@ -17,7 +17,7 @@ const emit = defineEmits(['confirm', 'close'])
 </script>
 
 <template>
-    <Modal :show="show" max-width="sm" @close="emit('close')">
+    <Modal :show="show" max-width="sm" centered @close="emit('close')">
         <div class="flex h-full flex-col">
             <!-- Icon + Title -->
             <div class="flex flex-1 items-start gap-4 p-6">
