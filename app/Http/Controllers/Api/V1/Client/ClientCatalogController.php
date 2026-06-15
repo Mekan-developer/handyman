@@ -8,9 +8,9 @@ use App\Http\Resources\Api\V1\Client\CategoryContentResource;
 use App\Models\Category;
 use App\Models\City;
 use App\Models\Oblast;
-use App\Models\Region;
 use App\Repositories\BannerRepository;
 use App\Repositories\CategoryContentRepository;
+use App\Repositories\RegionRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
@@ -19,6 +19,7 @@ class ClientCatalogController extends Controller
     public function __construct(
         private readonly BannerRepository $bannerRepository,
         private readonly CategoryContentRepository $contentRepository,
+        private readonly RegionRepository $regionRepository,
     ) {}
 
     public function banners(): AnonymousResourceCollection
@@ -47,9 +48,7 @@ class ClientCatalogController extends Controller
     public function regions(): JsonResponse
     {
         return response()->json([
-            'data' => Region::where('is_active', true)
-                ->orderBy('name')
-                ->get(['id', 'name', 'oblast_id']),
+            'data' => $this->regionRepository->activeWithOblast(),
         ]);
     }
 
