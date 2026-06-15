@@ -12,6 +12,7 @@ return [
         'orders' => 'Заказы',
         'payments' => 'Платежи',
         'banners' => 'Баннеры',
+        'users' => 'Пользователи',
     ],
     'header' => [
         'logout' => 'Выйти',

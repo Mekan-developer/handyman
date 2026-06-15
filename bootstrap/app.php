@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ApiException;
+use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\EnsureClient;
 use App\Http\Middleware\EnsureMaster;
 use App\Http\Middleware\HandleInertiaRequests;
@@ -56,6 +57,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'ensure.client' => EnsureClient::class,
             'ensure.master' => EnsureMaster::class,
+            'role' => CheckRole::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

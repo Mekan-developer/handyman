@@ -11,4 +11,5 @@ return [
     'payment' => 'Töleg',
     'banner' => 'Banner',
     'content' => 'Mazmun',
+    'user' => 'Ulanyjy',
 ];

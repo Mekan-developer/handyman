@@ -12,6 +12,7 @@ return [
         'orders' => 'Sargytlar',
         'payments' => 'Tölegler',
         'banners' => 'Bannerlar',
+        'users' => 'Ulanyjylar',
     ],
     'header' => [
         'logout' => 'Çykmak',
