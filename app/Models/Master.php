@@ -27,6 +27,7 @@ class Master extends Authenticatable
         'balance',
         'access_expires_at',
         'is_active',
+        'is_available',
         'photo',
     ];
 
@@ -38,6 +39,7 @@ class Master extends Authenticatable
             'balance' => 'decimal:2',
             'access_expires_at' => 'datetime',
             'is_active' => 'boolean',
+            'is_available' => 'boolean',
         ];
     }
 

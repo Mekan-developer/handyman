@@ -117,5 +117,6 @@ return [
         'invalid_transition' => 'Ýagdaý üýtgetmek mümkin däl',
         'not_editable' => 'Sargydy diňe «Garaşylýar» ýagdaýynda redaktirläp bolýar',
         'cannot_cancel_assigned' => 'Sargydy ýatyryp bolmaýar — eýýäm usta bellenildi',
+        'master_unavailable' => 'Usta häzirki wagtda sargytlary kabul etmäge elýeterli däl',
     ],
 ];

@@ -21,6 +21,8 @@ return [
     'status' => 'Ýagdaý',
     'active' => 'Işjeň',
     'inactive' => 'Işjeň däl',
+    'available' => 'Elýeterli',
+    'unavailable' => 'Elýeterli däl',
     'created_at' => 'Goşulan senesi',
     'actions' => 'Hereketler',
     'save' => 'Ýatda sakla',

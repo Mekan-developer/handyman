@@ -21,6 +21,8 @@ return [
     'status' => 'Статус',
     'active' => 'Активный',
     'inactive' => 'Неактивный',
+    'available' => 'Доступен',
+    'unavailable' => 'Недоступен',
     'created_at' => 'Дата добавления',
     'actions' => 'Действия',
     'save' => 'Сохранить',

@@ -27,6 +27,10 @@ class AssignMasterAction
             throw OrderException::masterAccessExpired();
         }
 
+        if (! $master->is_available) {
+            throw OrderException::masterUnavailable();
+        }
+
         if ($master->city_id !== $order->city_id) {
             throw OrderException::cityMismatch();
         }

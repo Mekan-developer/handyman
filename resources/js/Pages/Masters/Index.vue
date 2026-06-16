@@ -193,18 +193,32 @@ const masterList = computed(() => props.masters?.data ?? [])
                                     {{ paymentModels.find(pm => pm.value === master.payment_model)?.label ?? master.payment_model }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span
-                                        :class="master.is_active
-                                            ? 'bg-green-100 text-green-700 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30'
-                                            : 'bg-red-100 text-red-600 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/30'"
-                                        class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
-                                    >
+                                    <div class="flex flex-col gap-1.5">
                                         <span
-                                            :class="master.is_active ? 'bg-green-500 dark:bg-green-400' : 'bg-red-400'"
-                                            class="h-1.5 w-1.5 rounded-full"
-                                        />
-                                        {{ master.is_active ? t('masters.active') : t('masters.inactive') }}
-                                    </span>
+                                            :class="master.is_active
+                                                ? 'bg-green-100 text-green-700 ring-1 ring-green-200 dark:bg-green-500/10 dark:text-green-300 dark:ring-green-500/30'
+                                                : 'bg-red-100 text-red-600 ring-1 ring-red-200 dark:bg-red-500/10 dark:text-red-300 dark:ring-red-500/30'"
+                                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                        >
+                                            <span
+                                                :class="master.is_active ? 'bg-green-500 dark:bg-green-400' : 'bg-red-400'"
+                                                class="h-1.5 w-1.5 rounded-full"
+                                            />
+                                            {{ master.is_active ? t('masters.active') : t('masters.inactive') }}
+                                        </span>
+                                        <span
+                                            :class="master.is_available
+                                                ? 'bg-blue-100 text-blue-700 ring-1 ring-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:ring-blue-500/30'
+                                                : 'bg-gray-100 text-gray-500 ring-1 ring-gray-200 dark:bg-slate-700 dark:text-slate-400 dark:ring-slate-600'"
+                                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
+                                        >
+                                            <span
+                                                :class="master.is_available ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-400 dark:bg-slate-500'"
+                                                class="h-1.5 w-1.5 rounded-full"
+                                            />
+                                            {{ master.is_available ? t('masters.available') : t('masters.unavailable') }}
+                                        </span>
+                                    </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">
                                     <span v-if="master.access_expires_at">

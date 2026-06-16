@@ -28,6 +28,7 @@ class MasterResource extends JsonResource
             'balance' => $this->balance,
             'access_expires_at' => $this->access_expires_at?->toDateTimeString(),
             'is_active' => $this->is_active,
+            'is_available' => $this->is_available,
             'photo' => $this->photo,
             'categories' => $this->whenLoaded('categories', fn () => $this->categories->map(fn ($c) => ['id' => $c->id, 'name' => $c->name])
             ),

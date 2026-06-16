@@ -22,6 +22,7 @@ class MasterProfileResource extends JsonResource
             'payment_model' => $this->payment_model->value,
             'payment_value' => (float) $this->payment_value,
             'is_active' => $this->is_active,
+            'is_available' => $this->is_available,
             'access_expires_at' => $this->access_expires_at?->toDateString(),
             'city' => $this->whenLoaded('city', fn () => [
                 'id' => $this->city->id,

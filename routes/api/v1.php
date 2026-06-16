@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Client\ClientCatalogController;
 use App\Http\Controllers\Api\V1\Client\ClientOrderController;
 use App\Http\Controllers\Api\V1\Client\ClientProfileController;
 use App\Http\Controllers\Api\V1\MasterAuthController;
+use App\Http\Controllers\Api\V1\MasterAvailabilityController;
 use App\Http\Controllers\Api\V1\MasterLocationController;
 use App\Http\Controllers\Api\V1\MasterOrderController;
 use App\Http\Controllers\Api\V1\MasterProfileController;
@@ -36,6 +37,7 @@ Route::prefix('master')->group(function () {
     Route::middleware(['auth:sanctum', 'ensure.master'])->group(function () {
 
         Route::get('me', [MasterProfileController::class, 'show'])->name('api.v1.master.me');
+        Route::patch('availability', [MasterAvailabilityController::class, 'update'])->name('api.v1.master.availability.update');
 
         Route::prefix('orders')->name('api.v1.master.orders.')->group(function () {
             Route::get('/', [MasterOrderController::class, 'index'])->name('index');

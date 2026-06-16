@@ -9,6 +9,11 @@ class OrderException extends ApiException
         return new self((string) __('orders.errors.master_inactive'));
     }
 
+    public static function masterUnavailable(): self
+    {
+        return new self((string) __('orders.errors.master_unavailable'));
+    }
+
     public static function cityMismatch(): self
     {
         return new self((string) __('orders.errors.city_mismatch'));

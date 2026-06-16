@@ -35,6 +35,11 @@ class MasterFactory extends Factory
         return $this->state(['is_active' => false]);
     }
 
+    public function unavailable(): static
+    {
+        return $this->state(['is_available' => false]);
+    }
+
     public function expired(): static
     {
         return $this->state(['access_expires_at' => now()->subDay()]);
