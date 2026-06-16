@@ -20,20 +20,24 @@ class StoreCategoryContentRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:5000'],
             'price' => ['nullable', 'string', 'max:255'],
-            'image' => ['nullable', 'image', 'max:10240'],
+            'images' => ['nullable', 'array'],
+            'images.*' => ['image', 'max:10240'],
+            'keep_ids' => ['nullable', 'array'],
+            'keep_ids.*' => ['integer'],
         ];
     }
 
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $v) {
-            $hasNewImage = $this->hasFile('image');
+            $hasNewImages = $this->hasFile('images');
             /** @var Category $category */
             $category = $this->route('category');
-            $hasExisting = $category->content?->images()->exists() ?? false;
+            $keepIds = $this->input('keep_ids', []);
+            $hasKeptImages = count($keepIds) > 0 && $category->content?->images()->whereIn('id', $keepIds)->exists();
 
-            if (! $hasNewImage && ! $hasExisting) {
-                $v->errors()->add('image', __('categories.content_images_required'));
+            if (! $hasNewImages && ! $hasKeptImages) {
+                $v->errors()->add('images', __('categories.content_images_required'));
             }
         });
     }

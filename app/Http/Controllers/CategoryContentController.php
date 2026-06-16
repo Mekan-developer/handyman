@@ -19,7 +19,12 @@ class CategoryContentController extends Controller
     ): RedirectResponse {
         abort_if($category->isRoot(), 422, __('categories.content_subcategory_only'));
 
-        $action->handle($category, $request->validated(), $request->file('image'));
+        $action->handle(
+            $category,
+            $request->validated(),
+            $request->file('images', []),
+            $request->input('keep_ids', []),
+        );
 
         $this->notifySuccess('notifications.saved', ['resource' => __('resources.content')]);
 

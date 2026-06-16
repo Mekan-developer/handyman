@@ -15,8 +15,10 @@ class UpsertCategoryContentAction
 
     /**
      * @param  array{title: string, description: ?string, price: ?string}  $data
+     * @param  UploadedFile[]  $images
+     * @param  int[]  $keepIds
      */
-    public function handle(Category $category, array $data, ?UploadedFile $image): CategoryContent
+    public function handle(Category $category, array $data, array $images = [], array $keepIds = []): CategoryContent
     {
         $content = $this->repository->upsert($category, [
             'title' => $data['title'],
@@ -24,9 +26,9 @@ class UpsertCategoryContentAction
             'price' => $data['price'] ?? null,
         ]);
 
-        if ($image !== null) {
-            $this->repository->deleteImagesExcept($content, []);
+        $this->repository->deleteImagesExcept($content, $keepIds);
 
+        foreach ($images as $image) {
             $path = $image->store('category-content', 'public');
             $absolutePath = Storage::disk('public')->path($path);
 
