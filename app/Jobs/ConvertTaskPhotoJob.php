@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\OrderTask;
+use App\Models\OrderTaskPhoto;
 use App\Support\PhotoConverter;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -16,37 +16,25 @@ class ConvertTaskPhotoJob implements ShouldQueue
 
     public int $backoff = 30;
 
-    /** @param 'before'|'after' $photoType */
     public function __construct(
-        public readonly int $taskId,
-        public readonly string $photoType,
+        public readonly int $photoId,
     ) {}
 
     public function handle(): void
     {
-        $task = OrderTask::find($this->taskId);
+        $photo = OrderTaskPhoto::find($this->photoId);
 
-        if ($task === null) {
+        if ($photo === null || $photo->status === OrderTaskPhoto::STATUS_DONE) {
             return;
         }
 
-        $pathField = $this->photoType.'_photo_path';
-        $statusField = $this->photoType.'_status';
-
-        $currentPath = $task->{$pathField};
-        $currentStatus = $task->{$statusField};
-
-        if ($currentPath === null || $currentStatus === OrderTask::STATUS_DONE) {
-            return;
-        }
-
-        $task->update([$statusField => OrderTask::STATUS_CONVERTING]);
+        $photo->update(['status' => OrderTaskPhoto::STATUS_CONVERTING]);
 
         try {
-            $absoluteOriginal = Storage::disk('public')->path($currentPath);
+            $absoluteOriginal = Storage::disk('public')->path($photo->path);
             $absoluteWebp = PhotoConverter::convert($absoluteOriginal);
 
-            Storage::disk('public')->delete($currentPath);
+            Storage::disk('public')->delete($photo->path);
 
             $webpRelative = ltrim(str_replace(
                 Storage::disk('public')->path(''),
@@ -54,12 +42,12 @@ class ConvertTaskPhotoJob implements ShouldQueue
                 $absoluteWebp
             ), DIRECTORY_SEPARATOR);
 
-            $task->update([
-                $pathField => $webpRelative,
-                $statusField => OrderTask::STATUS_DONE,
+            $photo->update([
+                'path' => $webpRelative,
+                'status' => OrderTaskPhoto::STATUS_DONE,
             ]);
         } catch (\Throwable $e) {
-            $task->update([$statusField => OrderTask::STATUS_FAILED]);
+            $photo->update(['status' => OrderTaskPhoto::STATUS_FAILED]);
             throw $e;
         }
     }

@@ -30,6 +30,8 @@ class MasterTaskController extends Controller
             return response()->json(['message' => $e->getMessage()], 422);
         }
 
+        $task->load(['beforePhotos', 'afterPhotos']);
+
         return (new MasterTaskResource($task))
             ->response()
             ->setStatusCode(201);

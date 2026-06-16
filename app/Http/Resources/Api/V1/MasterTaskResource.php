@@ -18,14 +18,16 @@ class MasterTaskResource extends JsonResource
             'id' => $this->id,
             'title' => $this->title,
             'description' => $this->description,
-            'before_photo' => $this->before_photo_path ? [
-                'url' => asset('storage/'.$this->before_photo_path),
-                'status' => $this->before_status,
-            ] : null,
-            'after_photo' => $this->after_photo_path ? [
-                'url' => asset('storage/'.$this->after_photo_path),
-                'status' => $this->after_status,
-            ] : null,
+            'before_photos' => $this->whenLoaded('beforePhotos', fn () => $this->beforePhotos->map(fn ($p) => [
+                'id' => $p->id,
+                'url' => asset('storage/'.$p->path),
+                'status' => $p->status,
+            ])),
+            'after_photos' => $this->whenLoaded('afterPhotos', fn () => $this->afterPhotos->map(fn ($p) => [
+                'id' => $p->id,
+                'url' => asset('storage/'.$p->path),
+                'status' => $p->status,
+            ])),
         ];
     }
 }
