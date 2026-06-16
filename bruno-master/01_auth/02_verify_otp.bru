@@ -17,8 +17,8 @@ headers {
 
 body:json {
   {
-    "phone": "+99362111222",
-    "code": "1234"
+    "phone": "+99361000003",
+    "code": "041039"
   }
 }
 
@@ -30,10 +30,10 @@ script:post-response {
 
 docs {
   # Verify OTP
-
+  
   Verifies the OTP code and returns a Sanctum Bearer token on success.
   The script automatically saves the token to the `token` env variable.
-
+  
   **Response 200:**
   ```json
   {
@@ -50,7 +50,7 @@ docs {
     }
   }
   ```
-
+  
   **Errors:**
   - `404` — master not found
   - `403` — master disabled

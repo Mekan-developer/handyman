@@ -34,12 +34,21 @@ docs {
       "payment_model": "percentage",
       "payment_value": 15,
       "is_active": true,
+      "is_available": true,
       "access_expires_at": "2026-12-31",
+      "city": { "id": 1, "name": "Ашхабад" },
       "categories": [
         { "id": 1, "name": "Сантехника" }
-      ],
-      "city": { "id": 1, "name": "Ашхабад" }
+      ]
     }
   }
   ```
+
+  **Fields:**
+  | Field              | Type    | Description                                      |
+  |--------------------|---------|--------------------------------------------------|
+  | `is_active`        | boolean | Activated by admin (can accept orders)           |
+  | `is_available`     | boolean | Set by master — ready for work right now         |
+  | `access_expires_at`| date    | When master's access subscription expires        |
+  | `payment_model`    | string  | `percentage` / `fixed_per_job` / `salary` / `salary_percentage` |
 }
