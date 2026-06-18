@@ -25,12 +25,13 @@ class CategoryController extends Controller
         return Inertia::render('Categories/Index', [
             'categories' => CategoryResource::collection($this->repository->paginate()),
             'parentCategories' => $this->repository->roots(),
+            'iconGroups' => config('service_icons'),
         ]);
     }
 
     public function store(StoreCategoryRequest $request, CreateCategoryAction $action): RedirectResponse
     {
-        $action->handle($request->validated());
+        $action->handle($request->validated(), $request->file('icon_file'));
         $this->notifySuccess('notifications.created', ['resource' => __('resources.category')]);
 
         return redirect()->route('categories.index');
@@ -39,7 +40,7 @@ class CategoryController extends Controller
     public function update(UpdateCategoryRequest $request, int $id, UpdateCategoryAction $action): RedirectResponse
     {
         $category = $this->repository->findOrFail($id);
-        $action->handle($category, $request->validated());
+        $action->handle($category, $request->validated(), $request->file('icon_file'));
         $this->notifySuccess('notifications.updated', ['resource' => __('resources.category')]);
 
         return redirect()->route('categories.index');
