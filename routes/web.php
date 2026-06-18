@@ -13,6 +13,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\SystemStatusController;
 use App\Http\Controllers\TilesController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -33,6 +34,8 @@ Route::get('/', function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/system-status', SystemStatusController::class)->name('system.status');
+
     // Profile — accessible to all authenticated users (all roles)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -56,6 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::get('masters/{master}/trajectory', [MasterController::class, 'trajectory'])->name('masters.trajectory');
         Route::post('masters/{master}/reset-balance', [MasterController::class, 'resetBalance'])->name('masters.reset-balance');
         Route::resource('masters', MasterController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::post('payments/{master}/payout', [PaymentController::class, 'payout'])->name('payments.payout');
 
         Route::resource('banners', BannerController::class)->only(['index', 'store', 'destroy']);
         Route::post('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');

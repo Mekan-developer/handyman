@@ -121,6 +121,33 @@ function logout() {
     router.post(route('logout'))
 }
 
+const queueStatus = ref('checking')
+const reverbStatus = ref('checking')
+const wsStatus = ref('checking')
+let statusPollInterval = null
+
+// Echo client connection state — purely client-side, no HTTP needed
+function updateWsStatus() {
+    if (!window.Echo) {
+        wsStatus.value = 'error'
+        return
+    }
+    const state = window.Echo.connector.pusher.connection.state
+    wsStatus.value = state === 'connected' ? 'ok' : (state === 'connecting' ? 'checking' : 'error')
+}
+
+// Queue + Reverb server reachability — one HTTP request covers both
+async function fetchSystemStatus() {
+    try {
+        const { data } = await window.axios.get(route('system.status'))
+        queueStatus.value = data.queue
+        reverbStatus.value = data.websocket
+    } catch {
+        queueStatus.value = 'error'
+        reverbStatus.value = 'error'
+    }
+}
+
 const alarmAudio = new Audio('/sounds/alarm.mp3')
 alarmAudio.volume = 0.5
 
@@ -160,7 +187,13 @@ function handleOrderStatusChanged(payload) {
 }
 
 onMounted(() => {
+    fetchSystemStatus()
+    statusPollInterval = setInterval(fetchSystemStatus, 30_000)
+
+    updateWsStatus()
+
     if (!window.Echo) { return }
+    window.Echo.connector.pusher.connection.bind('state_change', updateWsStatus)
     window.Echo.channel('orders')
         .listen('.order.created', handleNewOrder)
         .listen('.master.assigned', handleMasterAssigned)
@@ -168,6 +201,8 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+    clearInterval(statusPollInterval)
+    window.Echo?.connector.pusher.connection.unbind('state_change', updateWsStatus)
     window.Echo?.leave('orders')
 })
 </script>
@@ -229,6 +264,46 @@ onBeforeUnmount(() => {
                     {{ t(item.labelKey) }}
                 </Link>
             </nav>
+
+            <!-- Service status -->
+            <div class="shrink-0 border-t border-slate-700 px-4 py-3 space-y-2">
+                <template
+                    v-for="{ key, status } in [
+                        { key: 'queue', status: queueStatus },
+                        { key: 'reverb', status: reverbStatus },
+                        { key: 'websocket', status: wsStatus },
+                    ]"
+                    :key="key"
+                >
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-2 w-2 shrink-0">
+                            <span
+                                v-if="status === 'ok'"
+                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
+                            />
+                            <span
+                                class="relative inline-flex h-2 w-2 rounded-full"
+                                :class="{
+                                    'bg-emerald-500': status === 'ok',
+                                    'bg-red-500': status === 'error',
+                                    'bg-yellow-400': status === 'checking',
+                                }"
+                            />
+                        </span>
+                        <span class="text-xs text-slate-400">{{ t(`layout.services.${key}`) }}</span>
+                        <span
+                            class="ml-auto text-[10px] font-medium"
+                            :class="{
+                                'text-emerald-400': status === 'ok',
+                                'text-red-400': status === 'error',
+                                'text-yellow-400': status === 'checking',
+                            }"
+                        >
+                            {{ t(`layout.services.${status === 'checking' ? 'checking' : status === 'ok' ? 'ok' : 'error'}`) }}
+                        </span>
+                    </div>
+                </template>
+            </div>
 
             <!-- Bottom user area -->
             <div class="shrink-0 border-t border-slate-700 p-4">

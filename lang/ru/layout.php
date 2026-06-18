@@ -30,4 +30,20 @@ return [
         'update' => 'Обновить',
         'cancel' => 'Отмена',
     ],
+    'select' => [
+        'oblast' => 'Выберите велаят',
+        'city' => 'Выберите город',
+    ],
+    'labels' => [
+        'oblast' => 'Велаят',
+        'city' => 'Город',
+    ],
+    'services' => [
+        'queue' => 'Очередь задач',
+        'reverb' => 'Reverb сервер',
+        'websocket' => 'WebSocket клиент',
+        'ok' => 'Работает',
+        'error' => 'Не работает',
+        'checking' => 'Проверка...',
+    ],
 ];

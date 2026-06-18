@@ -30,4 +30,20 @@ return [
         'update' => 'Täzelemek',
         'cancel' => 'Ýatyr',
     ],
+    'select' => [
+        'oblast' => 'Welaýat saýlaň',
+        'city' => 'Şäher saýlaň',
+    ],
+    'labels' => [
+        'oblast' => 'Welaýat',
+        'city' => 'Şäher',
+    ],
+    'services' => [
+        'queue' => 'Nobat hyzmaty',
+        'reverb' => 'Reverb serwer',
+        'websocket' => 'WebSocket müşderi',
+        'ok' => 'Işleýär',
+        'error' => 'Işlemeýär',
+        'checking' => 'Barlanýar...',
+    ],
 ];
