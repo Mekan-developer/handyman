@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\V1\MasterLocationController;
 use App\Http\Controllers\Api\V1\MasterOrderController;
 use App\Http\Controllers\Api\V1\MasterProfileController;
 use App\Http\Controllers\Api\V1\MasterTaskController;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +20,16 @@ use Illuminate\Support\Facades\Route;
  *   - Master token name: `mobile`        (require middleware: ensure.master)
  *   - Client token name: `mobile-client` (require middleware: ensure.client)
  */
+
+/*
+ * Broadcast channel auth for mobile apps.
+ * Flutter clients set authEndpoint to /api/v1/broadcasting/auth and pass their
+ * Sanctum Bearer token. The guard config (web + sanctum) allows Broadcast::auth()
+ * to resolve both session-based admin users and token-based Master/Client models.
+ */
+Route::post('broadcasting/auth', function (Request $request) {
+    return Broadcast::auth($request);
+})->middleware('auth:sanctum')->name('api.v1.broadcasting.auth');
 
 Route::prefix('master')->group(function () {
 
@@ -41,7 +53,8 @@ Route::prefix('master')->group(function () {
 
         Route::prefix('orders')->name('api.v1.master.orders.')->group(function () {
             Route::get('/', [MasterOrderController::class, 'index'])->name('index');
-            Route::get('{order}', [MasterOrderController::class, 'show'])->name('show');
+            Route::get('{order}', [MasterOrderController::class, 'show'])
+                ->name('show');
             Route::post('{order}/start', [MasterOrderController::class, 'start'])->name('start');
             Route::post('{order}/complete', [MasterOrderController::class, 'complete'])->name('complete');
 
@@ -60,6 +73,7 @@ Route::prefix('client')->group(function () {
     Route::get('regions', [ClientCatalogController::class, 'regions'])->name('api.v1.client.regions');
     Route::get('cities', [ClientCatalogController::class, 'cities'])->name('api.v1.client.cities');
     Route::get('categories', [ClientCatalogController::class, 'categories'])->name('api.v1.client.categories');
+    Route::get('categories/search', [ClientCatalogController::class, 'searchCategories'])->name('api.v1.client.categories.search');
     Route::get('categories/{category}/content', [ClientCatalogController::class, 'categoryContent'])->name('api.v1.client.categories.content');
     Route::get('banners', [ClientCatalogController::class, 'banners'])->name('api.v1.client.banners');
 
