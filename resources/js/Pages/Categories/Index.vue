@@ -6,12 +6,14 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import CategoryFormModal from '@/Pages/Categories/Partials/CategoryFormModal.vue'
 import CategoryContentModal from '@/Pages/Categories/Partials/CategoryContentModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
+import ServiceIcon from '@/Components/ServiceIcon.vue'
 
 const { t } = useI18n()
 
 const props = defineProps({
     categories: Object,
     parentCategories: Array,
+    iconGroups: { type: Object, default: () => ({}) },
 })
 
 // ── Modal state ───────────────────────────────────────────────────────────────
@@ -22,6 +24,9 @@ const form = useForm({
     name: '',
     is_active: true,
     parent_id: null,
+    icon_type: null,
+    icon: null,
+    icon_file: null,
 })
 
 function openCreate() {
@@ -44,6 +49,11 @@ function openEdit(category) {
     form.name = category.name
     form.is_active = category.is_active
     form.parent_id = category.parent_id
+    form.icon_type = category.icon_type
+    // Only preset keys are valid `icon` values; a custom icon keeps its file
+    // server-side (previewed via existingIconUrl), so send null here.
+    form.icon = category.icon_type === 'preset' ? category.icon : null
+    form.icon_file = null
     form.clearErrors()
     showModal.value = true
 }
@@ -56,15 +66,20 @@ function closeModal() {
 }
 
 function submit() {
-    if (editingCategory.value) {
-        form.put(route('categories.update', editingCategory.value.id), {
-            onSuccess: closeModal,
-        })
-    } else {
-        form.post(route('categories.store'), {
-            onSuccess: closeModal,
-        })
-    }
+    const isEdit = Boolean(editingCategory.value)
+
+    // Icons may be uploaded as files; multipart can't ride on PUT, so we always
+    // POST and spoof the method for updates (Laravel reads `_method`).
+    form.transform((data) => (isEdit ? { ...data, _method: 'put' } : data))
+
+    const url = isEdit
+        ? route('categories.update', editingCategory.value.id)
+        : route('categories.store')
+
+    form.post(url, {
+        forceFormData: true,
+        onSuccess: closeModal,
+    })
 }
 
 // ── Content modal ─────────────────────────────────────────────────────────────
@@ -168,23 +183,24 @@ const categoryList = computed(() => props.categories?.data ?? [])
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
-                                        <!-- Корневая категория: иконка папки -->
+                                        <!-- Иконка категории; если не задана — fallback: папка (корень) / вложение (подкатегория) -->
                                         <span
-                                            v-if="!category.parent_id"
-                                            class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400"
+                                            :class="[
+                                                category.parent_id ? 'ml-4' : '',
+                                                category.parent_id
+                                                    ? 'bg-purple-100 text-purple-500 dark:bg-purple-500/20 dark:text-purple-400'
+                                                    : 'bg-blue-100 text-blue-500 dark:bg-blue-500/20 dark:text-blue-400',
+                                            ]"
+                                            class="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md"
                                         >
-                                            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <ServiceIcon v-if="category.icon_url" :url="category.icon_url" class="h-4 w-4" />
+                                            <svg v-else-if="!category.parent_id" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                                             </svg>
+                                            <svg v-else class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h3.75" />
+                                            </svg>
                                         </span>
-                                        <!-- Дочерняя категория: отступ + значок вложения -->
-                                        <template v-else>
-                                            <span class="ml-4 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-md bg-purple-100 text-purple-500 dark:bg-purple-500/20 dark:text-purple-400">
-                                                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h7.5M8.25 12h7.5m-7.5 5.25h3.75" />
-                                                </svg>
-                                            </span>
-                                        </template>
                                         <span
                                             :class="category.parent_id
                                                 ? 'text-sm text-gray-600 dark:text-slate-400'
@@ -307,6 +323,7 @@ const categoryList = computed(() => props.categories?.data ?? [])
             :form="form"
             :editing="editingCategory"
             :parent-categories="parentCategories"
+            :icon-groups="iconGroups"
             @close="closeModal"
             @submit="submit"
         />

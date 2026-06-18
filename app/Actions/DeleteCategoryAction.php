@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Models\Category;
 use App\Repositories\CategoryRepository;
+use App\Support\CategoryIcon;
 
 class DeleteCategoryAction
 {
@@ -11,6 +12,7 @@ class DeleteCategoryAction
 
     public function handle(Category $category): void
     {
+        CategoryIcon::purge($category);
         $this->repository->delete($category);
     }
 }

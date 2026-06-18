@@ -20,6 +20,10 @@ docs {
   Public endpoint. Returns active root categories with their active children.
   Use this on the order creation screen.
 
+  Each category carries an icon: `icon_type` is `preset` (built-in set),
+  `custom` (admin-uploaded SVG) or `null`. `icon_url` is the ready-to-render
+  SVG URL (monochrome, paint with the app's text color) — use it directly.
+
   **Response 200:**
   ```json
   {
@@ -27,9 +31,19 @@ docs {
       {
         "id": 1,
         "name": "Сантехника",
+        "parent_id": null,
+        "icon_type": "preset",
+        "icon": "wrench",
+        "icon_url": "http://localhost/icons/services/wrench.svg",
         "children": [
-          { "id": 5, "name": "Замена труб" },
-          { "id": 6, "name": "Устранение засоров" }
+          {
+            "id": 5,
+            "name": "Замена труб",
+            "parent_id": 1,
+            "icon_type": "custom",
+            "icon": "category-icons/abc123.svg",
+            "icon_url": "http://localhost/storage/category-icons/abc123.svg"
+          }
         ]
       }
     ]

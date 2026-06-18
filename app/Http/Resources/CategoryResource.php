@@ -15,6 +15,9 @@ class CategoryResource extends JsonResource
             'name' => $this->name,
             'is_active' => $this->is_active,
             'parent_id' => $this->parent_id,
+            'icon_type' => $this->icon_type?->value,
+            'icon' => $this->icon,
+            'icon_url' => $this->icon_url,
             'parent' => $this->whenLoaded('parent', fn () => [
                 'id' => $this->parent->id,
                 'name' => $this->parent->name,

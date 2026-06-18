@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\CategoryIconType;
 use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -30,5 +31,13 @@ class CategoryFactory extends Factory
     public function inactive(): static
     {
         return $this->state(['is_active' => false]);
+    }
+
+    public function withPresetIcon(string $key = 'wrench'): static
+    {
+        return $this->state([
+            'icon_type' => CategoryIconType::Preset->value,
+            'icon' => $key,
+        ]);
     }
 }

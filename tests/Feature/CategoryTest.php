@@ -4,7 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\User;
+use App\Support\CategoryIcon;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class CategoryTest extends TestCase
@@ -17,6 +20,14 @@ class CategoryTest extends TestCase
         $this->actingAs($user);
 
         return $user;
+    }
+
+    private function fakeSvg(string $name = 'icon.svg'): UploadedFile
+    {
+        return UploadedFile::fake()->createWithContent(
+            $name,
+            '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/></svg>',
+        );
     }
 
     // ── Index ─────────────────────────────────────────────────────────────────
@@ -182,5 +193,219 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->delete(route('categories.destroy', 9999))->assertNotFound();
+    }
+
+    // ── Icons ─────────────────────────────────────────────────────────────────
+
+    public function test_every_preset_icon_has_a_matching_svg_file(): void
+    {
+        $keys = CategoryIcon::presetKeys();
+
+        $this->assertNotEmpty($keys);
+
+        foreach ($keys as $key) {
+            $this->assertFileExists(
+                public_path("icons/services/{$key}.svg"),
+                "Missing SVG file for preset icon [{$key}]",
+            );
+        }
+    }
+
+    public function test_can_create_category_with_preset_icon(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->post(route('categories.store'), [
+            'name' => 'Электрика',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'preset',
+            'icon' => 'bolt',
+        ])->assertRedirect(route('categories.index'));
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Электрика',
+            'icon_type' => 'preset',
+            'icon' => 'bolt',
+        ]);
+    }
+
+    public function test_subcategory_can_have_preset_icon(): void
+    {
+        $this->actingAsAdmin();
+        $parent = Category::factory()->create();
+
+        $this->post(route('categories.store'), [
+            'name' => 'Розетки',
+            'is_active' => true,
+            'parent_id' => $parent->id,
+            'icon_type' => 'preset',
+            'icon' => 'cpu-chip',
+        ])->assertRedirect(route('categories.index'));
+
+        $this->assertDatabaseHas('categories', [
+            'name' => 'Розетки',
+            'parent_id' => $parent->id,
+            'icon' => 'cpu-chip',
+        ]);
+    }
+
+    public function test_store_rejects_preset_icon_outside_the_set(): void
+    {
+        $this->actingAsAdmin();
+
+        $this->post(route('categories.store'), [
+            'name' => 'Тест',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'preset',
+            'icon' => 'definitely-not-a-real-icon',
+        ])->assertSessionHasErrors('icon');
+    }
+
+    public function test_can_create_category_with_uploaded_svg_icon(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $this->post(route('categories.store'), [
+            'name' => 'Сантехника',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'custom',
+            'icon_file' => $this->fakeSvg('plumber.svg'),
+        ])->assertRedirect(route('categories.index'));
+
+        $category = Category::where('name', 'Сантехника')->firstOrFail();
+
+        $this->assertSame('custom', $category->icon_type->value);
+        $this->assertNotNull($category->icon);
+        Storage::disk('public')->assertExists($category->icon);
+    }
+
+    public function test_store_rejects_non_svg_icon_file(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $this->post(route('categories.store'), [
+            'name' => 'Тест',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'custom',
+            'icon_file' => UploadedFile::fake()->create('photo.png', 10, 'image/png'),
+        ])->assertSessionHasErrors('icon_file');
+    }
+
+    public function test_updating_custom_icon_deletes_the_old_file(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $oldPath = $this->fakeSvg('old.svg')->store('category-icons', 'public');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $oldPath,
+        ]);
+        Storage::disk('public')->assertExists($oldPath);
+
+        $this->put(route('categories.update', $category), [
+            'name' => $category->name,
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'custom',
+            'icon_file' => $this->fakeSvg('new.svg'),
+        ])->assertRedirect(route('categories.index'));
+
+        $category->refresh();
+        $this->assertNotSame($oldPath, $category->icon);
+        Storage::disk('public')->assertMissing($oldPath);
+        Storage::disk('public')->assertExists($category->icon);
+    }
+
+    public function test_switching_from_custom_to_preset_deletes_the_file(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $oldPath = $this->fakeSvg()->store('category-icons', 'public');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $oldPath,
+        ]);
+
+        $this->put(route('categories.update', $category), [
+            'name' => $category->name,
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'preset',
+            'icon' => 'wrench',
+        ])->assertRedirect(route('categories.index'));
+
+        $category->refresh();
+        $this->assertSame('preset', $category->icon_type->value);
+        $this->assertSame('wrench', $category->icon);
+        Storage::disk('public')->assertMissing($oldPath);
+    }
+
+    public function test_keeping_custom_icon_on_update_without_reupload(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $path = $this->fakeSvg()->store('category-icons', 'public');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $path,
+        ]);
+
+        // Mirrors the frontend: icon_type stays custom, no file, icon = null.
+        $this->put(route('categories.update', $category), [
+            'name' => 'Обновлённое',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'custom',
+            'icon' => null,
+        ])->assertRedirect(route('categories.index'));
+
+        $category->refresh();
+        $this->assertSame('custom', $category->icon_type->value);
+        $this->assertSame($path, $category->icon);
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_can_clear_category_icon(): void
+    {
+        $this->actingAsAdmin();
+        $category = Category::factory()->withPresetIcon('home')->create();
+
+        $this->put(route('categories.update', $category), [
+            'name' => $category->name,
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => null,
+        ])->assertRedirect(route('categories.index'));
+
+        $category->refresh();
+        $this->assertNull($category->icon_type);
+        $this->assertNull($category->icon);
+    }
+
+    public function test_deleting_category_purges_custom_icon_file(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $path = $this->fakeSvg()->store('category-icons', 'public');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $path,
+        ]);
+        Storage::disk('public')->assertExists($path);
+
+        $this->delete(route('categories.destroy', $category))
+            ->assertRedirect(route('categories.index'));
+
+        Storage::disk('public')->assertMissing($path);
     }
 }

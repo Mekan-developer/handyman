@@ -25,6 +25,23 @@ class CategoryRepository
             ->get(['id', 'name']);
     }
 
+    /**
+     * Active categories whose name matches the search term — used by the client
+     * app's service search input. Matches are ordered by name with the parent
+     * eager-loaded so the app can show the service's group.
+     */
+    public function searchActive(string $term, int $limit = 20): Collection
+    {
+        $escaped = addcslashes($term, '%_\\');
+
+        return Category::where('is_active', true)
+            ->where('name', 'like', "%{$escaped}%")
+            ->with(['parent:id,name'])
+            ->orderBy('name')
+            ->limit($limit)
+            ->get();
+    }
+
     public function findOrFail(int $id): Category
     {
         return Category::findOrFail($id);

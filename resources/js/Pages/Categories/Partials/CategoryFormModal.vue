@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
+import IconPicker from '@/Components/IconPicker.vue'
 
 const { t } = useI18n()
 
@@ -10,7 +11,10 @@ const props = defineProps({
     form: { type: Object, required: true },
     editing: { type: Object, default: null },
     parentCategories: { type: Array, default: () => [] },
+    iconGroups: { type: Object, default: () => ({}) },
 })
+
+const existingIconUrl = computed(() => props.editing?.icon_url ?? null)
 
 const emit = defineEmits(['close', 'submit'])
 
@@ -185,6 +189,21 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                         </svg>
                         {{ form.errors.name }}
+                    </p>
+                </div>
+
+                <!-- Иконка -->
+                <div>
+                    <IconPicker
+                        :form="form"
+                        :icon-groups="iconGroups"
+                        :existing-icon-url="existingIconUrl"
+                    />
+                    <p v-if="form.errors.icon || form.errors.icon_file" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        {{ form.errors.icon || form.errors.icon_file }}
                     </p>
                 </div>
 
