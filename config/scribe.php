@@ -80,7 +80,9 @@ return [
         'assets_directory' => null,
 
         // Middleware to attach to the docs endpoint (if `add_routes` is true).
-        'middleware' => [],
+        // In production the docs are gated behind an authenticated admin user
+        // (web session); in local/dev they stay open. See ProtectScribeDocs.
+        'middleware' => ['web', \App\Http\Middleware\ProtectScribeDocs::class],
     ],
 
     'external' => [
