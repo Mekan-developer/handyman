@@ -19,6 +19,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Authentication Guards
+    |--------------------------------------------------------------------------
+    |
+    | Defines which guards Broadcast::auth() checks when authenticating private
+    | channel subscriptions. The web guard covers admin session; sanctum covers
+    | mobile clients and masters authenticating via Bearer tokens.
+    |
+    */
+
+    'guard' => ['web', 'sanctum'],
+
+    /*
+    |--------------------------------------------------------------------------
     | Broadcast Connections
     |--------------------------------------------------------------------------
     |

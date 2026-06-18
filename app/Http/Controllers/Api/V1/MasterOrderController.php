@@ -22,7 +22,7 @@ class MasterOrderController extends Controller
         /** @var Master $master */
         $master = $request->user();
 
-        $orders = $this->repository->forMaster($master, $request->query('filter', 'active'));
+        $orders = $this->repository->forMaster($master, $request->query('filter'));
 
         return MasterOrderResource::collection($orders);
     }
