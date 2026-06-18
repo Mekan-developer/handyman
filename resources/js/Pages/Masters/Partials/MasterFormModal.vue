@@ -1,20 +1,26 @@
 <script setup>
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
+import OblastCitySelect from '@/Components/OblastCitySelect.vue'
 
 const { t } = useI18n()
 
-defineProps({
+const props = defineProps({
     show: { type: Boolean, required: true },
     form: { type: Object, required: true },
     editing: { type: Object, default: null },
-    cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
     categories: { type: Array, default: () => [] },
     paymentModels: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['close', 'submit'])
+
+const showPercent = computed(() => ['percentage', 'salary_percentage'].includes(props.form.payment_model))
+const showFixed = computed(() => props.form.payment_model === 'fixed_per_job')
+const showSalary = computed(() => ['salary', 'salary_percentage'].includes(props.form.payment_model))
 
 const inputBase = 'w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:bg-white focus:outline-none focus:ring-4 dark:bg-slate-700/50 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-700 transition-all'
 const inputNormal = 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-600 dark:focus:border-blue-500'
@@ -82,20 +88,14 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                     </div>
                 </div>
 
-                <!-- City -->
+                <!-- Oblast → City (cascading) -->
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                        {{ t('masters.city') }} <span class="text-red-400">*</span>
-                    </label>
-                    <select
+                    <OblastCitySelect
                         v-model="form.city_id"
-                        :class="[inputBase, form.errors.city_id ? inputError : inputNormal]"
-                    >
-                        <option :value="null" disabled>{{ t('masters.city_placeholder') }}</option>
-                        <option v-for="city in cities" :key="city.id" :value="city.id">
-                            {{ city.name }}
-                        </option>
-                    </select>
+                        :oblasts="oblasts"
+                        :has-error="!!form.errors.city_id"
+                        required
+                    />
                     <p v-if="form.errors.city_id" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                         <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
@@ -104,40 +104,96 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                     </p>
                 </div>
 
-                <!-- Payment model + value row -->
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
+                <!-- Payment model -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        {{ t('masters.payment_model') }} <span class="text-red-400">*</span>
+                    </label>
+                    <select
+                        v-model="form.payment_model"
+                        :class="[inputBase, form.errors.payment_model ? inputError : inputNormal]"
+                    >
+                        <option :value="null" disabled>—</option>
+                        <option v-for="pm in paymentModels" :key="pm.value" :value="pm.value">
+                            {{ pm.label }}
+                        </option>
+                    </select>
+                    <p v-if="form.errors.payment_model" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        {{ form.errors.payment_model }}
+                    </p>
+                </div>
+
+                <!-- Payment values — dynamic by model -->
+                <div v-if="showPercent || showFixed || showSalary" class="grid gap-4" :class="(showSalary && showPercent) ? 'grid-cols-2' : 'grid-cols-1'">
+                    <!-- Monthly salary (Salary / Salary+Percentage) -->
+                    <div v-if="showSalary">
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                            {{ t('masters.payment_model') }} <span class="text-red-400">*</span>
+                            {{ t('masters.monthly_salary') }} <span class="text-red-400">*</span>
                         </label>
-                        <select
-                            v-model="form.payment_model"
-                            :class="[inputBase, form.errors.payment_model ? inputError : inputNormal]"
-                        >
-                            <option :value="null" disabled>—</option>
-                            <option v-for="pm in paymentModels" :key="pm.value" :value="pm.value">
-                                {{ pm.label }}
-                            </option>
-                        </select>
-                        <p v-if="form.errors.payment_model" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <div class="relative">
+                            <input
+                                v-model="form.monthly_salary"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                :class="[inputBase, 'pr-16', form.errors.monthly_salary ? inputError : inputNormal]"
+                            />
+                            <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-gray-400 dark:text-slate-500">
+                                {{ t('masters.unit_manat') }}
+                            </span>
+                        </div>
+                        <p v-if="form.errors.monthly_salary" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                             </svg>
-                            {{ form.errors.payment_model }}
+                            {{ form.errors.monthly_salary }}
                         </p>
                     </div>
 
-                    <div>
+                    <!-- Percent (Percentage / Salary+Percentage) -->
+                    <div v-if="showPercent">
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                            {{ t('masters.payment_value') }} <span class="text-red-400">*</span>
+                            {{ t('masters.payment_percent') }} <span class="text-red-400">*</span>
                         </label>
-                        <input
-                            v-model="form.payment_value"
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            :class="[inputBase, form.errors.payment_value ? inputError : inputNormal]"
-                        />
+                        <div class="relative">
+                            <input
+                                v-model="form.payment_value"
+                                type="number"
+                                min="0"
+                                max="100"
+                                step="0.01"
+                                :class="[inputBase, 'pr-10', form.errors.payment_value ? inputError : inputNormal]"
+                            />
+                            <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-gray-400 dark:text-slate-500">%</span>
+                        </div>
+                        <p v-if="form.errors.payment_value" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                            {{ form.errors.payment_value }}
+                        </p>
+                    </div>
+
+                    <!-- Fixed per job -->
+                    <div v-if="showFixed">
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                            {{ t('masters.payment_fixed') }} <span class="text-red-400">*</span>
+                        </label>
+                        <div class="relative">
+                            <input
+                                v-model="form.payment_value"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                :class="[inputBase, 'pr-16', form.errors.payment_value ? inputError : inputNormal]"
+                            />
+                            <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-gray-400 dark:text-slate-500">
+                                {{ t('masters.unit_manat') }}
+                            </span>
+                        </div>
                         <p v-if="form.errors.payment_value" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />

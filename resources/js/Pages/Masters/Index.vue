@@ -11,7 +11,7 @@ const { t } = useI18n()
 
 const props = defineProps({
     masters: Object,
-    cities: Array,
+    oblasts: Array,
     categories: Array,
     paymentModels: Array,
 })
@@ -26,6 +26,7 @@ const form = useForm({
     phone: '',
     payment_model: null,
     payment_value: 0,
+    monthly_salary: 0,
     access_expires_at: '',
     is_active: true,
     category_ids: [],
@@ -45,6 +46,7 @@ function openEdit(master) {
     form.phone = master.phone
     form.payment_model = master.payment_model
     form.payment_value = master.payment_value
+    form.monthly_salary = master.monthly_salary
     form.access_expires_at = master.access_expires_at
         ? master.access_expires_at.replace(' ', 'T').slice(0, 16)
         : ''
@@ -294,7 +296,7 @@ const masterList = computed(() => props.masters?.data ?? [])
             :show="showModal"
             :form="form"
             :editing="editingMaster"
-            :cities="cities"
+            :oblasts="oblasts"
             :categories="categories"
             :payment-models="paymentModels"
             @close="closeModal"

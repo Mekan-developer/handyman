@@ -2,6 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
+import OblastCitySelect from '@/Components/OblastCitySelect.vue'
 
 const { t } = useI18n()
 
@@ -9,7 +10,7 @@ defineProps({
     show: { type: Boolean, required: true },
     form: { type: Object, required: true },
     editing: { type: Object, default: null },
-    cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['close', 'submit'])
@@ -64,21 +65,14 @@ const emit = defineEmits(['close', 'submit'])
                     <p v-if="form.errors.phone" class="mt-1.5 text-xs text-red-500">{{ form.errors.phone }}</p>
                 </div>
 
-                <!-- City -->
+                <!-- Oblast → City (cascading) -->
                 <div>
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                        {{ t('clients.fields.city') }} <span class="text-red-400">*</span>
-                    </label>
-                    <select
+                    <OblastCitySelect
                         v-model="form.city_id"
-                        :class="form.errors.city_id
-                            ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20 dark:border-red-500'
-                            : 'border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-slate-600 dark:focus:border-blue-500'"
-                        class="w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 shadow-sm focus:bg-white focus:outline-none focus:ring-4 dark:bg-slate-700/50 dark:text-white dark:focus:bg-slate-700 transition-all"
-                    >
-                        <option :value="null" disabled>{{ t('clients.select_city') }}</option>
-                        <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
-                    </select>
+                        :oblasts="oblasts"
+                        :has-error="!!form.errors.city_id"
+                        required
+                    />
                     <p v-if="form.errors.city_id" class="mt-1.5 text-xs text-red-500">{{ form.errors.city_id }}</p>
                 </div>
             </div>

@@ -10,7 +10,6 @@ use App\Http\Requests\StoreClientRequest;
 use App\Http\Requests\UpdateClientRequest;
 use App\Http\Resources\ClientResource;
 use App\Http\Traits\WithNotification;
-use App\Repositories\CityRepository;
 use App\Repositories\ClientRepository;
 use App\Repositories\OblastRepository;
 use Illuminate\Http\RedirectResponse;
@@ -30,7 +29,6 @@ class ClientController extends Controller
 
         return Inertia::render('Clients/Index', [
             'clients' => ClientResource::collection($this->repository->paginate(20, $filters)),
-            'cities' => app(CityRepository::class)->paginate(100)->items(),
             'oblasts' => app(OblastRepository::class)->allWithCities(),
             'filters' => $filters,
         ]);

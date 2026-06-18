@@ -12,7 +12,6 @@ const { t } = useI18n()
 
 const props = defineProps({
     clients: { type: Object, default: null },
-    cities: { type: Array, default: () => [] },
     oblasts: { type: Array, default: () => [] },
     filters: { type: Object, default: () => ({}) },
 })
@@ -317,7 +316,7 @@ const clientList = computed(() => props.clients?.data ?? [])
             :show="showModal"
             :form="form"
             :editing="editingClient"
-            :cities="cities"
+            :oblasts="oblasts"
             @close="closeModal"
             @submit="submit"
         />
