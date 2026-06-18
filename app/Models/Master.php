@@ -24,6 +24,7 @@ class Master extends Authenticatable
         'phone',
         'payment_model',
         'payment_value',
+        'monthly_salary',
         'balance',
         'access_expires_at',
         'is_active',
@@ -36,6 +37,7 @@ class Master extends Authenticatable
         return [
             'payment_model' => PaymentModel::class,
             'payment_value' => 'decimal:2',
+            'monthly_salary' => 'decimal:2',
             'balance' => 'decimal:2',
             'access_expires_at' => 'datetime',
             'is_active' => 'boolean',

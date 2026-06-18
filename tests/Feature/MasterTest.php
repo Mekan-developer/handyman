@@ -180,6 +180,79 @@ class MasterTest extends TestCase
             ->assertSessionHasErrors('payment_model');
     }
 
+    // ── Payment models ────────────────────────────────────────────────────────
+
+    public function test_creating_salary_percentage_master_stores_both_values(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+
+        $payload = array_merge($this->validPayload($city), [
+            'payment_model' => PaymentModel::SalaryPercentage->value,
+            'payment_value' => 35,
+            'monthly_salary' => 1500,
+        ]);
+
+        $this->post(route('masters.store'), $payload)->assertRedirect();
+
+        $this->assertDatabaseHas('masters', [
+            'phone' => '+99362123456',
+            'payment_model' => PaymentModel::SalaryPercentage->value,
+            'payment_value' => 35,
+            'monthly_salary' => 1500,
+        ]);
+    }
+
+    public function test_salary_percentage_requires_monthly_salary(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+
+        $payload = array_merge($this->validPayload($city), [
+            'payment_model' => PaymentModel::SalaryPercentage->value,
+            'payment_value' => 35,
+            'monthly_salary' => null,
+        ]);
+
+        $this->post(route('masters.store'), $payload)
+            ->assertSessionHasErrors('monthly_salary');
+    }
+
+    public function test_percentage_cannot_exceed_100(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+
+        $payload = array_merge($this->validPayload($city), [
+            'payment_model' => PaymentModel::Percentage->value,
+            'payment_value' => 150,
+        ]);
+
+        $this->post(route('masters.store'), $payload)
+            ->assertSessionHasErrors('payment_value');
+    }
+
+    public function test_salary_requires_monthly_salary_but_not_payment_value(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+
+        $payload = array_merge($this->validPayload($city), [
+            'payment_model' => PaymentModel::Salary->value,
+            'payment_value' => null,
+            'monthly_salary' => 1500,
+        ]);
+
+        $this->post(route('masters.store'), $payload)->assertRedirect();
+
+        $this->assertDatabaseHas('masters', [
+            'phone' => '+99362123456',
+            'payment_model' => PaymentModel::Salary->value,
+            'monthly_salary' => 1500,
+            'payment_value' => 0,
+        ]);
+    }
+
     // ── Update ────────────────────────────────────────────────────────────────
 
     public function test_user_can_update_a_master(): void

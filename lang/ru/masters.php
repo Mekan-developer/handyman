@@ -16,6 +16,13 @@ return [
     'categories_placeholder' => 'Выберите категории',
     'payment_model' => 'Модель оплаты',
     'payment_value' => 'Значение оплаты',
+    'payment_percent' => 'Процент (%)',
+    'payment_fixed' => 'Сумма за работу (манат)',
+    'monthly_salary' => 'Оклад в месяц (манат)',
+    'unit_manat' => 'манат',
+    'errors' => [
+        'percent_max' => 'Процент не может превышать 100',
+    ],
     'balance' => 'Баланс',
     'access_expires_at' => 'Доступ до',
     'status' => 'Статус',

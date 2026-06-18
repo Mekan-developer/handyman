@@ -25,6 +25,7 @@ class MasterResource extends JsonResource
             ]),
             'payment_model' => $this->payment_model->value,
             'payment_value' => $this->payment_value,
+            'monthly_salary' => $this->monthly_salary,
             'balance' => $this->balance,
             'access_expires_at' => $this->access_expires_at?->toDateTimeString(),
             'is_active' => $this->is_active,

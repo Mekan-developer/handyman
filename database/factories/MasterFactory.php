@@ -23,11 +23,39 @@ class MasterFactory extends Factory
             'phone' => fake()->unique()->numerify('+99362#######'),
             'payment_model' => PaymentModel::Percentage,
             'payment_value' => fake()->randomFloat(2, 5, 50),
+            'monthly_salary' => 0,
             'balance' => 0,
             'access_expires_at' => now()->addDays(30),
             'is_active' => true,
             'photo' => null,
         ];
+    }
+
+    public function fixedPerJob(): static
+    {
+        return $this->state([
+            'payment_model' => PaymentModel::FixedPerJob,
+            'payment_value' => 200,
+            'monthly_salary' => 0,
+        ]);
+    }
+
+    public function salary(): static
+    {
+        return $this->state([
+            'payment_model' => PaymentModel::Salary,
+            'payment_value' => 0,
+            'monthly_salary' => 1500,
+        ]);
+    }
+
+    public function salaryPercentage(): static
+    {
+        return $this->state([
+            'payment_model' => PaymentModel::SalaryPercentage,
+            'payment_value' => 35,
+            'monthly_salary' => 1500,
+        ]);
     }
 
     public function inactive(): static

@@ -16,6 +16,13 @@ return [
     'categories_placeholder' => 'Kategoriyalary saýlaň',
     'payment_model' => 'Töleg modeli',
     'payment_value' => 'Töleg bahasy',
+    'payment_percent' => 'Göterim (%)',
+    'payment_fixed' => 'Iş üçin pul mukdary (manat)',
+    'monthly_salary' => 'Aýlyk zähmet haky (manat)',
+    'unit_manat' => 'manat',
+    'errors' => [
+        'percent_max' => 'Göterim 100-den köp bolup bilmez',
+    ],
     'balance' => 'Balans',
     'access_expires_at' => 'Girişiň möhleti',
     'status' => 'Ýagdaý',
