@@ -45,7 +45,7 @@ class OrderRepository
             ->findOrFail($orderId);
     }
 
-    public function forMaster(Master $master, string $filter = 'active'): LengthAwarePaginator
+    public function forMaster(Master $master, ?string $filter = null): LengthAwarePaginator
     {
         return Order::with(['category'])
             ->where('master_id', $master->id)
@@ -58,7 +58,7 @@ class OrderRepository
 
     public function findForMasterOrFail(int $orderId, Master $master): Order
     {
-        return Order::with(['category', 'photos', 'tasks'])
+        return Order::with(['category', 'photos', 'tasks.beforePhotos', 'tasks.afterPhotos'])
             ->where('master_id', $master->id)
             ->findOrFail($orderId);
     }
@@ -70,7 +70,8 @@ class OrderRepository
             'category',
             'master.latestLocation',
             'photos',
-            'tasks',
+            'tasks.beforePhotos',
+            'tasks.afterPhotos',
         ])->findOrFail($id);
     }
 
