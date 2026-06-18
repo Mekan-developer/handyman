@@ -74,9 +74,34 @@ class MasterRepository
         $master->increment('balance', $amount);
     }
 
+    public function decrementBalance(Master $master, float $amount): void
+    {
+        $master->decrement('balance', $amount);
+    }
+
     public function resetBalance(Master $master): void
     {
         $master->update(['balance' => 0]);
+    }
+
+    /** Masters with a positive outstanding balance — awaiting payout. */
+    public function withOutstandingBalance(): Collection
+    {
+        return Master::with('city')
+            ->where('balance', '>', 0)
+            ->orderByDesc('balance')
+            ->get();
+    }
+
+    /** Sum of all outstanding (not yet paid out) master balances. */
+    public function totalOutstandingBalance(): float
+    {
+        return (float) Master::where('balance', '>', 0)->sum('balance');
+    }
+
+    public function countWithOutstandingBalance(): int
+    {
+        return Master::where('balance', '>', 0)->count();
     }
 
     /** Active masters in given city, optionally filtered by category — for order assignment dropdown. */

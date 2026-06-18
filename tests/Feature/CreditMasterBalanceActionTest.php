@@ -82,6 +82,17 @@ class CreditMasterBalanceActionTest extends TestCase
         $this->assertEqualsWithDelta(100.0, $master->fresh()->balance, 0.01);
     }
 
+    public function test_salary_percentage_ignores_monthly_salary_in_per_order_credit(): void
+    {
+        $master = $this->makeMaster(PaymentModel::SalaryPercentage, 35.0);
+        $master->update(['monthly_salary' => 1500.0]);
+        $order = $this->makeOrder($master, finalPrice: 1000.0);
+
+        app(CreditMasterBalanceAction::class)->handle($order->load('master'));
+
+        $this->assertEqualsWithDelta(350.0, $master->fresh()->balance, 0.01);
+    }
+
     public function test_percentage_with_null_final_price_credits_nothing(): void
     {
         $master = $this->makeMaster(PaymentModel::Percentage, 35.0);

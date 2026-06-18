@@ -4,16 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Actions\CreateMasterAction;
 use App\Actions\DeleteMasterAction;
-use App\Actions\ResetMasterBalanceAction;
+use App\Actions\RecordMasterPayoutAction;
 use App\Actions\UpdateMasterAction;
+use App\Exceptions\PaymentException;
 use App\Http\Requests\StoreMasterRequest;
 use App\Http\Requests\UpdateMasterRequest;
 use App\Http\Resources\MasterResource;
 use App\Http\Traits\WithNotification;
 use App\PaymentModel;
 use App\Repositories\CategoryRepository;
-use App\Repositories\CityRepository;
 use App\Repositories\MasterRepository;
+use App\Repositories\OblastRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -29,7 +30,7 @@ class MasterController extends Controller
     {
         return Inertia::render('Masters/Index', [
             'masters' => MasterResource::collection($this->repository->paginate()),
-            'cities' => app(CityRepository::class)->paginate(100)->items(),
+            'oblasts' => app(OblastRepository::class)->allWithCities(),
             'categories' => app(CategoryRepository::class)->paginate(100)->items(),
             'paymentModels' => collect(PaymentModel::cases())->map(fn ($m) => [
                 'value' => $m->value,
@@ -84,11 +85,16 @@ class MasterController extends Controller
         return redirect()->route('masters.index');
     }
 
-    public function resetBalance(int $id, ResetMasterBalanceAction $action): RedirectResponse
+    public function resetBalance(int $id, RecordMasterPayoutAction $action): RedirectResponse
     {
         $master = $this->repository->findOrFail($id);
-        $action->handle($master);
-        $this->notifySuccess('masters.notifications.balance_reset');
+
+        try {
+            $action->handle($master, request()->user());
+            $this->notifySuccess('masters.notifications.balance_reset');
+        } catch (PaymentException $e) {
+            $this->notifyError($e->getMessage());
+        }
 
         return redirect()->route('masters.index');
     }
