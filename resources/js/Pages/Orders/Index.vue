@@ -12,12 +12,15 @@ const { t } = useI18n()
 
 const props = defineProps({
     orders: Object,
-    cities: Array,
+    oblasts: { type: Array, default: () => [] },
     categories: Array,
     clients: Array,
     statuses: Array,
     filters: Object,
 })
+
+// Плоский список городов для фильтра
+const allCities = computed(() => props.oblasts.flatMap((o) => o.cities ?? []))
 
 const showCreate = ref(false)
 
@@ -124,7 +127,7 @@ function confirmDelete() {
                     class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                 >
                     <option value="">{{ t('orders.filters.all_cities') }}</option>
-                    <option v-for="c in cities" :key="c.id" :value="c.id">{{ c.name }}</option>
+                    <option v-for="c in allCities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
 
                 <!-- Date range -->
@@ -253,7 +256,7 @@ function confirmDelete() {
 
         <CreateOrderModal
             :show="showCreate"
-            :cities="cities"
+            :oblasts="oblasts"
             :categories="categories"
             :clients="clients"
             @close="showCreate = false"

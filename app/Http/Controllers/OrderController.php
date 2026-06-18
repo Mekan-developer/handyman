@@ -16,11 +16,12 @@ use App\Http\Requests\UpdateOrderRequest;
 use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Http\Resources\OrderResource;
 use App\Http\Traits\WithNotification;
+use App\Models\MasterLocation;
 use App\OrderStatus;
 use App\Repositories\CategoryRepository;
-use App\Repositories\CityRepository;
 use App\Repositories\ClientRepository;
 use App\Repositories\MasterRepository;
+use App\Repositories\OblastRepository;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -43,7 +44,7 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Index', [
             'orders' => OrderResource::collection($this->repository->paginate($filters)),
-            'cities' => app(CityRepository::class)->paginate(100)->items(),
+            'oblasts' => app(OblastRepository::class)->allWithCities(),
             'categories' => app(CategoryRepository::class)->roots(),
             'clients' => app(ClientRepository::class)->allForSelect(),
             'statuses' => collect(OrderStatus::cases())->map(fn ($s) => [
@@ -60,23 +61,27 @@ class OrderController extends Controller
         $order = $this->repository->findOrFail($id);
 
         $isPending = $order->status === OrderStatus::Pending;
+        $isAssignable = ! in_array($order->status, [OrderStatus::Completed, OrderStatus::Cancelled]);
 
         return Inertia::render('Orders/Show', [
             'order' => (new OrderResource($order))->resolve(),
-            'cities' => $isPending ? app(CityRepository::class)->all()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]) : [],
+            'oblasts' => $isPending ? app(OblastRepository::class)->allWithCities() : collect(),
             'categories' => $isPending ? app(CategoryRepository::class)->roots()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]) : [],
-            'eligibleMasters' => $this->masterRepository
-                ->eligibleForOrder($order->city_id, $order->category_id)
-                ->map(fn ($m) => [
-                    'id' => $m->id,
-                    'name' => $m->name,
-                    'phone' => $m->phone,
-                    'categories' => $m->categories->pluck('name'),
-                    'latest_location' => $m->latestLocation ? [
-                        'latitude' => $m->latestLocation->latitude,
-                        'longitude' => $m->latestLocation->longitude,
-                    ] : null,
-                ]),
+            'eligibleMasters' => $isAssignable
+                ? $this->masterRepository
+                    ->eligibleForOrder($order->city_id, $order->category_id)
+                    ->filter(fn ($m) => $m->id !== $order->master_id)
+                    ->map(fn ($m) => [
+                        'id' => $m->id,
+                        'name' => $m->name,
+                        'phone' => $m->phone,
+                        'categories' => $m->categories->pluck('name'),
+                        'latest_location' => $m->latestLocation ? [
+                            'latitude' => $m->latestLocation->latitude,
+                            'longitude' => $m->latestLocation->longitude,
+                        ] : null,
+                    ])
+                : collect(),
             'statuses' => collect(OrderStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
                 'label' => $s->label(),
@@ -155,8 +160,17 @@ class OrderController extends Controller
         $newStatus = OrderStatus::from($data['status']);
 
         try {
-            $action->handle($order, $newStatus, $data['cancel_reason'] ?? null);
-            $this->notifySuccess('orders.notifications.status_updated');
+            $updated = $action->handle($order, $newStatus, $data['cancel_reason'] ?? null);
+            $updated->loadMissing('master');
+
+            if ($newStatus === OrderStatus::Completed
+                && $updated->master !== null
+                && $updated->master->payment_model->requiresFinalPrice()
+                && $updated->final_price === null) {
+                $this->notifyWarning('orders.notifications.completed_without_price');
+            } else {
+                $this->notifySuccess('orders.notifications.status_updated');
+            }
         } catch (OrderException $e) {
             $this->notifyError($e->getMessage());
         }
@@ -168,7 +182,23 @@ class OrderController extends Controller
     {
         $order = $this->repository->findOrFail($id);
 
-        $points = $order->masterLocations()
+        if (! $order->master_id) {
+            return response()->json(['points' => []]);
+        }
+
+        // Bounding box ~33 km around the client location to filter noise from unrelated simulate runs
+        $lat = (float) $order->client_lat;
+        $lng = (float) $order->client_lng;
+        $delta = 0.3; // ~33 km
+
+        $points = MasterLocation::where('master_id', $order->master_id)
+            ->whereBetween('latitude', [$lat - $delta, $lat + $delta])
+            ->whereBetween('longitude', [$lng - $delta, $lng + $delta])
+            ->when($order->assigned_at, fn ($q) => $q->where('recorded_at', '>=', $order->assigned_at))
+            ->when(
+                $order->completed_at ?? $order->cancelled_at,
+                fn ($q) => $q->where('recorded_at', '<=', $order->completed_at ?? $order->cancelled_at)
+            )
             ->orderBy('recorded_at')
             ->get(['latitude', 'longitude', 'recorded_at']);
 

@@ -35,7 +35,8 @@ return [
         'cancel_reason' => 'Причина отмены',
         'photos' => 'Фото проблемы',
         'tasks' => 'Выполненные задачи',
-        'location' => 'Местоположение',
+        'before' => 'До',
+        'after' => 'После',
     ],
 
     'actions' => [
@@ -84,6 +85,7 @@ return [
         'status_title' => 'Изменить статус заявки',
         'cancel_reason' => 'Причина отмены',
         'no_eligible_masters' => 'Нет доступных мастеров для этого города и категории',
+        'complete_no_price_warning' => 'Финальная цена не указана. Мастеру с процентной оплатой начислится 0. Укажите цену для корректного расчёта.',
     ],
 
     'create' => [
@@ -93,6 +95,9 @@ return [
         'new_client_hint' => 'Клиента нет в базе — будет создан новый',
         'selected_client' => 'Выбран существующий клиент',
         'deselect' => 'Сбросить',
+        'new_client' => 'Новый клиент',
+        'create_named' => 'Создать «:name»',
+        'back_to_search' => 'Найти существующего клиента',
         'pick_location' => 'Кликните по карте, чтобы указать местоположение',
         'clear_location' => 'Очистить',
         'my_location' => 'Центрировать по моему местоположению',
@@ -104,6 +109,7 @@ return [
         'master_assigned' => 'Мастер успешно назначен',
         'price_set' => 'Стоимость установлена',
         'status_updated' => 'Статус обновлён',
+        'completed_without_price' => 'Заявка завершена, но финальная цена не указана — мастеру начислено 0',
         'new_order' => 'Новая заявка от :client — :category',
         'master_assigned_broadcast' => 'Заявка :order: назначен мастер :master',
         'status_changed_broadcast' => 'Заявка :order: статус — :status',

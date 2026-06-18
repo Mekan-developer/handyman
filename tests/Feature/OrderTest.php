@@ -344,6 +344,46 @@ class OrderTest extends TestCase
         $this->assertNotNull($order->fresh()->completed_at);
     }
 
+    public function test_completing_percentage_order_without_price_credits_zero_and_warns(): void
+    {
+        $this->actingAsAdmin();
+        $master = Master::factory()->create(['payment_value' => 35, 'balance' => 0]);
+        $order = Order::factory()->forMaster($master)->inProgress()->create(['final_price' => null]);
+
+        $this->post(route('orders.update-status', $order), ['status' => 'completed'])
+            ->assertRedirect()
+            ->assertSessionHas('notification', fn ($notification) => $notification['type'] === 'warning');
+
+        $this->assertEquals('completed', $order->fresh()->status->value);
+        $this->assertEqualsWithDelta(0.0, (float) $master->fresh()->balance, 0.01);
+    }
+
+    public function test_completing_percentage_order_with_price_credits_master(): void
+    {
+        $this->actingAsAdmin();
+        $master = Master::factory()->create(['payment_value' => 35, 'balance' => 0]);
+        $order = Order::factory()->forMaster($master)->inProgress()->create(['final_price' => 1000]);
+
+        $this->post(route('orders.update-status', $order), ['status' => 'completed'])
+            ->assertRedirect()
+            ->assertSessionHas('notification', fn ($notification) => $notification['type'] === 'success');
+
+        $this->assertEqualsWithDelta(350.0, (float) $master->fresh()->balance, 0.01);
+    }
+
+    public function test_completing_fixed_per_job_order_without_price_credits_fixed(): void
+    {
+        $this->actingAsAdmin();
+        $master = Master::factory()->fixedPerJob()->create(['balance' => 0]);
+        $order = Order::factory()->forMaster($master)->inProgress()->create(['final_price' => null]);
+
+        $this->post(route('orders.update-status', $order), ['status' => 'completed'])
+            ->assertRedirect()
+            ->assertSessionHas('notification', fn ($notification) => $notification['type'] === 'success');
+
+        $this->assertEqualsWithDelta(200.0, (float) $master->fresh()->balance, 0.01);
+    }
+
     public function test_admin_can_cancel_order_with_reason(): void
     {
         $this->actingAsAdmin();

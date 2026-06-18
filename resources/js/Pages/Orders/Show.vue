@@ -18,7 +18,7 @@ const page = usePage()
 
 const props = defineProps({
     order: { type: Object, required: true },
-    cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
     categories: { type: Array, default: () => [] },
     eligibleMasters: { type: Array, default: () => [] },
     statuses: { type: Array, default: () => [] },
@@ -35,8 +35,9 @@ function openLightbox(images, index = 0) {
     lightbox.value = { show: true, images, index }
 }
 
-function taskImages(task) {
-    return [task.before_photo_url, task.after_photo_url].filter(Boolean)
+function taskPhoto(task, type) {
+    const photos = type === 'before' ? task.before_photos : task.after_photos
+    return photos?.[0] ?? null
 }
 
 const MAP_MODES = ['auto', 'light', 'grayscale', 'black'] //'dark', 'white',
@@ -621,17 +622,29 @@ const sortedEligibleMasters = computed(() => {
                                 >
                                     <p class="mb-2 text-xs font-medium text-gray-900 dark:text-slate-200">{{ task.title }}</p>
                                     <div class="grid grid-cols-2 gap-2">
+                                        <!-- Before -->
                                         <div>
-                                            <p class="mb-1 text-xs text-gray-400">Before</p>
-                                            <button v-if="task.before_photo_url" type="button" class="block w-full cursor-zoom-in" @click="openLightbox(taskImages(task), 0)">
-                                                <img :src="task.before_photo_url" class="aspect-square w-full rounded-lg object-cover" />
+                                            <p class="mb-1 text-xs text-gray-400">{{ t('orders.fields.before') }}</p>
+                                            <button
+                                                v-if="taskPhoto(task, 'before')"
+                                                type="button"
+                                                class="block w-full cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-600"
+                                                @click="openLightbox([taskPhoto(task, 'before').url], 0)"
+                                            >
+                                                <img :src="taskPhoto(task, 'before').url" class="aspect-square w-full object-cover" />
                                             </button>
                                             <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
                                         </div>
+                                        <!-- After -->
                                         <div>
-                                            <p class="mb-1 text-xs text-gray-400">After</p>
-                                            <button v-if="task.after_photo_url" type="button" class="block w-full cursor-zoom-in" @click="openLightbox(taskImages(task), taskImages(task).length - 1)">
-                                                <img :src="task.after_photo_url" class="aspect-square w-full rounded-lg object-cover" />
+                                            <p class="mb-1 text-xs text-gray-400">{{ t('orders.fields.after') }}</p>
+                                            <button
+                                                v-if="taskPhoto(task, 'after')"
+                                                type="button"
+                                                class="block w-full cursor-zoom-in overflow-hidden rounded-lg ring-1 ring-gray-200 dark:ring-slate-600"
+                                                @click="openLightbox([taskPhoto(task, 'after').url], 0)"
+                                            >
+                                                <img :src="taskPhoto(task, 'after').url" class="aspect-square w-full object-cover" />
                                             </button>
                                             <div v-else class="aspect-square rounded-lg bg-gray-100 dark:bg-slate-700" />
                                         </div>
@@ -695,7 +708,7 @@ const sortedEligibleMasters = computed(() => {
         <EditOrderModal
             :show="showEditModal"
             :order="order"
-            :cities="cities"
+            :oblasts="oblasts"
             :categories="categories"
             @close="showEditModal = false"
         />
@@ -716,6 +729,8 @@ const sortedEligibleMasters = computed(() => {
             :order-id="order.id"
             :current-status="order.status"
             :statuses="statuses"
+            :final-price="order.final_price"
+            :master-payment-model="order.master?.payment_model"
             @close="showStatusModal = false"
         />
 

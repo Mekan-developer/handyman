@@ -35,7 +35,8 @@ return [
         'cancel_reason' => 'Ýatyrylan sebäbi',
         'photos' => 'Meseläniň suratlary',
         'tasks' => 'Edilen işler',
-        'location' => 'Ýerleşişi',
+        'before' => 'Öň',
+        'after' => 'Soň',
     ],
 
     'actions' => [
@@ -84,6 +85,7 @@ return [
         'status_title' => 'Sargydyň ýagdaýyny üýtget',
         'cancel_reason' => 'Ýatyrylan sebäbi',
         'no_eligible_masters' => 'Bu şäher we kategoriýa üçin elýeterli ussa ýok',
+        'complete_no_price_warning' => 'Jemi baha görkezilmedi. Göterimli tölegli ussa 0 hasaplanar. Dogry hasaplama üçin bahany giriziň.',
     ],
 
     'create' => [
@@ -93,6 +95,9 @@ return [
         'new_client_hint' => 'Müşderi bazada ýok — täzesi dörediler',
         'selected_client' => 'Bar bolan müşderi saýlandy',
         'deselect' => 'Aýyr',
+        'new_client' => 'Täze müşderi',
+        'create_named' => '«:name» döret',
+        'back_to_search' => 'Bar bolan müşderi gözle',
         'pick_location' => 'Ýerleşişi görkezmek üçin kartada basyň',
         'clear_location' => 'Aýyr',
         'my_location' => 'Meniň ýerleşişime gönükdir',
@@ -104,6 +109,7 @@ return [
         'master_assigned' => 'Usta üstünlikli bellenildi',
         'price_set' => 'Baha goýuldy',
         'status_updated' => 'Ýagdaý täzelendi',
+        'completed_without_price' => 'Sargyt tamamlandy, ýöne jemi baha görkezilmedi — ussa 0 hasaplandy',
         'new_order' => ':client müşderisinden täze sargyt — :category',
         'master_assigned_broadcast' => ':order sargydyna usta bellenildi: :master',
         'status_changed_broadcast' => ':order sargydy: ýagdaý — :status',

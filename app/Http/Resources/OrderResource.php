@@ -41,6 +41,7 @@ class OrderResource extends JsonResource
                 'id' => $this->master->id,
                 'name' => $this->master->name,
                 'phone' => $this->master->phone,
+                'payment_model' => $this->master->payment_model->value,
                 'latest_location' => $this->master->relationLoaded('latestLocation') && $this->master->latestLocation ? [
                     'latitude' => $this->master->latestLocation->latitude,
                     'longitude' => $this->master->latestLocation->longitude,
@@ -58,10 +59,12 @@ class OrderResource extends JsonResource
             'tasks' => $this->whenLoaded('tasks', fn () => $this->tasks->map(fn ($t) => [
                 'id' => $t->id,
                 'title' => $t->title,
-                'before_photo_url' => $t->before_photo_path ? asset('storage/'.$t->before_photo_path) : null,
-                'after_photo_url' => $t->after_photo_path ? asset('storage/'.$t->after_photo_path) : null,
-                'before_status' => $t->before_status,
-                'after_status' => $t->after_status,
+                'before_photos' => $t->relationLoaded('beforePhotos')
+                    ? $t->beforePhotos->map(fn ($p) => ['id' => $p->id, 'url' => asset('storage/'.$p->path), 'status' => $p->status])
+                    : [],
+                'after_photos' => $t->relationLoaded('afterPhotos')
+                    ? $t->afterPhotos->map(fn ($p) => ['id' => $p->id, 'url' => asset('storage/'.$p->path), 'status' => $p->status])
+                    : [],
             ])),
 
             'assigned_at' => $this->assigned_at?->toDateTimeString(),

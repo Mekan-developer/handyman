@@ -5,13 +5,14 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import InputError from '@/Components/InputError.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
+import OblastCitySelect from '@/Components/OblastCitySelect.vue'
 
 const { t } = useI18n()
 
 const props = defineProps({
     show: { type: Boolean, required: true },
     order: { type: Object, required: true },
-    cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
     categories: { type: Array, default: () => [] },
 })
 
@@ -75,13 +76,14 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
             <div class="flex-1 overflow-y-auto">
             <div class="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">
 
-                <!-- City -->
+                <!-- City (велаят → город) -->
                 <div class="space-y-1">
-                    <label :class="labelClass">{{ t('orders.fields.city') }}</label>
-                    <select v-model="form.city_id" :class="[inputClass, form.errors.city_id ? errorInputClass : '']">
-                        <option :value="null" disabled>{{ t('orders.modals.select_city') }}</option>
-                        <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
-                    </select>
+                    <OblastCitySelect
+                        v-model="form.city_id"
+                        :oblasts="oblasts"
+                        :has-error="!!form.errors.city_id"
+                        required
+                    />
                     <InputError :message="form.errors.city_id" />
                 </div>
 

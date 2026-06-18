@@ -11,11 +11,19 @@ const props = defineProps({
     orderId: { type: Number, required: true },
     currentStatus: { type: String, required: true },
     statuses: { type: Array, default: () => [] },
+    finalPrice: { type: [Number, String], default: null },
+    masterPaymentModel: { type: String, default: null },
 })
 
 const emit = defineEmits(['close'])
 
 const form = useForm({ status: '', cancel_reason: '' })
+
+const warnNoPrice = computed(() =>
+    form.status === 'completed'
+    && ['percentage', 'salary_percentage'].includes(props.masterPaymentModel)
+    && (props.finalPrice === null || props.finalPrice === '' || Number(props.finalPrice) === 0)
+)
 
 watch(() => props.show, (val) => {
     if (val) {
@@ -85,6 +93,18 @@ function submit() {
                         rows="3"
                         class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
                     />
+                </div>
+
+                <div
+                    v-if="warnNoPrice"
+                    class="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-500/40 dark:bg-amber-500/10"
+                >
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                    </svg>
+                    <p class="text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                        {{ t('orders.modals.complete_no_price_warning') }}
+                    </p>
                 </div>
 
                 <p v-if="form.errors.status" class="text-xs text-red-500">{{ form.errors.status }}</p>

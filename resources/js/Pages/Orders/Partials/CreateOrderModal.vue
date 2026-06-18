@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import InputError from '@/Components/InputError.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
+import OblastCitySelect from '@/Components/OblastCitySelect.vue'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -13,7 +14,7 @@ const page = usePage()
 
 const props = defineProps({
     show: { type: Boolean, required: true },
-    cities: { type: Array, default: () => [] },
+    oblasts: { type: Array, default: () => [] },
     categories: { type: Array, default: () => [] },
     clients: { type: Array, default: () => [] },
 })
@@ -40,6 +41,7 @@ const hasLocation = computed(() => form.client_lat !== '' && form.client_lng !==
 // ── Клиент: поиск / выбор / ручной ввод ───────────────────────────────────────
 const clientSearch = ref('')
 const showClientDropdown = ref(false)
+const clientMode = ref('search') // 'search' | 'new'
 
 const filteredClients = computed(() => {
     const q = clientSearch.value.trim().toLowerCase()
@@ -65,6 +67,22 @@ function selectClient(client) {
 
 function deselectClient() {
     form.client_id = null
+    form.client_name = ''
+    form.client_phone = ''
+    clientMode.value = 'search'
+}
+
+function startNewClient() {
+    form.client_id = null
+    form.client_name = clientSearch.value.trim()
+    form.client_phone = ''
+    clientSearch.value = ''
+    showClientDropdown.value = false
+    clientMode.value = 'new'
+}
+
+function backToSearch() {
+    clientMode.value = 'search'
     form.client_name = ''
     form.client_phone = ''
 }
@@ -190,6 +208,7 @@ watch(() => props.show, async (val) => {
         photoPreviews.value = []
         clientSearch.value = ''
         showClientDropdown.value = false
+        clientMode.value = 'search'
         await nextTick()
         initMap()
     } else {
@@ -234,9 +253,8 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                     <div class="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">
 
                         <!-- Client section -->
-                        <div class="space-y-2 sm:col-span-2">
-                            <label :class="labelClass">{{ t('orders.create.client_section') }}</label>
-
+                        <div class="sm:col-span-2">
+                            <!-- Клиент выбран -->
                             <div
                                 v-if="selectedClient"
                                 class="flex items-center justify-between gap-3 rounded-xl border border-blue-200 bg-blue-50/60 px-4 py-2.5 dark:border-blue-500/40 dark:bg-blue-500/10"
@@ -259,47 +277,70 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                                 </button>
                             </div>
 
-                            <div v-else class="space-y-2">
-                                <div class="relative">
+                            <!-- Режим поиска -->
+                            <div v-else-if="clientMode === 'search'" class="relative">
+                                <div class="flex gap-2">
                                     <input
                                         v-model="clientSearch"
                                         type="text"
                                         :placeholder="t('orders.create.search_client')"
                                         @focus="showClientDropdown = true"
                                         @input="showClientDropdown = true"
-                                        :class="inputClass"
+                                        :class="[inputClass, 'flex-1']"
                                     />
-                                    <div
-                                        v-if="showClientDropdown && clientSearch"
-                                        class="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800"
+                                    <button
+                                        type="button"
+                                        @click="startNewClient"
+                                        class="shrink-0 rounded-xl border border-gray-300 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-600 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-600 dark:bg-slate-700/50 dark:text-slate-300 dark:hover:border-blue-500 dark:hover:text-blue-400 transition-colors"
                                     >
-                                        <button
-                                            v-for="c in filteredClients"
-                                            :key="c.id"
-                                            type="button"
-                                            @click="selectClient(c)"
-                                            class="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-slate-700"
-                                        >
-                                            <span class="text-sm text-gray-900 dark:text-slate-200">{{ c.name || '—' }}</span>
-                                            <span class="text-xs text-gray-500 dark:text-slate-400">{{ c.phone }}</span>
-                                        </button>
-                                        <p v-if="filteredClients.length === 0" class="px-4 py-3 text-sm text-gray-400 dark:text-slate-500">
-                                            {{ t('orders.create.no_clients_found') }}
-                                        </p>
-                                    </div>
+                                        + {{ t('orders.create.new_client') }}
+                                    </button>
                                 </div>
+                                <div
+                                    v-if="showClientDropdown && clientSearch"
+                                    class="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-gray-200 bg-white shadow-lg dark:border-slate-600 dark:bg-slate-800"
+                                >
+                                    <button
+                                        v-for="c in filteredClients"
+                                        :key="c.id"
+                                        type="button"
+                                        @click="selectClient(c)"
+                                        class="flex w-full items-center justify-between gap-2 px-4 py-2.5 text-left hover:bg-blue-50 dark:hover:bg-slate-700"
+                                    >
+                                        <span class="text-sm text-gray-900 dark:text-slate-200">{{ c.name || '—' }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-slate-400">{{ c.phone }}</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="startNewClient"
+                                        class="flex w-full items-center gap-2 border-t border-gray-100 px-4 py-2.5 text-left text-sm text-blue-600 hover:bg-blue-50 dark:border-slate-700 dark:text-blue-400 dark:hover:bg-slate-700"
+                                    >
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                        {{ t('orders.create.create_named', { name: clientSearch }) }}
+                                    </button>
+                                </div>
+                            </div>
 
-                                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                            <!-- Режим нового клиента -->
+                            <div v-else class="space-y-1.5">
+                                <div class="grid grid-cols-2 gap-2">
                                     <div class="space-y-1">
+                                        <label :class="labelClass">
+                                            {{ t('orders.fields.client_name') }} <span class="text-red-400">*</span>
+                                        </label>
                                         <input
                                             v-model="form.client_name"
                                             type="text"
-                                            :placeholder="t('orders.fields.client_name')"
                                             :class="[inputClass, form.errors.client_name ? errorInputClass : '']"
                                         />
                                         <InputError :message="form.errors.client_name" />
                                     </div>
                                     <div class="space-y-1">
+                                        <label :class="labelClass">
+                                            {{ t('orders.fields.client_phone') }} <span class="text-red-400">*</span>
+                                        </label>
                                         <PhoneInput
                                             v-model="form.client_phone"
                                             :has-error="!!form.errors.client_phone"
@@ -308,23 +349,30 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                                         <InputError :message="form.errors.client_phone" />
                                     </div>
                                 </div>
-                                <p class="text-xs text-gray-400 dark:text-slate-500">{{ t('orders.create.new_client_hint') }}</p>
+                                <button
+                                    type="button"
+                                    @click="backToSearch"
+                                    class="text-xs text-blue-500 hover:underline dark:text-blue-400"
+                                >
+                                    ← {{ t('orders.create.back_to_search') }}
+                                </button>
                             </div>
                         </div>
 
-                        <!-- City -->
+                        <!-- City (велаят → город) -->
                         <div class="space-y-1">
-                            <label :class="labelClass">{{ t('orders.fields.city') }}</label>
-                            <select v-model="form.city_id" :class="[inputClass, form.errors.city_id ? errorInputClass : '']">
-                                <option :value="null" disabled>{{ t('orders.modals.select_city') }}</option>
-                                <option v-for="city in cities" :key="city.id" :value="city.id">{{ city.name }}</option>
-                            </select>
+                            <OblastCitySelect
+                                v-model="form.city_id"
+                                :oblasts="oblasts"
+                                :has-error="!!form.errors.city_id"
+                                required
+                            />
                             <InputError :message="form.errors.city_id" />
                         </div>
 
                         <!-- Category -->
                         <div class="space-y-1">
-                            <label :class="labelClass">{{ t('orders.fields.category') }}</label>
+                            <label :class="labelClass">{{ t('orders.fields.category') }} <span class="text-red-400">*</span></label>
                             <select v-model="form.category_id" :class="[inputClass, form.errors.category_id ? errorInputClass : '']">
                                 <option :value="null" disabled>{{ t('orders.modals.select_category') }}</option>
                                 <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
@@ -345,7 +393,7 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
 
                         <!-- Description -->
                         <div class="space-y-1 sm:col-span-2">
-                            <label :class="labelClass">{{ t('orders.fields.description') }}</label>
+                            <label :class="labelClass">{{ t('orders.fields.description') }} <span class="text-red-400">*</span></label>
                             <textarea
                                 v-model="form.description"
                                 rows="3"
@@ -356,7 +404,7 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
 
                         <!-- Map picker -->
                         <div class="space-y-2 sm:col-span-2">
-                            <label :class="labelClass">{{ t('orders.fields.location') }}</label>
+                            <label :class="labelClass">{{ t('orders.fields.location') }} <span class="text-red-400">*</span></label>
 
                             <!-- Map with overlays -->
                             <div class="relative h-80 overflow-hidden rounded-xl border border-gray-300 dark:border-slate-600">
