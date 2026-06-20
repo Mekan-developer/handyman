@@ -172,23 +172,42 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                     </p>
                 </div>
 
-                <!-- Название -->
+                <!-- Название (рус.) -->
                 <div>
                     <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                        {{ t('categories.name') }} <span class="text-red-400">*</span>
+                        {{ t('categories.name_ru') }} <span class="text-red-400">*</span>
                     </label>
                     <input
-                        v-model="form.name"
+                        v-model="form.name_ru"
                         type="text"
-                        :placeholder="t('categories.name_placeholder')"
+                        :placeholder="t('categories.name_ru_placeholder')"
                         autofocus
-                        :class="[inputBase, form.errors.name ? inputError : inputNormal]"
+                        :class="[inputBase, form.errors.name_ru ? inputError : inputNormal]"
                     />
-                    <p v-if="form.errors.name" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                    <p v-if="form.errors.name_ru" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                         <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                         </svg>
-                        {{ form.errors.name }}
+                        {{ form.errors.name_ru }}
+                    </p>
+                </div>
+
+                <!-- Название (туркм.) -->
+                <div>
+                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                        {{ t('categories.name_tk') }} <span class="text-red-400">*</span>
+                    </label>
+                    <input
+                        v-model="form.name_tk"
+                        type="text"
+                        :placeholder="t('categories.name_tk_placeholder')"
+                        :class="[inputBase, form.errors.name_tk ? inputError : inputNormal]"
+                    />
+                    <p v-if="form.errors.name_tk" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        {{ form.errors.name_tk }}
                     </p>
                 </div>
 

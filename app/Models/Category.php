@@ -20,14 +20,15 @@ class Category extends Model
     /** @var array<int, string> */
     protected $fillable = [
         'parent_id',
-        'name',
+        'name_ru',
+        'name_tk',
         'icon_type',
         'icon',
         'is_active',
     ];
 
     /** @var array<int, string> */
-    protected $appends = ['icon_url'];
+    protected $appends = ['icon_url', 'name'];
 
     protected function casts(): array
     {
@@ -36,6 +37,28 @@ class Category extends Model
             'parent_id' => 'integer',
             'icon_type' => CategoryIconType::class,
         ];
+    }
+
+    /**
+     * Localized category name resolved from the current app locale, falling back
+     * to Russian. Lets all existing consumers keep reading `$category->name`.
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::get(fn (): string => $this->localized('name') ?? '');
+    }
+
+    /**
+     * Pick the `{attribute}_{locale}` value for the active locale, falling back
+     * to the Russian variant when the localized one is empty or not loaded.
+     */
+    private function localized(string $attribute): ?string
+    {
+        $locale = app()->getLocale();
+
+        return $this->attributes["{$attribute}_{$locale}"]
+            ?? $this->attributes["{$attribute}_ru"]
+            ?? null;
     }
 
     /**

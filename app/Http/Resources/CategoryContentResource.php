@@ -14,7 +14,11 @@ class CategoryContentResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $this->title,
+            'title_ru' => $this->title_ru,
+            'title_tk' => $this->title_tk,
             'description' => $this->description,
+            'description_ru' => $this->description_ru,
+            'description_tk' => $this->description_tk,
             'price' => $this->price,
             'images' => $this->images->map(fn ($img) => [
                 'id' => $img->id,

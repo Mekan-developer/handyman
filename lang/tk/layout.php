@@ -30,6 +30,7 @@ return [
         'update' => 'Täzelemek',
         'cancel' => 'Ýatyr',
     ],
+    'selected' => 'saýlandy',
     'select' => [
         'oblast' => 'Welaýat saýlaň',
         'city' => 'Şäher saýlaň',
@@ -42,6 +43,9 @@ return [
         'queue' => 'Nobat hyzmaty',
         'reverb' => 'Reverb serwer',
         'websocket' => 'WebSocket müşderi',
+        'queue_short' => 'Nobat',
+        'reverb_short' => 'Reverb',
+        'websocket_short' => 'WS',
         'ok' => 'Işleýär',
         'error' => 'Işlemeýär',
         'checking' => 'Barlanýar...',

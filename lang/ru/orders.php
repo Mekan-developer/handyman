@@ -103,6 +103,7 @@ return [
         'my_location' => 'Центрировать по моему местоположению',
         'add_photos' => 'Добавить фото',
         'photos_hint' => 'До 4 изображений',
+        'category_empty' => 'Нет доступных категорий',
     ],
 
     'notifications' => [

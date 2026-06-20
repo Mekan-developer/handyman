@@ -22,7 +22,7 @@ class StoreMasterRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:20', 'unique:masters,phone'],
             'payment_model' => ['required', Rule::enum(PaymentModel::class)],
-            'payment_value' => ['required_if:payment_model,percentage,fixed_per_job,salary_percentage', 'nullable', 'numeric', 'min:0'],
+            'payment_value' => ['required_if:payment_model,percentage,salary_percentage', 'nullable', 'numeric', 'min:0'],
             'monthly_salary' => ['required_if:payment_model,salary,salary_percentage', 'nullable', 'numeric', 'min:0'],
             'access_expires_at' => ['nullable', 'date', 'after:now'],
             'is_active' => ['required', 'boolean'],
@@ -37,7 +37,7 @@ class StoreMasterRequest extends FormRequest
 
         $merge = [];
 
-        if (! in_array($model, [PaymentModel::Percentage->value, PaymentModel::FixedPerJob->value, PaymentModel::SalaryPercentage->value], true)) {
+        if (! in_array($model, [PaymentModel::Percentage->value, PaymentModel::SalaryPercentage->value], true)) {
             $merge['payment_value'] = $this->input('payment_value') ?? 0;
         }
 

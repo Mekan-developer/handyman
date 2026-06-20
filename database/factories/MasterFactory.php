@@ -31,15 +31,6 @@ class MasterFactory extends Factory
         ];
     }
 
-    public function fixedPerJob(): static
-    {
-        return $this->state([
-            'payment_model' => PaymentModel::FixedPerJob,
-            'payment_value' => 200,
-            'monthly_salary' => 0,
-        ]);
-    }
-
     public function salary(): static
     {
         return $this->state([

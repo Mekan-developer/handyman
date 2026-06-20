@@ -51,7 +51,8 @@ class CategoryContentTest extends TestCase
         $root = Category::factory()->create(['parent_id' => null]);
 
         $this->post(route('categories.content.upsert', $root), [
-            'title' => 'Test',
+            'title_ru' => 'Test',
+            'title_tk' => 'Test',
             'images' => [$this->fakeImage()],
         ])->assertStatus(422);
     }
@@ -65,7 +66,7 @@ class CategoryContentTest extends TestCase
 
         $this->post(route('categories.content.upsert', $category), [
             'images' => [$this->fakeImage()],
-        ])->assertSessionHasErrors('title');
+        ])->assertSessionHasErrors(['title_ru', 'title_tk']);
     }
 
     public function test_at_least_one_image_is_required_on_create(): void
@@ -76,7 +77,8 @@ class CategoryContentTest extends TestCase
         $category = $this->subcategory();
 
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Test',
+            'title_ru' => 'Test',
+            'title_tk' => 'Test',
         ])->assertSessionHasErrors('images');
     }
 
@@ -90,16 +92,20 @@ class CategoryContentTest extends TestCase
         $category = $this->subcategory();
 
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Описание услуги',
-            'description' => 'Подробное описание',
+            'title_ru' => 'Описание услуги',
+            'title_tk' => 'Hyzmatyň beýany',
+            'description_ru' => 'Подробное описание',
+            'description_tk' => 'Jikme-jik beýan',
             'price' => 'от 100 TMT',
             'images' => [$this->fakeImage(), $this->fakeImage()],
         ])->assertRedirect(route('categories.index'));
 
         $content = $category->fresh()->content;
         $this->assertNotNull($content);
-        $this->assertSame('Описание услуги', $content->title);
-        $this->assertSame('Подробное описание', $content->description);
+        $this->assertSame('Описание услуги', $content->title_ru);
+        $this->assertSame('Hyzmatyň beýany', $content->title_tk);
+        $this->assertSame('Подробное описание', $content->description_ru);
+        $this->assertSame('Jikme-jik beýan', $content->description_tk);
         $this->assertSame('от 100 TMT', $content->price);
         $this->assertCount(2, $content->images);
     }
@@ -112,12 +118,14 @@ class CategoryContentTest extends TestCase
         $category = $this->subcategory();
 
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Минимальный',
+            'title_ru' => 'Минимальный',
+            'title_tk' => 'Minimal',
             'images' => [$this->fakeImage()],
         ])->assertRedirect(route('categories.index'));
 
         $content = $category->fresh()->content;
-        $this->assertNull($content->description);
+        $this->assertNull($content->description_ru);
+        $this->assertNull($content->description_tk);
         $this->assertNull($content->price);
         $this->assertCount(1, $content->images);
     }
@@ -133,7 +141,8 @@ class CategoryContentTest extends TestCase
 
         // Create initial
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Старый заголовок',
+            'title_ru' => 'Старый заголовок',
+            'title_tk' => 'Köne sözbaşy',
             'images' => [$this->fakeImage()],
         ]);
 
@@ -142,13 +151,14 @@ class CategoryContentTest extends TestCase
 
         // Update: keep existing image, add new, change title
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Новый заголовок',
+            'title_ru' => 'Новый заголовок',
+            'title_tk' => 'Täze sözbaşy',
             'keep_ids' => [$keepId],
             'images' => [$this->fakeImage()],
         ])->assertRedirect(route('categories.index'));
 
         $content->refresh();
-        $this->assertSame('Новый заголовок', $content->title);
+        $this->assertSame('Новый заголовок', $content->title_ru);
         $this->assertCount(2, $content->images);
         $this->assertContains($keepId, $content->images->pluck('id')->all());
     }
@@ -162,7 +172,8 @@ class CategoryContentTest extends TestCase
 
         // Create with 2 images
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Test',
+            'title_ru' => 'Test',
+            'title_tk' => 'Test',
             'images' => [$this->fakeImage(), $this->fakeImage()],
         ]);
 
@@ -171,7 +182,8 @@ class CategoryContentTest extends TestCase
 
         // Update: keep only first image
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Updated',
+            'title_ru' => 'Updated',
+            'title_tk' => 'Updated',
             'keep_ids' => [$ids[0]],
         ])->assertRedirect(route('categories.index'));
 
@@ -190,7 +202,8 @@ class CategoryContentTest extends TestCase
         $category = $this->subcategory();
 
         $this->post(route('categories.content.upsert', $category), [
-            'title' => 'Контент',
+            'title_ru' => 'Контент',
+            'title_tk' => 'Mazmun',
             'images' => [$this->fakeImage()],
         ]);
 

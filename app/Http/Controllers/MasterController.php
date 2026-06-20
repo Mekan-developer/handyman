@@ -31,7 +31,7 @@ class MasterController extends Controller
         return Inertia::render('Masters/Index', [
             'masters' => MasterResource::collection($this->repository->paginate()),
             'oblasts' => app(OblastRepository::class)->allWithCities(),
-            'categories' => app(CategoryRepository::class)->paginate(100)->items(),
+            'categories' => app(CategoryRepository::class)->treeForSelect(),
             'paymentModels' => collect(PaymentModel::cases())->map(fn ($m) => [
                 'value' => $m->value,
                 'label' => $m->label(),

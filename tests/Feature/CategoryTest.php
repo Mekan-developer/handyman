@@ -58,13 +58,15 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Электрика',
+            'name_ru' => 'Электрика',
+            'name_tk' => 'Elektrika',
             'is_active' => true,
             'parent_id' => null,
         ])->assertRedirect(route('categories.index'));
 
         $this->assertDatabaseHas('categories', [
-            'name' => 'Электрика',
+            'name_ru' => 'Электрика',
+            'name_tk' => 'Elektrika',
             'parent_id' => null,
             'is_active' => true,
         ]);
@@ -73,16 +75,17 @@ class CategoryTest extends TestCase
     public function test_user_can_create_a_child_category(): void
     {
         $this->actingAsAdmin();
-        $parent = Category::factory()->create(['name' => 'Электрика']);
+        $parent = Category::factory()->create(['name_ru' => 'Электрика']);
 
         $this->post(route('categories.store'), [
-            'name' => 'Розетки',
+            'name_ru' => 'Розетки',
+            'name_tk' => 'Rozetka',
             'is_active' => true,
             'parent_id' => $parent->id,
         ])->assertRedirect(route('categories.index'));
 
         $this->assertDatabaseHas('categories', [
-            'name' => 'Розетки',
+            'name_ru' => 'Розетки',
             'parent_id' => $parent->id,
         ]);
     }
@@ -92,10 +95,11 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => '',
+            'name_ru' => '',
+            'name_tk' => '',
             'is_active' => true,
             'parent_id' => null,
-        ])->assertSessionHasErrors('name');
+        ])->assertSessionHasErrors(['name_ru', 'name_tk']);
     }
 
     public function test_store_fails_when_parent_does_not_exist(): void
@@ -103,7 +107,8 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Тест',
+            'name_ru' => 'Тест',
+            'name_tk' => 'Test',
             'is_active' => true,
             'parent_id' => 9999,
         ])->assertSessionHasErrors('parent_id');
@@ -114,17 +119,19 @@ class CategoryTest extends TestCase
     public function test_user_can_update_a_category(): void
     {
         $this->actingAsAdmin();
-        $category = Category::factory()->create(['name' => 'Старое']);
+        $category = Category::factory()->create(['name_ru' => 'Старое']);
 
         $this->put(route('categories.update', $category), [
-            'name' => 'Новое',
+            'name_ru' => 'Новое',
+            'name_tk' => 'Täze',
             'is_active' => false,
             'parent_id' => null,
         ])->assertRedirect(route('categories.index'));
 
         $this->assertDatabaseHas('categories', [
             'id' => $category->id,
-            'name' => 'Новое',
+            'name_ru' => 'Новое',
+            'name_tk' => 'Täze',
             'is_active' => false,
         ]);
     }
@@ -136,7 +143,8 @@ class CategoryTest extends TestCase
         $child = Category::factory()->create(['parent_id' => null]);
 
         $this->put(route('categories.update', $child), [
-            'name' => $child->name,
+            'name_ru' => $child->name_ru,
+            'name_tk' => $child->name_tk,
             'is_active' => true,
             'parent_id' => $parent->id,
         ])->assertRedirect(route('categories.index'));
@@ -153,10 +161,11 @@ class CategoryTest extends TestCase
         $category = Category::factory()->create();
 
         $this->put(route('categories.update', $category), [
-            'name' => '',
+            'name_ru' => '',
+            'name_tk' => '',
             'is_active' => true,
             'parent_id' => null,
-        ])->assertSessionHasErrors('name');
+        ])->assertSessionHasErrors(['name_ru', 'name_tk']);
     }
 
     // ── Destroy ───────────────────────────────────────────────────────────────
@@ -216,7 +225,8 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Электрика',
+            'name_ru' => 'Электрика',
+            'name_tk' => 'Elektrika',
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'preset',
@@ -224,7 +234,7 @@ class CategoryTest extends TestCase
         ])->assertRedirect(route('categories.index'));
 
         $this->assertDatabaseHas('categories', [
-            'name' => 'Электрика',
+            'name_ru' => 'Электрика',
             'icon_type' => 'preset',
             'icon' => 'bolt',
         ]);
@@ -236,7 +246,8 @@ class CategoryTest extends TestCase
         $parent = Category::factory()->create();
 
         $this->post(route('categories.store'), [
-            'name' => 'Розетки',
+            'name_ru' => 'Розетки',
+            'name_tk' => 'Rozetka',
             'is_active' => true,
             'parent_id' => $parent->id,
             'icon_type' => 'preset',
@@ -244,7 +255,7 @@ class CategoryTest extends TestCase
         ])->assertRedirect(route('categories.index'));
 
         $this->assertDatabaseHas('categories', [
-            'name' => 'Розетки',
+            'name_ru' => 'Розетки',
             'parent_id' => $parent->id,
             'icon' => 'cpu-chip',
         ]);
@@ -255,7 +266,8 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Тест',
+            'name_ru' => 'Тест',
+            'name_tk' => 'Test',
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'preset',
@@ -269,14 +281,15 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Сантехника',
+            'name_ru' => 'Сантехника',
+            'name_tk' => 'Santehnika',
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'custom',
             'icon_file' => $this->fakeSvg('plumber.svg'),
         ])->assertRedirect(route('categories.index'));
 
-        $category = Category::where('name', 'Сантехника')->firstOrFail();
+        $category = Category::where('name_ru', 'Сантехника')->firstOrFail();
 
         $this->assertSame('custom', $category->icon_type->value);
         $this->assertNotNull($category->icon);
@@ -289,7 +302,8 @@ class CategoryTest extends TestCase
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
-            'name' => 'Тест',
+            'name_ru' => 'Тест',
+            'name_tk' => 'Test',
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'custom',
@@ -310,7 +324,8 @@ class CategoryTest extends TestCase
         Storage::disk('public')->assertExists($oldPath);
 
         $this->put(route('categories.update', $category), [
-            'name' => $category->name,
+            'name_ru' => $category->name_ru,
+            'name_tk' => $category->name_tk,
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'custom',
@@ -335,7 +350,8 @@ class CategoryTest extends TestCase
         ]);
 
         $this->put(route('categories.update', $category), [
-            'name' => $category->name,
+            'name_ru' => $category->name_ru,
+            'name_tk' => $category->name_tk,
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'preset',
@@ -361,7 +377,8 @@ class CategoryTest extends TestCase
 
         // Mirrors the frontend: icon_type stays custom, no file, icon = null.
         $this->put(route('categories.update', $category), [
-            'name' => 'Обновлённое',
+            'name_ru' => 'Обновлённое',
+            'name_tk' => 'Täzelenen',
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => 'custom',
@@ -380,7 +397,8 @@ class CategoryTest extends TestCase
         $category = Category::factory()->withPresetIcon('home')->create();
 
         $this->put(route('categories.update', $category), [
-            'name' => $category->name,
+            'name_ru' => $category->name_ru,
+            'name_tk' => $category->name_tk,
             'is_active' => true,
             'parent_id' => null,
             'icon_type' => null,

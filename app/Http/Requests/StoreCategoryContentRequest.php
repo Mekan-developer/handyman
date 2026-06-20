@@ -17,8 +17,10 @@ class StoreCategoryContentRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'title' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:5000'],
+            'title_ru' => ['required', 'string', 'max:255'],
+            'title_tk' => ['required', 'string', 'max:255'],
+            'description_ru' => ['nullable', 'string', 'max:5000'],
+            'description_tk' => ['nullable', 'string', 'max:5000'],
             'price' => ['nullable', 'string', 'max:255'],
             'images' => ['nullable', 'array'],
             'images.*' => ['image', 'max:10240'],

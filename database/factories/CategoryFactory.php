@@ -16,9 +16,12 @@ class CategoryFactory extends Factory
      */
     public function definition(): array
     {
+        $name = fake()->unique()->word();
+
         return [
             'parent_id' => null,
-            'name' => fake()->unique()->word(),
+            'name_ru' => $name,
+            'name_tk' => $name.' (tk)',
             'is_active' => true,
         ];
     }

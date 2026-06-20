@@ -6,6 +6,7 @@ import Modal from '@/Components/Modal.vue'
 import InputError from '@/Components/InputError.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
 import OblastCitySelect from '@/Components/OblastCitySelect.vue'
+import CategoryPicker from '@/Components/CategoryPicker.vue'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -359,25 +360,16 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                             </div>
                         </div>
 
-                        <!-- City (велаят → город) -->
-                        <div class="space-y-1">
+                        <!-- City (велаят + город в один ряд) -->
+                        <div class="space-y-1 sm:col-span-2">
                             <OblastCitySelect
                                 v-model="form.city_id"
                                 :oblasts="oblasts"
                                 :has-error="!!form.errors.city_id"
+                                horizontal
                                 required
                             />
                             <InputError :message="form.errors.city_id" />
-                        </div>
-
-                        <!-- Category -->
-                        <div class="space-y-1">
-                            <label :class="labelClass">{{ t('orders.fields.category') }} <span class="text-red-400">*</span></label>
-                            <select v-model="form.category_id" :class="[inputClass, form.errors.category_id ? errorInputClass : '']">
-                                <option :value="null" disabled>{{ t('orders.modals.select_category') }}</option>
-                                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                            </select>
-                            <InputError :message="form.errors.category_id" />
                         </div>
 
                         <!-- Address -->
@@ -560,6 +552,17 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                             </div>
                             <p class="text-xs text-gray-400 dark:text-slate-500">{{ t('orders.create.photos_hint') }}</p>
                             <InputError :message="form.errors.photos" />
+                        </div>
+
+                        <!-- Category (ниже всех: группа-родитель → услуги-дети) -->
+                        <div class="space-y-1 sm:col-span-2">
+                            <CategoryPicker
+                                v-model="form.category_id"
+                                :categories="categories"
+                                :has-error="!!form.errors.category_id"
+                                required
+                            />
+                            <InputError :message="form.errors.category_id" />
                         </div>
                     </div>
                 </div>

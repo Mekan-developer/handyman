@@ -13,6 +13,8 @@ class CategoryResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'name_ru' => $this->name_ru,
+            'name_tk' => $this->name_tk,
             'is_active' => $this->is_active,
             'parent_id' => $this->parent_id,
             'icon_type' => $this->icon_type?->value,

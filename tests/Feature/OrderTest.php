@@ -371,19 +371,6 @@ class OrderTest extends TestCase
         $this->assertEqualsWithDelta(350.0, (float) $master->fresh()->balance, 0.01);
     }
 
-    public function test_completing_fixed_per_job_order_without_price_credits_fixed(): void
-    {
-        $this->actingAsAdmin();
-        $master = Master::factory()->fixedPerJob()->create(['balance' => 0]);
-        $order = Order::factory()->forMaster($master)->inProgress()->create(['final_price' => null]);
-
-        $this->post(route('orders.update-status', $order), ['status' => 'completed'])
-            ->assertRedirect()
-            ->assertSessionHas('notification', fn ($notification) => $notification['type'] === 'success');
-
-        $this->assertEqualsWithDelta(200.0, (float) $master->fresh()->balance, 0.01);
-    }
-
     public function test_admin_can_cancel_order_with_reason(): void
     {
         $this->actingAsAdmin();

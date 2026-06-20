@@ -229,12 +229,10 @@ onBeforeUnmount(() => {
             <!-- Logo -->
             <div class="flex h-16 shrink-0 items-center border-b border-slate-700 px-6">
                 <div class="flex items-center gap-2.5">
-                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
-                        <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
-                        </svg>
+                    <div class="flex h-14 w-14 items-center justify-center rounded-lg bg-gray-200">
+                        <image src="/icons/logo/alo_help.png" alt="Logo" class="h-auto w-16" />
                     </div>
-                    <span class="text-lg font-bold text-white">Handyman</span>
+                    <span class="text-lg font-bold text-white">Alo-kömek</span>
                 </div>
             </div>
 
@@ -266,16 +264,18 @@ onBeforeUnmount(() => {
             </nav>
 
             <!-- Service status -->
-            <div class="shrink-0 border-t border-slate-700 px-4 py-3 space-y-2">
-                <template
-                    v-for="{ key, status } in [
-                        { key: 'queue', status: queueStatus },
-                        { key: 'reverb', status: reverbStatus },
-                        { key: 'websocket', status: wsStatus },
-                    ]"
-                    :key="key"
-                >
-                    <div class="flex items-center gap-2">
+            <div class="shrink-0 border-t border-slate-700 px-4 py-3">
+                <div class="flex items-center justify-between gap-2">
+                    <div
+                        v-for="{ key, status } in [
+                            { key: 'queue', status: queueStatus },
+                            { key: 'reverb', status: reverbStatus },
+                            { key: 'websocket', status: wsStatus },
+                        ]"
+                        :key="key"
+                        class="flex items-center gap-1.5"
+                        :title="`${t(`layout.services.${key}`)} — ${t(`layout.services.${status === 'checking' ? 'checking' : status === 'ok' ? 'ok' : 'error'}`)}`"
+                    >
                         <span class="relative flex h-2 w-2 shrink-0">
                             <span
                                 v-if="status === 'ok'"
@@ -290,19 +290,9 @@ onBeforeUnmount(() => {
                                 }"
                             />
                         </span>
-                        <span class="text-xs text-slate-400">{{ t(`layout.services.${key}`) }}</span>
-                        <span
-                            class="ml-auto text-[10px] font-medium"
-                            :class="{
-                                'text-emerald-400': status === 'ok',
-                                'text-red-400': status === 'error',
-                                'text-yellow-400': status === 'checking',
-                            }"
-                        >
-                            {{ t(`layout.services.${status === 'checking' ? 'checking' : status === 'ok' ? 'ok' : 'error'}`) }}
-                        </span>
+                        <span class="text-xs text-slate-400">{{ t(`layout.services.${key}_short`) }}</span>
                     </div>
-                </template>
+                </div>
             </div>
 
             <!-- Bottom user area -->

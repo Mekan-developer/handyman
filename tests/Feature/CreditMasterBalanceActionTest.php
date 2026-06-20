@@ -52,16 +52,6 @@ class CreditMasterBalanceActionTest extends TestCase
         $this->assertEqualsWithDelta(350.0, $master->fresh()->balance, 0.01);
     }
 
-    public function test_fixed_per_job_credits_fixed_amount_regardless_of_price(): void
-    {
-        $master = $this->makeMaster(PaymentModel::FixedPerJob, 200.0);
-        $order = $this->makeOrder($master, finalPrice: 5000.0);
-
-        app(CreditMasterBalanceAction::class)->handle($order->load('master'));
-
-        $this->assertEqualsWithDelta(200.0, $master->fresh()->balance, 0.01);
-    }
-
     public function test_salary_model_does_not_credit_balance(): void
     {
         $master = $this->makeMaster(PaymentModel::Salary, 3000.0);
@@ -105,8 +95,8 @@ class CreditMasterBalanceActionTest extends TestCase
 
     public function test_balance_accumulates_across_multiple_orders(): void
     {
-        $master = $this->makeMaster(PaymentModel::FixedPerJob, 200.0, initialBalance: 400.0);
-        $order = $this->makeOrder($master);
+        $master = $this->makeMaster(PaymentModel::Percentage, 20.0, initialBalance: 400.0);
+        $order = $this->makeOrder($master, finalPrice: 1000.0);
 
         app(CreditMasterBalanceAction::class)->handle($order->load('master'));
 

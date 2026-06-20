@@ -30,7 +30,6 @@ class CreditMasterBalanceAction
         $master = $order->master;
 
         return match ($master->payment_model) {
-            PaymentModel::FixedPerJob => (float) $master->payment_value,
             PaymentModel::Percentage,
             PaymentModel::SalaryPercentage => $order->final_price !== null
                 ? round((float) $order->final_price * (float) $master->payment_value / 100, 2)

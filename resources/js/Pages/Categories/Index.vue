@@ -21,7 +21,8 @@ const showModal = ref(false)
 const editingCategory = ref(null)
 
 const form = useForm({
-    name: '',
+    name_ru: '',
+    name_tk: '',
     is_active: true,
     parent_id: null,
     icon_type: null,
@@ -46,7 +47,8 @@ function openCreateChild(parent) {
 
 function openEdit(category) {
     editingCategory.value = category
-    form.name = category.name
+    form.name_ru = category.name_ru
+    form.name_tk = category.name_tk
     form.is_active = category.is_active
     form.parent_id = category.parent_id
     form.icon_type = category.icon_type

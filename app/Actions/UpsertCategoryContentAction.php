@@ -14,15 +14,17 @@ class UpsertCategoryContentAction
     public function __construct(private readonly CategoryContentRepository $repository) {}
 
     /**
-     * @param  array{title: string, description: ?string, price: ?string}  $data
+     * @param  array{title_ru: string, title_tk: string, description_ru: ?string, description_tk: ?string, price: ?string}  $data
      * @param  UploadedFile[]  $images
      * @param  int[]  $keepIds
      */
     public function handle(Category $category, array $data, array $images = [], array $keepIds = []): CategoryContent
     {
         $content = $this->repository->upsert($category, [
-            'title' => $data['title'],
-            'description' => $data['description'] ?? null,
+            'title_ru' => $data['title_ru'],
+            'title_tk' => $data['title_tk'],
+            'description_ru' => $data['description_ru'] ?? null,
+            'description_tk' => $data['description_tk'] ?? null,
             'price' => $data['price'] ?? null,
         ]);
 

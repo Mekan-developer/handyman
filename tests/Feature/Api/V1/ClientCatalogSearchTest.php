@@ -12,8 +12,8 @@ class ClientCatalogSearchTest extends TestCase
 
     public function test_finds_active_categories_by_name(): void
     {
-        Category::factory()->create(['name' => 'Сантехника']);
-        Category::factory()->create(['name' => 'Электрика']);
+        Category::factory()->create(['name_ru' => 'Сантехника']);
+        Category::factory()->create(['name_ru' => 'Электрика']);
 
         $this->getJson(route('api.v1.client.categories.search', ['q' => 'тех']))
             ->assertOk()
@@ -24,8 +24,8 @@ class ClientCatalogSearchTest extends TestCase
 
     public function test_includes_parent_group_for_subcategory(): void
     {
-        $parent = Category::factory()->create(['name' => 'Сантехника']);
-        $child = Category::factory()->child($parent)->create(['name' => 'Замена труб']);
+        $parent = Category::factory()->create(['name_ru' => 'Сантехника']);
+        $child = Category::factory()->child($parent)->create(['name_ru' => 'Замена труб']);
 
         $this->getJson(route('api.v1.client.categories.search', ['q' => 'труб']))
             ->assertOk()
@@ -36,7 +36,7 @@ class ClientCatalogSearchTest extends TestCase
 
     public function test_excludes_inactive_categories(): void
     {
-        Category::factory()->inactive()->create(['name' => 'Сантехника']);
+        Category::factory()->inactive()->create(['name_ru' => 'Сантехника']);
 
         $this->getJson(route('api.v1.client.categories.search', ['q' => 'сан']))
             ->assertOk()

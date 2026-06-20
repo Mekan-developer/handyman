@@ -73,12 +73,16 @@ class ClientCatalogController extends Controller
 
     public function categories(): JsonResponse
     {
+        $nameColumn = in_array(app()->getLocale(), ['ru', 'tk'], true)
+            ? 'name_'.app()->getLocale()
+            : 'name_ru';
+
         return response()->json([
             'data' => Category::where('is_active', true)
                 ->whereNull('parent_id')
-                ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('name')])
-                ->orderBy('name')
-                ->get(['id', 'name', 'parent_id', 'icon_type', 'icon']),
+                ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy($nameColumn)])
+                ->orderBy($nameColumn)
+                ->get(['id', 'name_ru', 'name_tk', 'parent_id', 'icon_type', 'icon']),
         ]);
     }
 

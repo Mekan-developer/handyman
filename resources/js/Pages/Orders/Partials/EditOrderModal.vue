@@ -6,6 +6,7 @@ import Modal from '@/Components/Modal.vue'
 import InputError from '@/Components/InputError.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
 import OblastCitySelect from '@/Components/OblastCitySelect.vue'
+import CategoryPicker from '@/Components/CategoryPicker.vue'
 
 const { t } = useI18n()
 
@@ -76,25 +77,16 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
             <div class="flex-1 overflow-y-auto">
             <div class="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">
 
-                <!-- City (велаят → город) -->
-                <div class="space-y-1">
+                <!-- City (велаят + город в один ряд) -->
+                <div class="space-y-1 sm:col-span-2">
                     <OblastCitySelect
                         v-model="form.city_id"
                         :oblasts="oblasts"
                         :has-error="!!form.errors.city_id"
+                        horizontal
                         required
                     />
                     <InputError :message="form.errors.city_id" />
-                </div>
-
-                <!-- Category -->
-                <div class="space-y-1">
-                    <label :class="labelClass">{{ t('orders.fields.category') }}</label>
-                    <select v-model="form.category_id" :class="[inputClass, form.errors.category_id ? errorInputClass : '']">
-                        <option :value="null" disabled>{{ t('orders.modals.select_category') }}</option>
-                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                    </select>
-                    <InputError :message="form.errors.category_id" />
                 </div>
 
                 <!-- Client Name -->
@@ -162,6 +154,17 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                         :class="[inputClass, form.errors.description ? errorInputClass : '']"
                     />
                     <InputError :message="form.errors.description" />
+                </div>
+
+                <!-- Category (ниже всех: группа-родитель → услуги-дети) -->
+                <div class="space-y-1 sm:col-span-2">
+                    <CategoryPicker
+                        v-model="form.category_id"
+                        :categories="categories"
+                        :has-error="!!form.errors.category_id"
+                        required
+                    />
+                    <InputError :message="form.errors.category_id" />
                 </div>
             </div>
             </div>

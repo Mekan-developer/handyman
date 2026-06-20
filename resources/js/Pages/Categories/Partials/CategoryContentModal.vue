@@ -21,10 +21,11 @@ const existingImage = computed(() => props.category?.content?.images?.[0] ?? nul
 const displayUrl = computed(() => previewUrl.value ?? existingImage.value?.url ?? null)
 
 const form = useForm({
-    title: '',
-    description: '',
+    title_ru: '',
+    title_tk: '',
+    description_ru: '',
+    description_tk: '',
     price: '',
-    image: null,
 })
 
 watch(() => props.show, (opened) => {
@@ -38,8 +39,10 @@ watch(() => props.show, (opened) => {
     }
     const content = props.category?.content
     if (content) {
-        form.title = content.title ?? ''
-        form.description = content.description ?? ''
+        form.title_ru = content.title_ru ?? ''
+        form.title_tk = content.title_tk ?? ''
+        form.description_ru = content.description_ru ?? ''
+        form.description_tk = content.description_tk ?? ''
         form.price = content.price ?? ''
     }
 })
@@ -63,7 +66,13 @@ function handleClose() {
 }
 
 function submit() {
-    form.image = selectedFile.value
+    // Backend expects an `images` array plus `keep_ids` of retained images.
+    // The single-slot UI sends the newly picked file, or keeps the existing one.
+    form.transform((data) => ({
+        ...data,
+        images: selectedFile.value ? [selectedFile.value] : [],
+        keep_ids: (!selectedFile.value && existingImage.value) ? [existingImage.value.id] : [],
+    }))
 
     form.post(route('categories.content.upsert', props.category.id), {
         forceFormData: true,
@@ -166,49 +175,87 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                             @change="onFileSelected"
                         />
 
-                        <p v-if="form.errors.image" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <p v-if="form.errors.images" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                             </svg>
-                            {{ form.errors.image }}
+                            {{ form.errors.images }}
                         </p>
                     </div>
 
-                    <!-- Title -->
+                    <!-- Title (рус.) -->
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                            {{ t('categories.content_title') }} <span class="text-red-400">*</span>
+                            {{ t('categories.content_title_ru') }} <span class="text-red-400">*</span>
                         </label>
                         <input
-                            v-model="form.title"
+                            v-model="form.title_ru"
                             type="text"
-                            :placeholder="t('categories.content_title_placeholder')"
-                            :class="[inputBase, form.errors.title ? inputError : inputNormal]"
+                            :placeholder="t('categories.content_title_ru_placeholder')"
+                            :class="[inputBase, form.errors.title_ru ? inputError : inputNormal]"
                         />
-                        <p v-if="form.errors.title" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <p v-if="form.errors.title_ru" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                             </svg>
-                            {{ form.errors.title }}
+                            {{ form.errors.title_ru }}
                         </p>
                     </div>
 
-                    <!-- Description -->
+                    <!-- Title (туркм.) -->
                     <div>
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                            {{ t('categories.content_description') }}
+                            {{ t('categories.content_title_tk') }} <span class="text-red-400">*</span>
                         </label>
-                        <textarea
-                            v-model="form.description"
-                            rows="3"
-                            :placeholder="t('categories.content_description_placeholder')"
-                            :class="[inputBase, form.errors.description ? inputError : inputNormal, 'resize-none']"
+                        <input
+                            v-model="form.title_tk"
+                            type="text"
+                            :placeholder="t('categories.content_title_tk_placeholder')"
+                            :class="[inputBase, form.errors.title_tk ? inputError : inputNormal]"
                         />
-                        <p v-if="form.errors.description" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <p v-if="form.errors.title_tk" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
                             <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
                             </svg>
-                            {{ form.errors.description }}
+                            {{ form.errors.title_tk }}
+                        </p>
+                    </div>
+
+                    <!-- Description (рус.) -->
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                            {{ t('categories.content_description_ru') }}
+                        </label>
+                        <textarea
+                            v-model="form.description_ru"
+                            rows="3"
+                            :placeholder="t('categories.content_description_ru_placeholder')"
+                            :class="[inputBase, form.errors.description_ru ? inputError : inputNormal, 'resize-none']"
+                        />
+                        <p v-if="form.errors.description_ru" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                            {{ form.errors.description_ru }}
+                        </p>
+                    </div>
+
+                    <!-- Description (туркм.) -->
+                    <div>
+                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                            {{ t('categories.content_description_tk') }}
+                        </label>
+                        <textarea
+                            v-model="form.description_tk"
+                            rows="3"
+                            :placeholder="t('categories.content_description_tk_placeholder')"
+                            :class="[inputBase, form.errors.description_tk ? inputError : inputNormal, 'resize-none']"
+                        />
+                        <p v-if="form.errors.description_tk" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                            </svg>
+                            {{ form.errors.description_tk }}
                         </p>
                     </div>
 

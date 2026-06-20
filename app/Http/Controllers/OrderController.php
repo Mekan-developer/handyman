@@ -45,7 +45,7 @@ class OrderController extends Controller
         return Inertia::render('Orders/Index', [
             'orders' => OrderResource::collection($this->repository->paginate($filters)),
             'oblasts' => app(OblastRepository::class)->allWithCities(),
-            'categories' => app(CategoryRepository::class)->roots(),
+            'categories' => app(CategoryRepository::class)->treeForSelect(),
             'clients' => app(ClientRepository::class)->allForSelect(),
             'statuses' => collect(OrderStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
@@ -66,7 +66,7 @@ class OrderController extends Controller
         return Inertia::render('Orders/Show', [
             'order' => (new OrderResource($order))->resolve(),
             'oblasts' => $isPending ? app(OblastRepository::class)->allWithCities() : collect(),
-            'categories' => $isPending ? app(CategoryRepository::class)->roots()->map(fn ($c) => ['id' => $c->id, 'name' => $c->name]) : [],
+            'categories' => $isPending ? app(CategoryRepository::class)->treeForSelect() : [],
             'eligibleMasters' => $isAssignable
                 ? $this->masterRepository
                     ->eligibleForOrder($order->city_id, $order->category_id)

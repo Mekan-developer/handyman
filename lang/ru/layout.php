@@ -30,6 +30,7 @@ return [
         'update' => 'Обновить',
         'cancel' => 'Отмена',
     ],
+    'selected' => 'выбрано',
     'select' => [
         'oblast' => 'Выберите велаят',
         'city' => 'Выберите город',
@@ -42,6 +43,9 @@ return [
         'queue' => 'Очередь задач',
         'reverb' => 'Reverb сервер',
         'websocket' => 'WebSocket клиент',
+        'queue_short' => 'Очередь',
+        'reverb_short' => 'Reverb',
+        'websocket_short' => 'WS',
         'ok' => 'Работает',
         'error' => 'Не работает',
         'checking' => 'Проверка...',

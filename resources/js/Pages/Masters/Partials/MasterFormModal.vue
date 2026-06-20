@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import Modal from '@/Components/Modal.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
 import OblastCitySelect from '@/Components/OblastCitySelect.vue'
+import CategoryPicker from '@/Components/CategoryPicker.vue'
 
 const { t } = useI18n()
 
@@ -19,7 +20,6 @@ const props = defineProps({
 const emit = defineEmits(['close', 'submit'])
 
 const showPercent = computed(() => ['percentage', 'salary_percentage'].includes(props.form.payment_model))
-const showFixed = computed(() => props.form.payment_model === 'fixed_per_job')
 const showSalary = computed(() => ['salary', 'salary_percentage'].includes(props.form.payment_model))
 
 const inputBase = 'w-full rounded-xl border bg-gray-50 px-4 py-3 text-sm text-gray-900 placeholder-gray-400 shadow-sm focus:bg-white focus:outline-none focus:ring-4 dark:bg-slate-700/50 dark:text-white dark:placeholder-slate-500 dark:focus:bg-slate-700 transition-all'
@@ -127,7 +127,7 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                 </div>
 
                 <!-- Payment values — dynamic by model -->
-                <div v-if="showPercent || showFixed || showSalary" class="grid gap-4" :class="(showSalary && showPercent) ? 'grid-cols-2' : 'grid-cols-1'">
+                <div v-if="showPercent || showSalary" class="grid gap-4" :class="(showSalary && showPercent) ? 'grid-cols-2' : 'grid-cols-1'">
                     <!-- Monthly salary (Salary / Salary+Percentage) -->
                     <div v-if="showSalary">
                         <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
@@ -177,30 +177,6 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                         </p>
                     </div>
 
-                    <!-- Fixed per job -->
-                    <div v-if="showFixed">
-                        <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                            {{ t('masters.payment_fixed') }} <span class="text-red-400">*</span>
-                        </label>
-                        <div class="relative">
-                            <input
-                                v-model="form.payment_value"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                :class="[inputBase, 'pr-16', form.errors.payment_value ? inputError : inputNormal]"
-                            />
-                            <span class="pointer-events-none absolute inset-y-0 right-4 flex items-center text-sm text-gray-400 dark:text-slate-500">
-                                {{ t('masters.unit_manat') }}
-                            </span>
-                        </div>
-                        <p v-if="form.errors.payment_value" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
-                            <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
-                            </svg>
-                            {{ form.errors.payment_value }}
-                        </p>
-                    </div>
                 </div>
 
                 <!-- Access expires at -->
@@ -221,27 +197,21 @@ const inputError = 'border-red-400 focus:border-red-400 focus:ring-red-400/20 da
                     </p>
                 </div>
 
-                <!-- Categories (multi-checkbox) -->
+                <!-- Categories (multi-picker) -->
                 <div v-if="categories.length">
-                    <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
-                        {{ t('masters.categories') }}
-                    </label>
-                    <div class="flex flex-wrap gap-2">
-                        <button
-                            v-for="cat in categories"
-                            :key="cat.id"
-                            type="button"
-                            @click="form.category_ids.includes(cat.id)
-                                ? form.category_ids.splice(form.category_ids.indexOf(cat.id), 1)
-                                : form.category_ids.push(cat.id)"
-                            :class="form.category_ids.includes(cat.id)
-                                ? 'bg-blue-600 text-white border-blue-600'
-                                : 'bg-gray-50 text-gray-600 border-gray-300 hover:border-blue-400 dark:bg-slate-700/50 dark:text-slate-300 dark:border-slate-600 dark:hover:border-blue-500'"
-                            class="rounded-lg border px-3 py-1.5 text-xs font-medium transition-all duration-150"
-                        >
-                            {{ cat.name }}
-                        </button>
-                    </div>
+                    <CategoryPicker
+                        v-model="form.category_ids"
+                        :categories="categories"
+                        :has-error="!!form.errors.category_ids"
+                        :label="t('masters.categories')"
+                        multiple
+                    />
+                    <p v-if="form.errors.category_ids" class="mt-1.5 flex items-center gap-1 text-xs text-red-500">
+                        <svg class="h-3.5 w-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-5a.75.75 0 01.75.75v4.5a.75.75 0 01-1.5 0v-4.5A.75.75 0 0110 5zm0 10a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+                        </svg>
+                        {{ form.errors.category_ids }}
+                    </p>
                 </div>
 
                 <!-- Status toggle -->

@@ -9,6 +9,8 @@ const props = defineProps({
     oblasts: { type: Array, default: () => [] },
     hasError: { type: Boolean, default: false },
     required: { type: Boolean, default: false },
+    // Render велаят + город side by side in one row instead of stacked.
+    horizontal: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -58,7 +60,40 @@ const subLabel =
 </script>
 
 <template>
-    <div class="space-y-3">
+    <!-- Горизонтальный режим: велаят + город в один ряд -->
+    <div v-if="horizontal" class="grid grid-cols-2 gap-3">
+        <div>
+            <span :class="subLabel">
+                {{ t('layout.labels.oblast') }}
+                <span v-if="required" class="text-red-400">*</span>
+            </span>
+            <select
+                v-model="selectedOblastId"
+                @change="onOblastChange"
+                :class="[base, hasError && !selectedOblastId ? error : normal]"
+            >
+                <option :value="null" disabled>{{ t('layout.select.oblast') }}</option>
+                <option v-for="o in oblasts" :key="o.id" :value="o.id">{{ o.name }}</option>
+            </select>
+        </div>
+        <div>
+            <span :class="subLabel">
+                {{ t('layout.labels.city') }}
+                <span v-if="required" class="text-red-400">*</span>
+            </span>
+            <select
+                v-model="cityId"
+                :disabled="!selectedOblastId"
+                :class="[base, hasError ? error : normal, !selectedOblastId ? 'cursor-not-allowed opacity-60' : '']"
+            >
+                <option :value="null" disabled>{{ t('layout.select.city') }}</option>
+                <option v-for="c in filteredCities" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Вертикальный режим (по умолчанию): город появляется после выбора велаята -->
+    <div v-else class="space-y-3">
         <!-- Велаят -->
         <div>
             <span :class="subLabel">

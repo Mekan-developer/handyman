@@ -103,6 +103,7 @@ return [
         'my_location' => 'Meniň ýerleşişime gönükdir',
         'add_photos' => 'Surat goş',
         'photos_hint' => '4-e çenli surat',
+        'category_empty' => 'Elýeterli kategoriýa ýok',
     ],
 
     'notifications' => [

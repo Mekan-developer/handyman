@@ -18,7 +18,8 @@ class UpdateCategoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name_ru' => ['required', 'string', 'max:255'],
+            'name_tk' => ['required', 'string', 'max:255'],
             'is_active' => ['required', 'boolean'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'icon_type' => ['nullable', Rule::enum(CategoryIconType::class)],
