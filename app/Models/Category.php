@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Storage;
 
 class Category extends Model
 {
@@ -69,7 +68,10 @@ class Category extends Model
     {
         return Attribute::get(fn (): ?string => match (true) {
             $this->icon_type === CategoryIconType::Preset && $this->icon !== null => asset("icons/services/{$this->icon}.svg"),
-            $this->icon_type === CategoryIconType::Custom && $this->icon !== null => Storage::disk('public')->url($this->icon),
+            // New-style custom: bare key (u-uuid) stored in public/icons/services/
+            $this->icon_type === CategoryIconType::Custom && $this->icon !== null && ! str_contains($this->icon, '/') => asset("icons/services/{$this->icon}.svg"),
+            // Legacy custom: path with directory separator on the public Storage disk
+            $this->icon_type === CategoryIconType::Custom && $this->icon !== null => asset("storage/{$this->icon}"),
             default => null,
         });
     }

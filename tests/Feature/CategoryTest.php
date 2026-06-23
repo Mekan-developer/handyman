@@ -277,7 +277,7 @@ class CategoryTest extends TestCase
 
     public function test_can_create_category_with_uploaded_svg_icon(): void
     {
-        Storage::fake('public');
+        Storage::fake('service_icons');
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
@@ -293,12 +293,13 @@ class CategoryTest extends TestCase
 
         $this->assertSame('custom', $category->icon_type->value);
         $this->assertNotNull($category->icon);
-        Storage::disk('public')->assertExists($category->icon);
+        $this->assertMatchesRegularExpression('/^u-/', $category->icon);
+        Storage::disk('service_icons')->assertExists("{$category->icon}.svg");
     }
 
     public function test_store_rejects_non_svg_icon_file(): void
     {
-        Storage::fake('public');
+        Storage::fake('service_icons');
         $this->actingAsAdmin();
 
         $this->post(route('categories.store'), [
@@ -311,17 +312,40 @@ class CategoryTest extends TestCase
         ])->assertSessionHasErrors('icon_file');
     }
 
-    public function test_updating_custom_icon_deletes_the_old_file(): void
+    public function test_uploaded_svg_becomes_a_shared_asset_for_all_categories(): void
     {
-        Storage::fake('public');
+        Storage::fake('service_icons');
         $this->actingAsAdmin();
 
-        $oldPath = $this->fakeSvg('old.svg')->store('category-icons', 'public');
+        // Category A uploads an icon
+        $this->post(route('categories.store'), [
+            'name_ru' => 'Сантехника',
+            'name_tk' => 'Santehnika',
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'custom',
+            'icon_file' => $this->fakeSvg('plumber.svg'),
+        ]);
+
+        $categoryA = Category::where('name_ru', 'Сантехника')->firstOrFail();
+        $uploadedKey = $categoryA->icon;
+
+        // The key appears in the uploaded icon pool
+        $this->assertContains($uploadedKey, CategoryIcon::uploadedKeys());
+    }
+
+    public function test_updating_category_with_new_svg_keeps_old_uploaded_file(): void
+    {
+        Storage::fake('service_icons');
+        $this->actingAsAdmin();
+
+        // Seed an existing custom icon directly on the disk
+        $oldKey = 'u-old-uuid';
+        Storage::disk('service_icons')->put("{$oldKey}.svg", '<svg/>');
         $category = Category::factory()->create([
             'icon_type' => 'custom',
-            'icon' => $oldPath,
+            'icon' => $oldKey,
         ]);
-        Storage::disk('public')->assertExists($oldPath);
 
         $this->put(route('categories.update', $category), [
             'name_ru' => $category->name_ru,
@@ -333,46 +357,25 @@ class CategoryTest extends TestCase
         ])->assertRedirect(route('categories.index'));
 
         $category->refresh();
-        $this->assertNotSame($oldPath, $category->icon);
-        Storage::disk('public')->assertMissing($oldPath);
-        Storage::disk('public')->assertExists($category->icon);
-    }
 
-    public function test_switching_from_custom_to_preset_deletes_the_file(): void
-    {
-        Storage::fake('public');
-        $this->actingAsAdmin();
+        // New icon stored
+        $this->assertNotSame($oldKey, $category->icon);
+        Storage::disk('service_icons')->assertExists("{$category->icon}.svg");
 
-        $oldPath = $this->fakeSvg()->store('category-icons', 'public');
-        $category = Category::factory()->create([
-            'icon_type' => 'custom',
-            'icon' => $oldPath,
-        ]);
-
-        $this->put(route('categories.update', $category), [
-            'name_ru' => $category->name_ru,
-            'name_tk' => $category->name_tk,
-            'is_active' => true,
-            'parent_id' => null,
-            'icon_type' => 'preset',
-            'icon' => 'wrench',
-        ])->assertRedirect(route('categories.index'));
-
-        $category->refresh();
-        $this->assertSame('preset', $category->icon_type->value);
-        $this->assertSame('wrench', $category->icon);
-        Storage::disk('public')->assertMissing($oldPath);
+        // Old file kept — it's a shared asset that other categories might reference
+        Storage::disk('service_icons')->assertExists("{$oldKey}.svg");
     }
 
     public function test_keeping_custom_icon_on_update_without_reupload(): void
     {
-        Storage::fake('public');
+        Storage::fake('service_icons');
         $this->actingAsAdmin();
 
-        $path = $this->fakeSvg()->store('category-icons', 'public');
+        $key = 'u-existing-uuid';
+        Storage::disk('service_icons')->put("{$key}.svg", '<svg/>');
         $category = Category::factory()->create([
             'icon_type' => 'custom',
-            'icon' => $path,
+            'icon' => $key,
         ]);
 
         // Mirrors the frontend: icon_type stays custom, no file, icon = null.
@@ -387,8 +390,37 @@ class CategoryTest extends TestCase
 
         $category->refresh();
         $this->assertSame('custom', $category->icon_type->value);
-        $this->assertSame($path, $category->icon);
-        Storage::disk('public')->assertExists($path);
+        $this->assertSame($key, $category->icon);
+        Storage::disk('service_icons')->assertExists("{$key}.svg");
+    }
+
+    public function test_switching_from_custom_to_preset_keeps_uploaded_file(): void
+    {
+        Storage::fake('service_icons');
+        $this->actingAsAdmin();
+
+        $key = 'u-uploaded-uuid';
+        Storage::disk('service_icons')->put("{$key}.svg", '<svg/>');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $key,
+        ]);
+
+        $this->put(route('categories.update', $category), [
+            'name_ru' => $category->name_ru,
+            'name_tk' => $category->name_tk,
+            'is_active' => true,
+            'parent_id' => null,
+            'icon_type' => 'preset',
+            'icon' => 'wrench',
+        ])->assertRedirect(route('categories.index'));
+
+        $category->refresh();
+        $this->assertSame('preset', $category->icon_type->value);
+        $this->assertSame('wrench', $category->icon);
+
+        // Uploaded file is a shared asset — not deleted on switch
+        Storage::disk('service_icons')->assertExists("{$key}.svg");
     }
 
     public function test_can_clear_category_icon(): void
@@ -409,21 +441,40 @@ class CategoryTest extends TestCase
         $this->assertNull($category->icon);
     }
 
-    public function test_deleting_category_purges_custom_icon_file(): void
+    public function test_deleting_category_does_not_purge_uploaded_icon_file(): void
     {
-        Storage::fake('public');
+        Storage::fake('service_icons');
         $this->actingAsAdmin();
 
-        $path = $this->fakeSvg()->store('category-icons', 'public');
+        $key = 'u-shared-uuid';
+        Storage::disk('service_icons')->put("{$key}.svg", '<svg/>');
         $category = Category::factory()->create([
             'icon_type' => 'custom',
-            'icon' => $path,
+            'icon' => $key,
         ]);
-        Storage::disk('public')->assertExists($path);
 
         $this->delete(route('categories.destroy', $category))
             ->assertRedirect(route('categories.index'));
 
-        Storage::disk('public')->assertMissing($path);
+        // File is a shared asset — kept after category deletion
+        Storage::disk('service_icons')->assertExists("{$key}.svg");
+    }
+
+    public function test_deleting_category_purges_legacy_custom_icon(): void
+    {
+        Storage::fake('public');
+        $this->actingAsAdmin();
+
+        $legacyPath = $this->fakeSvg()->store('category-icons', 'public');
+        $category = Category::factory()->create([
+            'icon_type' => 'custom',
+            'icon' => $legacyPath,
+        ]);
+        Storage::disk('public')->assertExists($legacyPath);
+
+        $this->delete(route('categories.destroy', $category))
+            ->assertRedirect(route('categories.index'));
+
+        Storage::disk('public')->assertMissing($legacyPath);
     }
 }

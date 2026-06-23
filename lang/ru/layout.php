@@ -30,6 +30,11 @@ return [
         'update' => 'Обновить',
         'cancel' => 'Отмена',
     ],
+    'pagination' => [
+        'showing' => 'Показано {from}–{to} из {total}',
+        'prev' => 'Назад',
+        'next' => 'Далее',
+    ],
     'selected' => 'выбрано',
     'select' => [
         'oblast' => 'Выберите велаят',

@@ -8,13 +8,22 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class CategoryRepository
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    /** @param array{search?: string} $filters */
+    public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         return Category::with(['parent', 'content.images'])
+            ->when($filters['search'] ?? null, function ($q, $search) {
+                $escaped = addcslashes($search, '%_\\');
+                $q->where(fn ($sub) => $sub
+                    ->where('name_ru', 'like', "%{$escaped}%")
+                    ->orWhere('name_tk', 'like', "%{$escaped}%")
+                );
+            })
             ->orderByRaw('COALESCE(parent_id, id) DESC')
             ->orderByRaw('parent_id IS NOT NULL')
             ->orderBy($this->nameColumn())
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /** Root categories only — used as parent options in the form. */

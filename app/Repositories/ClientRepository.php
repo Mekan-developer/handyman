@@ -24,7 +24,8 @@ class ClientRepository
                 fn ($q) => $q->whereHas('city', fn ($cq) => $cq->where('oblast_id', $filters['oblast_id']))
             )
             ->latest()
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**

@@ -1,10 +1,11 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Link, useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MasterFormModal from '@/Pages/Masters/Partials/MasterFormModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
+import Pagination from '@/Components/Pagination.vue'
 import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
@@ -14,6 +15,7 @@ const props = defineProps({
     oblasts: Array,
     categories: Array,
     paymentModels: Array,
+    filters: { type: Object, default: () => ({}) },
 })
 
 // ── Modal state ───────────────────────────────────────────────────────────────
@@ -105,9 +107,41 @@ function confirmResetBalance() {
     })
 }
 
-const currentPage = computed(() => props.masters?.current_page ?? 1)
-const lastPage = computed(() => props.masters?.last_page ?? 1)
+// ── Filters ────────────────────────────────────────────────────────────────────
+const search = ref(props.filters.search ?? '')
+const cityFilter = ref(props.filters.city_id ? Number(props.filters.city_id) : null)
+
+const allCities = computed(() => props.oblasts.flatMap((o) => o.cities ?? []))
+
+const activeFilters = computed(() => ({
+    ...(search.value ? { search: search.value } : {}),
+    ...(cityFilter.value ? { city_id: cityFilter.value } : {}),
+}))
+
+const hasActiveFilters = computed(() => Boolean(search.value || cityFilter.value))
+
+function applyFilters() {
+    router.get(route('masters.index'), activeFilters.value, {
+        preserveState: true, preserveScroll: true, replace: true,
+    })
+}
+
+function resetFilters() {
+    search.value = ''
+    cityFilter.value = null
+}
+
+watch(cityFilter, applyFilters)
+
+let searchTimer = null
+watch(search, () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(applyFilters, 350)
+})
+
+// ── Pagination ────────────────────────────────────────────────────────────────
 const masterList = computed(() => props.masters?.data ?? [])
+const paginationMeta = computed(() => props.masters?.meta ?? null)
 </script>
 
 <template>
@@ -140,6 +174,35 @@ const masterList = computed(() => props.masters?.data ?? [])
                 </div>
             </div>
 
+            <!-- Filters -->
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="relative">
+                    <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                    <input
+                        v-model="search"
+                        type="search"
+                        :placeholder="t('masters.search')"
+                        class="w-64 rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                    />
+                </div>
+                <select
+                    v-model="cityFilter"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                >
+                    <option :value="null">{{ t('masters.filters.all_cities') }}</option>
+                    <option v-for="city in allCities" :key="city.id" :value="city.id">{{ city.name }}</option>
+                </select>
+                <button
+                    v-if="hasActiveFilters"
+                    @click="resetFilters"
+                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm hover:bg-gray-50 hover:text-gray-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200 transition-colors"
+                >
+                    {{ t('masters.filters.reset') }}
+                </button>
+            </div>
+
             <!-- Table card -->
             <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-800">
                 <div class="overflow-x-auto">
@@ -169,7 +232,7 @@ const masterList = computed(() => props.masters?.data ?? [])
                                 class="group cursor-default transition-colors duration-150 hover:bg-blue-50/60 dark:hover:bg-slate-700"
                             >
                                 <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">
-                                    {{ index + 1 + (currentPage - 1) * 15 }}
+                                    {{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <span class="text-sm font-medium text-gray-900 dark:text-slate-300">
@@ -185,7 +248,7 @@ const masterList = computed(() => props.masters?.data ?? [])
                                         </span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
+                                <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-slate-400">
                                     {{ formatPhone(master.phone) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
@@ -269,25 +332,12 @@ const masterList = computed(() => props.masters?.data ?? [])
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div v-if="lastPage > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-slate-700">
-                    <p class="text-sm text-gray-500 dark:text-slate-400">
-                        {{ t('masters.title') }}
-                    </p>
-                    <div class="flex gap-1">
-                        <Link
-                            v-for="page in lastPage"
-                            :key="page"
-                            :href="route('masters.index', { page })"
-                            :class="page === currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
-                        >
-                            {{ page }}
-                        </Link>
-                    </div>
-                </div>
+                <Pagination
+                    v-if="paginationMeta"
+                    :meta="paginationMeta"
+                    route-name="masters.index"
+                    :route-params="activeFilters"
+                />
             </div>
         </div>
 

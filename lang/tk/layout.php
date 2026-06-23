@@ -30,6 +30,11 @@ return [
         'update' => 'Täzelemek',
         'cancel' => 'Ýatyr',
     ],
+    'pagination' => [
+        'showing' => '{from}–{to} / {total} görkezilýär',
+        'prev' => 'Öňki',
+        'next' => 'Soňky',
+    ],
     'selected' => 'saýlandy',
     'select' => [
         'oblast' => 'Welaýat saýlaň',

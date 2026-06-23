@@ -35,6 +35,11 @@ return [
     'save' => 'Ýatda sakla',
     'cancel' => 'Ýatyr',
     'delete_confirm' => 'Bu ussady öçürmek isleýärsiňizmi?',
+    'search' => 'Ady ýa-da telefon boýunça gözle…',
+    'filters' => [
+        'all_cities' => 'Ähli şäherler',
+        'reset' => 'Arassala',
+    ],
     'empty' => 'Ussatlar tapylmady',
     'view_map' => 'Kartada',
     'trajectory' => 'Ugur',

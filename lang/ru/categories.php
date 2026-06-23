@@ -20,6 +20,7 @@ return [
     'save' => 'Сохранить',
     'cancel' => 'Отмена',
     'delete_confirm' => 'Вы уверены, что хотите удалить эту категорию? Все дочерние категории станут корневыми.',
+    'search' => 'Поиск по названию…',
     'empty' => 'Категории не найдены',
     'child_of' => 'Подкатегория: :parent',
     'type_root' => 'Корневая',
@@ -42,6 +43,7 @@ return [
     'icon_group_tech' => 'Техника',
     'icon_group_security' => 'Безопасность',
     'icon_group_services' => 'Услуги',
+    'icon_group_uploaded' => 'Загруженные',
 
     'content_add' => 'Добавить контент',
     'content_edit' => 'Редактировать контент',

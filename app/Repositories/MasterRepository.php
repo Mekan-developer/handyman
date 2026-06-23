@@ -8,11 +8,21 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 class MasterRepository
 {
-    public function paginate(int $perPage = 15): LengthAwarePaginator
+    /** @param array{search?: string, city_id?: int|string} $filters */
+    public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         return Master::with(['city', 'categories'])
+            ->when($filters['search'] ?? null, function ($q, $search) {
+                $escaped = addcslashes($search, '%_\\');
+                $q->where(fn ($sub) => $sub
+                    ->where('name', 'like', "%{$escaped}%")
+                    ->orWhere('phone', 'like', "%{$escaped}%")
+                );
+            })
+            ->when($filters['city_id'] ?? null, fn ($q, $id) => $q->where('city_id', $id))
             ->latest()
-            ->paginate($perPage);
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /** All active masters with latest location — for map view. */

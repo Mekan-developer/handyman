@@ -10,7 +10,9 @@ use App\Http\Requests\UpdateCategoryRequest;
 use App\Http\Resources\CategoryResource;
 use App\Http\Traits\WithNotification;
 use App\Repositories\CategoryRepository;
+use App\Support\CategoryIcon;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -20,12 +22,18 @@ class CategoryController extends Controller
 
     public function __construct(private readonly CategoryRepository $repository) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
+        $filters = $request->only(['search']);
+
         return Inertia::render('Categories/Index', [
-            'categories' => CategoryResource::collection($this->repository->paginate()),
+            'categories' => CategoryResource::collection($this->repository->paginate(15, $filters)),
             'parentCategories' => $this->repository->roots(),
-            'iconGroups' => config('service_icons'),
+            'iconGroups' => array_filter(
+                array_merge(config('service_icons', []), ['uploaded' => CategoryIcon::uploadedKeys()]),
+                fn (array $group) => count($group) > 0,
+            ),
+            'filters' => $filters,
         ]);
     }
 

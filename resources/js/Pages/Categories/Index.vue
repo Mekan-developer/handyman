@@ -1,12 +1,13 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { Link, useForm, router } from '@inertiajs/vue3'
+import { ref, computed, watch } from 'vue'
+import { useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import CategoryFormModal from '@/Pages/Categories/Partials/CategoryFormModal.vue'
 import CategoryContentModal from '@/Pages/Categories/Partials/CategoryContentModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
 import ServiceIcon from '@/Components/ServiceIcon.vue'
+import Pagination from '@/Components/Pagination.vue'
 
 const { t } = useI18n()
 
@@ -14,6 +15,7 @@ const props = defineProps({
     categories: Object,
     parentCategories: Array,
     iconGroups: { type: Object, default: () => ({}) },
+    filters: { type: Object, default: () => ({}) },
 })
 
 // ── Modal state ───────────────────────────────────────────────────────────────
@@ -114,10 +116,22 @@ function confirmDelete() {
     })
 }
 
+// ── Search ────────────────────────────────────────────────────────────────────
+const search = ref(props.filters.search ?? '')
+
+let searchTimer = null
+watch(search, () => {
+    clearTimeout(searchTimer)
+    searchTimer = setTimeout(() => {
+        router.get(route('categories.index'), { search: search.value || undefined }, {
+            preserveState: true, preserveScroll: true, replace: true,
+        })
+    }, 350)
+})
+
 // ── Pagination ────────────────────────────────────────────────────────────────
-const currentPage = computed(() => props.categories?.current_page ?? 1)
-const lastPage = computed(() => props.categories?.last_page ?? 1)
 const categoryList = computed(() => props.categories?.data ?? [])
+const paginationMeta = computed(() => props.categories?.meta ?? null)
 
 </script>
 
@@ -129,15 +143,28 @@ const categoryList = computed(() => props.categories?.data ?? [])
                 <h1 class="text-xl font-semibold text-gray-900 dark:text-white">
                     {{ t('categories.title') }}
                 </h1>
-                <button
-                    @click="openCreate"
-                    class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
-                >
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                    </svg>
-                    {{ t('categories.add') }}
-                </button>
+                <div class="flex items-center gap-3">
+                    <div class="relative">
+                        <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                        <input
+                            v-model="search"
+                            type="search"
+                            :placeholder="t('categories.search')"
+                            class="w-56 rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                        />
+                    </div>
+                    <button
+                        @click="openCreate"
+                        class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 transition-colors"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        {{ t('categories.add') }}
+                    </button>
+                </div>
             </div>
 
             <!-- Table card -->
@@ -181,7 +208,7 @@ const categoryList = computed(() => props.categories?.data ?? [])
                                 class="group cursor-default transition-colors duration-150 hover:bg-blue-50/60 dark:hover:bg-slate-700"
                             >
                                 <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">
-                                    {{ index + 1 + (currentPage - 1) * 15 }}
+                                    {{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-2">
@@ -297,25 +324,12 @@ const categoryList = computed(() => props.categories?.data ?? [])
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div v-if="lastPage > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-slate-700">
-                    <p class="text-sm text-gray-500 dark:text-slate-400">
-                        {{ t('categories.title') }}
-                    </p>
-                    <div class="flex gap-1">
-                        <Link
-                            v-for="page in lastPage"
-                            :key="page"
-                            :href="route('categories.index', { page })"
-                            :class="page === currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
-                        >
-                            {{ page }}
-                        </Link>
-                    </div>
-                </div>
+                <Pagination
+                    v-if="paginationMeta"
+                    :meta="paginationMeta"
+                    route-name="categories.index"
+                    :route-params="search ? { search } : {}"
+                />
             </div>
         </div>
 

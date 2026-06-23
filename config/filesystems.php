@@ -44,6 +44,14 @@ return [
             'throw' => false,
         ],
 
+        'service_icons' => [
+            'driver' => 'local',
+            'root' => public_path('icons/services'),
+            'url' => env('APP_URL').'/icons/services',
+            'visibility' => 'public',
+            'throw' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

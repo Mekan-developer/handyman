@@ -6,6 +6,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
 import CreateOrderModal from '@/Pages/Orders/Partials/CreateOrderModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
+import Pagination from '@/Components/Pagination.vue'
 import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
@@ -60,9 +61,16 @@ watch(search, () => {
     searchTimer = setTimeout(applyFilters, 350)
 })
 
-const currentPage = computed(() => props.orders?.meta?.current_page ?? props.orders?.current_page ?? 1)
-const lastPage = computed(() => props.orders?.meta?.last_page ?? props.orders?.last_page ?? 1)
 const orderList = computed(() => props.orders?.data ?? [])
+const paginationMeta = computed(() => props.orders?.meta ?? null)
+
+const activeFilters = computed(() => ({
+    status: statusFilter.value || undefined,
+    city_id: cityFilter.value || undefined,
+    search: search.value || undefined,
+    date_from: dateFrom.value || undefined,
+    date_to: dateTo.value || undefined,
+}))
 
 const deleteTarget = ref(null)
 const deleting = ref(false)
@@ -192,7 +200,7 @@ function confirmDelete() {
                                 class="cursor-pointer transition-colors hover:bg-blue-50/60 dark:hover:bg-slate-700"
                                 @click="router.visit(route('orders.show', order.id))"
                             >
-                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ index + 1 }}</td>
+                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}</td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</div>
                                     <div class="text-xs text-gray-400">{{ formatPhone(order.client_phone) }}</div>
@@ -237,20 +245,12 @@ function confirmDelete() {
                     </table>
                 </div>
 
-                <!-- Pagination -->
-                <div v-if="lastPage > 1" class="flex items-center justify-end gap-1 border-t border-gray-100 px-6 py-4 dark:border-slate-700">
-                    <Link
-                        v-for="page in lastPage"
-                        :key="page"
-                        :href="route('orders.index', { page, ...filters })"
-                        :class="page === currentPage
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"
-                        class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
-                    >
-                        {{ page }}
-                    </Link>
-                </div>
+                <Pagination
+                    v-if="paginationMeta"
+                    :meta="paginationMeta"
+                    route-name="orders.index"
+                    :route-params="activeFilters"
+                />
             </div>
         </div>
 

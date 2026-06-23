@@ -20,6 +20,7 @@ return [
     'save' => 'Ýatda sakla',
     'cancel' => 'Ýatyr',
     'delete_confirm' => 'Bu kategoriýany öçürmek isleýärsiňizmi? Ähli çaga kategoriýalar kök bolar.',
+    'search' => 'Ady boýunça gözle…',
     'empty' => 'Kategoriýalar tapylmady',
     'child_of' => 'Çaga kategoriýa: :parent',
     'type_root' => 'Kök',
@@ -42,6 +43,7 @@ return [
     'icon_group_tech' => 'Tehnika',
     'icon_group_security' => 'Howpsuzlyk',
     'icon_group_services' => 'Hyzmatlar',
+    'icon_group_uploaded' => 'Ýüklenenler',
 
     'content_add' => 'Mazmun goş',
     'content_edit' => 'Mazmuny üýtget',

@@ -1,11 +1,12 @@
 ﻿<script setup>
 import { ref, computed } from 'vue'
-import { Link, useForm, router } from '@inertiajs/vue3'
+import { useForm, router } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import { Head } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import ClientFormModal from '@/Pages/Clients/Partials/ClientFormModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
+import Pagination from '@/Components/Pagination.vue'
 import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
@@ -130,9 +131,13 @@ function confirmToggleBlock() {
     })
 }
 
-const currentPage = computed(() => props.clients?.current_page ?? 1)
-const lastPage = computed(() => props.clients?.last_page ?? 1)
 const clientList = computed(() => props.clients?.data ?? [])
+const paginationMeta = computed(() => props.clients?.meta ?? null)
+
+const activeFilters = computed(() => ({
+    ...(selectedOblastId.value ? { oblast_id: selectedOblastId.value } : {}),
+    ...(selectedCityId.value ? { city_id: selectedCityId.value } : {}),
+}))
 </script>
 
 <template>
@@ -225,7 +230,7 @@ const clientList = computed(() => props.clients?.data ?? [])
                                 :class="client.is_blocked ? 'opacity-60' : ''"
                             >
                                 <td class="px-6 py-4 text-sm text-gray-400 dark:text-slate-500">
-                                    {{ index + 1 + (currentPage - 1) * 20 }}
+                                    {{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 20) }}
                                 </td>
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-slate-200">
                                     {{ client.name }}
@@ -293,22 +298,12 @@ const clientList = computed(() => props.clients?.data ?? [])
                     </table>
                 </div>
 
-                <div v-if="lastPage > 1" class="flex items-center justify-between border-t border-gray-100 px-6 py-4 dark:border-slate-700">
-                    <p class="text-sm text-gray-500 dark:text-slate-400">{{ t('clients.title') }}</p>
-                    <div class="flex gap-1">
-                        <Link
-                            v-for="page in lastPage"
-                            :key="page"
-                            :href="route('clients.index', { page })"
-                            :class="page === currentPage
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700'"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-md text-sm font-medium transition-colors"
-                        >
-                            {{ page }}
-                        </Link>
-                    </div>
-                </div>
+                <Pagination
+                    v-if="paginationMeta"
+                    :meta="paginationMeta"
+                    route-name="clients.index"
+                    :route-params="activeFilters"
+                />
             </div>
         </div>
 
