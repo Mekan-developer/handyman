@@ -13,6 +13,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RegionController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\SystemStatusController;
 use App\Http\Controllers\TilesController;
 use App\Http\Controllers\UserController;
@@ -84,6 +85,9 @@ Route::middleware('auth')->group(function () {
         });
 
         Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
     });
 });
 

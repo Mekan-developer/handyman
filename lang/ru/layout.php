@@ -13,6 +13,7 @@ return [
         'payments' => 'Платежи',
         'banners' => 'Баннеры',
         'users' => 'Пользователи',
+        'settings' => 'Настройки',
     ],
     'header' => [
         'logout' => 'Выйти',

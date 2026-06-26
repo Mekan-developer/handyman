@@ -11,14 +11,12 @@ class CompleteMasterOrderAction
 {
     public function __construct(private readonly UpdateOrderStatusAction $updateStatus) {}
 
-    public function handle(Master $master, Order $order, float $finalPrice): Order
+    public function handle(Master $master, Order $order): Order
     {
         if ($order->master_id !== $master->id) {
             throw OrderException::invalidTransition($order->status->value, OrderStatus::Completed->value);
         }
 
-        $order->update(['final_price' => $finalPrice]);
-
-        return $this->updateStatus->handle($order->fresh(), OrderStatus::Completed);
+        return $this->updateStatus->handle($order, OrderStatus::Completed);
     }
 }

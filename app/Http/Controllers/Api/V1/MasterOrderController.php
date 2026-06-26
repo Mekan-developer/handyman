@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api\V1;
 use App\Actions\CompleteMasterOrderAction;
 use App\Actions\StartMasterOrderAction;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\CompleteOrderRequest;
 use App\Http\Resources\Api\V1\MasterOrderResource;
 use App\Models\Master;
 use App\Repositories\OrderRepository;
@@ -49,14 +48,14 @@ class MasterOrderController extends Controller
         return (new MasterOrderResource($updated))->response();
     }
 
-    public function complete(CompleteOrderRequest $request, int $id, CompleteMasterOrderAction $action): JsonResponse
+    public function complete(Request $request, int $id, CompleteMasterOrderAction $action): JsonResponse
     {
         /** @var Master $master */
         $master = $request->user();
 
         $order = $this->repository->findForMasterOrFail($id, $master);
 
-        $updated = $action->handle($master, $order, (float) $request->validated('final_price'));
+        $updated = $action->handle($master, $order);
 
         return (new MasterOrderResource($updated))->response();
     }

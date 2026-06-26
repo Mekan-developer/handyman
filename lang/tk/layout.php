@@ -13,6 +13,7 @@ return [
         'payments' => 'Tölegler',
         'banners' => 'Bannerlar',
         'users' => 'Ulanyjylar',
+        'settings' => 'Sazlamalar',
     ],
     'header' => [
         'logout' => 'Çykmak',

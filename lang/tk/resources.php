@@ -12,4 +12,5 @@ return [
     'banner' => 'Banner',
     'content' => 'Mazmun',
     'user' => 'Ulanyjy',
+    'settings' => 'Sazlamalar',
 ];
