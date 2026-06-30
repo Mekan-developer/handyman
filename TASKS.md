@@ -47,7 +47,7 @@
 ### Mobile API (api/v1)
 
 #### Master API
-- OTP auth: request-otp, verify-otp, logout
+- OTP auth: request-otp (через SMS-шлюз, 3 мин TTL), verify-otp, logout
 - GET /api/v1/master/me
 - PATCH /api/v1/master/availability (MasterAvailabilityController)
 - Orders: index, show, start, complete
@@ -55,7 +55,7 @@
 - Location: POST /api/v1/master/{master}/location
 
 #### Client API
-- OTP auth: request-otp, verify-otp, logout, complete-registration
+- OTP auth: request-otp (через SMS-шлюз, 3 мин TTL), verify-otp, logout, complete-registration
 - GET/PATCH /api/v1/client/me (ClientProfileController)
 - Catalog: GET oblasts, regions, cities, categories, categories/search, category content, banners
 - Orders: index, show, store, cancel
@@ -71,6 +71,7 @@
 - Events: OrderCreated, OrderStatusChanged, MasterAssigned, MasterLocationUpdated
 - Jobs: ConvertOrderPhotoJob, ConvertTaskPhotoJob (WebP, tries=3, backoff=30); queue heartbeat — через `Queue::looping()` в `AppServiceProvider`, не отдельный job
 - Repositories: Oblast, Region, City, Category, CategoryContent, Master, Order, Client, Banner, Dashboard, User, Payment
+- Services: `OtpGatewayService` — отправка OTP через `socket-server/` (Node.js Socket.IO мост) на Flutter SMS-gateway телефон
 - Actions: полный набор для всех модулей (48 классов, включая User CRUD, ToggleMasterAvailability, RecordMasterPayout)
 - Policies: `UserPolicy` (`app/Policies/`)
 - Middleware: `CheckRole` (`role:`), `EnsureMaster`, `EnsureClient`, `ProtectScribeDocs`, `SetLocale`, `HandleInertiaRequests`
@@ -104,7 +105,6 @@
 
 | # | Задача | Приоритет |
 |---|--------|-----------|
-| 1 | **SMS-шлюз OTP** — `RequestMasterOtpAction` и `RequestClientOtpAction` только Log::info | Низкий |
 | 2 | **Приватные `orders` + `masters-map.*` каналы** + admin gate (мобильные `client.*`/`master.*` уже приватные) | Низкий |
 | 3 | **Auth для location ping** — `/master/{master}/location` без auth | Низкий |
 | 4 | **OrderStatus enum location** — лежит в `app/OrderStatus.php`, а не `app/Enums/` (как UserRole/CategoryIconType) | Низкий |

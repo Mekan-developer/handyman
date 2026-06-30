@@ -119,7 +119,7 @@ Pending → Assigned → InProgress → Completed
 
 ### 5. Master Mobile API (v1)
 Авторизация OTP → Sanctum:
-1. `POST /api/v1/master/auth/request-otp { phone }` — `RequestMasterOtpAction` генерирует 4-значный код, кладёт в Cache на 5 мин, **пока только Log::info** (TODO SMS)
+1. `POST /api/v1/master/auth/request-otp { phone }` — `RequestMasterOtpAction` генерирует 6-значный код, отправляет через `OtpGatewayService` (Socket.IO мост `socket-server/` → Flutter SMS-gateway телефон), кладёт в Cache на 3 мин
 2. `POST /api/v1/master/auth/verify-otp { phone, code }` — `VerifyMasterOtpAction` сверяет и возвращает Sanctum token (`name=mobile`)
 3. Все защищённые роуты под `auth:sanctum`
 

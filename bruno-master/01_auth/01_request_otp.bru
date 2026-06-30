@@ -23,16 +23,18 @@ body:json {
 
 docs {
   # Request OTP
-  
-  Sends an OTP code to the master's phone number via SMS.
-  Currently the code is written to `storage/logs/laravel.log` (TODO: SMS gateway).
-  
+
+  Sends a 6-digit OTP code to the master's phone via the SMS gateway
+  (Socket.IO bridge in `socket-server/` → Flutter SMS-gateway phone).
+  The code is valid for 3 minutes.
+
   **Response 200:**
   ```json
   { "message": "OTP sent." }
   ```
-  
+
   **Errors:**
   - `404` — master with this phone not found
   - `403` — master account is disabled
+  - `503` — SMS gateway unreachable or no gateway phone connected
 }

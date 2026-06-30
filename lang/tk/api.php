@@ -11,6 +11,7 @@ return [
 
     'otp' => [
         'invalid' => 'Nädogry ýa-da möhleti gutaran tassyklama kody',
+        'send_failed' => 'Tassyklama kody iberilmedi. Soňra synanyşyň',
     ],
 
     'master' => [

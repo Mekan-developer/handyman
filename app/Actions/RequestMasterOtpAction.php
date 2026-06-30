@@ -4,11 +4,13 @@ namespace App\Actions;
 
 use App\Exceptions\MasterDisabledException;
 use App\Models\Master;
+use App\Services\OtpGatewayService;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 
 class RequestMasterOtpAction
 {
+    public function __construct(private readonly OtpGatewayService $gateway) {}
+
     public function handle(Master $master): void
     {
         if (! $master->is_active) {
@@ -21,9 +23,8 @@ class RequestMasterOtpAction
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        Cache::put("master_otp:{$master->phone}", $code, now()->addMinutes(5));
+        $this->gateway->send($master->phone, $code);
 
-        // TODO: send via SMS gateway
-        Log::info("OTP for master {$master->phone}: {$code}");
+        Cache::put("master_otp:{$master->phone}", $code, now()->addMinutes((int) config('services.otp.ttl_minutes')));
     }
 }

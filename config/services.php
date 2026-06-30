@@ -35,4 +35,13 @@ return [
         'style_url' => env('TILES_STYLE_URL', 'http://localhost:8080/styles/basic-preview/style.json'),
     ],
 
+    'sms_gateway' => [
+        'url' => env('SMS_GATEWAY_URL', 'http://127.0.0.1:3000'),
+        'secret' => env('SMS_GATEWAY_SECRET'),
+    ],
+
+    'otp' => [
+        'ttl_minutes' => (int) env('OTP_TTL_MINUTES', 3),
+    ],
+
 ];

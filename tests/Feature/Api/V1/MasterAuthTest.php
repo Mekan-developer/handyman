@@ -5,6 +5,7 @@ namespace Tests\Feature\Api\V1;
 use App\Models\Master;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class MasterAuthTest extends TestCase
@@ -15,6 +16,8 @@ class MasterAuthTest extends TestCase
 
     public function test_active_master_can_request_otp(): void
     {
+        Http::fake(['*/emit-otp' => Http::response(['message' => 'OTP event emitted'])]);
+
         $master = Master::factory()->create();
 
         $this->postJson(route('api.v1.master.auth.request-otp'), ['phone' => $master->phone])
@@ -22,6 +25,21 @@ class MasterAuthTest extends TestCase
             ->assertJson(['message' => 'OTP sent.']);
 
         $this->assertNotNull(Cache::get("master_otp:{$master->phone}"));
+
+        Http::assertSent(fn ($request) => $request->url() === config('services.sms_gateway.url').'/emit-otp'
+            && $request['phone_number'] === substr($master->phone, 4));
+    }
+
+    public function test_otp_request_fails_when_sms_gateway_is_unreachable(): void
+    {
+        Http::fake(['*/emit-otp' => Http::response(['message' => 'No gateway client connected'], 503)]);
+
+        $master = Master::factory()->create();
+
+        $this->postJson(route('api.v1.master.auth.request-otp'), ['phone' => $master->phone])
+            ->assertStatus(503);
+
+        $this->assertNull(Cache::get("master_otp:{$master->phone}"));
     }
 
     public function test_inactive_master_cannot_request_otp(): void
