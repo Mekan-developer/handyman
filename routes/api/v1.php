@@ -4,11 +4,13 @@ use App\Http\Controllers\Api\V1\Client\ClientAuthController;
 use App\Http\Controllers\Api\V1\Client\ClientCatalogController;
 use App\Http\Controllers\Api\V1\Client\ClientOrderController;
 use App\Http\Controllers\Api\V1\Client\ClientProfileController;
+use App\Http\Controllers\Api\V1\Client\ClientSettingController;
 use App\Http\Controllers\Api\V1\MasterAuthController;
 use App\Http\Controllers\Api\V1\MasterAvailabilityController;
 use App\Http\Controllers\Api\V1\MasterLocationController;
 use App\Http\Controllers\Api\V1\MasterOrderController;
 use App\Http\Controllers\Api\V1\MasterProfileController;
+use App\Http\Controllers\Api\V1\MasterSettingController;
 use App\Http\Controllers\Api\V1\MasterTaskController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
@@ -32,6 +34,9 @@ Route::post('broadcasting/auth', function (Request $request) {
 })->middleware('auth:sanctum')->name('api.v1.broadcasting.auth');
 
 Route::prefix('master')->group(function () {
+
+    // Public — app settings (rules/terms shown before registration)
+    Route::get('settings', [MasterSettingController::class, 'show'])->name('api.v1.master.settings');
 
     // Public — location ping (temporary open auth until OTP flow stabilises)
     Route::post('{master}/location', [MasterLocationController::class, 'store'])->name('api.v1.master.location.store');
@@ -67,6 +72,9 @@ Route::prefix('master')->group(function () {
 });
 
 Route::prefix('client')->group(function () {
+
+    // Public — app settings (rules/terms shown before registration)
+    Route::get('settings', [ClientSettingController::class, 'show'])->name('api.v1.client.settings');
 
     // Public catalog
     Route::get('oblasts', [ClientCatalogController::class, 'oblasts'])->name('api.v1.client.oblasts');

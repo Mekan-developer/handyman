@@ -269,38 +269,6 @@ onBeforeUnmount(() => {
                 </Link>
             </nav>
 
-            <!-- Service status -->
-            <div class="shrink-0 border-t border-slate-700 px-4 py-3">
-                <div class="flex items-center justify-between gap-2">
-                    <div
-                        v-for="{ key, status } in [
-                            { key: 'queue', status: queueStatus },
-                            { key: 'reverb', status: reverbStatus },
-                            { key: 'websocket', status: wsStatus },
-                        ]"
-                        :key="key"
-                        class="flex items-center gap-1.5"
-                        :title="`${t(`layout.services.${key}`)} — ${t(`layout.services.${status === 'checking' ? 'checking' : status === 'ok' ? 'ok' : 'error'}`)}`"
-                    >
-                        <span class="relative flex h-2 w-2 shrink-0">
-                            <span
-                                v-if="status === 'ok'"
-                                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"
-                            />
-                            <span
-                                class="relative inline-flex h-2 w-2 rounded-full"
-                                :class="{
-                                    'bg-emerald-500': status === 'ok',
-                                    'bg-red-500': status === 'error',
-                                    'bg-yellow-400': status === 'checking',
-                                }"
-                            />
-                        </span>
-                        <span class="text-xs text-slate-400">{{ t(`layout.services.${key}_short`) }}</span>
-                    </div>
-                </div>
-            </div>
-
             <!-- Bottom user area -->
             <div class="shrink-0 border-t border-slate-700 p-4">
                 <div class="flex items-center gap-3">
