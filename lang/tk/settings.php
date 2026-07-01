@@ -40,5 +40,9 @@ return [
         'clients' => 'Müşderi',
         'msg_rate' => 'Hat/sek',
         'active_now' => 'Häzir işjeň',
+        'otp_gateway' => 'OTP Şlýuzy',
+        'gateway_bridge' => 'SMS-şlýuzy',
+        'phones_connected' => 'Telefonlar',
+        'last_otp' => 'Soňky OTP',
     ],
 ];

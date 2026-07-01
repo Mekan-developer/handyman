@@ -40,5 +40,9 @@ return [
         'clients' => 'Клиентов',
         'msg_rate' => 'Сообщ/сек',
         'active_now' => 'Сейчас активно',
+        'otp_gateway' => 'OTP Шлюз',
+        'gateway_bridge' => 'SMS-шлюз',
+        'phones_connected' => 'Телефонов',
+        'last_otp' => 'Последний OTP',
     ],
 ];

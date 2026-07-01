@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\OtpException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -34,6 +35,8 @@ class OtpGatewayService
 
             throw OtpException::sendFailed();
         }
+
+        Cache::put('otp_gateway:last_sent', now()->format('H:i'), now()->addDay());
     }
 
     private function toLocalFormat(string $phone): string

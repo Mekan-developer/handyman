@@ -13,6 +13,7 @@ class SystemStatusController extends Controller
         return response()->json([
             'queue' => $this->checkQueue(),
             'websocket' => $this->checkWebSocket(),
+            'otp_gateway' => $this->checkOtpGateway(),
         ]);
     }
 
@@ -40,5 +41,28 @@ class SystemStatusController extends Controller
         } catch (\Exception) {
             return 'error';
         }
+    }
+
+    /** @return array{status: string, clients: int, last_sent: string|null} */
+    private function checkOtpGateway(): array
+    {
+        $lastSent = Cache::get('otp_gateway:last_sent');
+
+        try {
+            $response = Http::timeout(2)->get(
+                rtrim((string) config('services.sms_gateway.url'), '/').'/health'
+            );
+
+            if ($response->successful()) {
+                return [
+                    'status' => 'ok',
+                    'clients' => (int) ($response->json('clients') ?? 0),
+                    'last_sent' => $lastSent,
+                ];
+            }
+        } catch (\Exception) {
+        }
+
+        return ['status' => 'error', 'clients' => 0, 'last_sent' => $lastSent];
     }
 }

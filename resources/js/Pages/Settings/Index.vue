@@ -90,15 +90,20 @@ function save(which) {
 const queueStatus    = ref('ok')
 const reverbStatus   = ref('ok')
 const wsStatus       = ref('ok')
+const otpStatus      = ref('checking')
 const queueCount     = ref(7)
 const queueDone      = ref(1284)
 const reverbChannels = ref(23)
 const reverbPing     = ref(12)
 const wsClients      = ref(41)
 const wsMsgRate      = ref(18)
+const otpClients     = ref(0)
+const otpLastSent    = ref(null)
 const nowTime        = ref('')
 
-const systemOk = computed(() => reverbStatus.value === 'ok' && wsStatus.value === 'ok')
+const systemOk = computed(() =>
+    reverbStatus.value === 'ok' && wsStatus.value === 'ok' && otpStatus.value === 'ok'
+)
 
 function statusSt(s) {
     if (s === 'ok')    { return { bg: 'bg-green-500/10',   border: 'border-green-500/25',  dot: 'bg-green-500',  text: 'text-green-500',  label: t('settings.monitoring.active')   } }
@@ -109,6 +114,7 @@ function statusSt(s) {
 const qSt = computed(() => statusSt(queueStatus.value))
 const rSt = computed(() => statusSt(reverbStatus.value))
 const wSt = computed(() => statusSt(wsStatus.value))
+const oSt = computed(() => statusSt(otpStatus.value))
 
 function tick() {
     const now = new Date()
@@ -126,9 +132,13 @@ async function fetchStatus() {
         const { data } = await window.axios.get(route('system.status'))
         queueStatus.value  = data.queue === 'ok' ? 'ok' : 'error'
         reverbStatus.value = data.websocket === 'ok' ? 'ok' : 'error'
+        otpStatus.value    = data.otp_gateway?.status === 'ok' ? 'ok' : 'error'
+        otpClients.value   = data.otp_gateway?.clients ?? 0
+        otpLastSent.value  = data.otp_gateway?.last_sent ?? null
     } catch {
         queueStatus.value  = 'error'
         reverbStatus.value = 'error'
+        otpStatus.value    = 'error'
     }
     if (window.Echo) {
         wsStatus.value = window.Echo.connector.pusher.connection.state === 'connected' ? 'ok' : 'error'
@@ -138,6 +148,9 @@ async function fetchStatus() {
 function reconnect(which) {
     if (which === 'reverb') {
         reverbStatus.value = 'checking'
+        setTimeout(fetchStatus, 1800)
+    } else if (which === 'otp') {
+        otpStatus.value = 'checking'
         setTimeout(fetchStatus, 1800)
     } else {
         wsStatus.value = 'checking'
@@ -194,7 +207,7 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
+                <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
 
                     <!-- Queue -->
                     <div class="rounded-2xl border border-gray-200 bg-white p-[18px] dark:border-white/[0.07] dark:bg-[#131729]">
@@ -314,6 +327,52 @@ onBeforeUnmount(() => {
                             <button
                                 type="button"
                                 @click="reconnect('ws')"
+                                class="rounded-md border border-gray-200 bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:border-white/[0.08] dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
+                            >
+                                {{ t('settings.monitoring.reconnect') }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- OTP Gateway -->
+                    <div class="rounded-2xl border border-gray-200 bg-white p-[18px] dark:border-white/[0.07] dark:bg-[#131729]">
+                        <div class="mb-3.5 flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-[9px] border border-emerald-500/20 bg-emerald-500/10">
+                                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#34d399" stroke-width="1.8">
+                                        <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                                        <line x1="12" y1="18" x2="12.01" y2="18"/>
+                                        <path d="M9 7h6M9 11h4"/>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <div class="text-[13.5px] font-semibold text-gray-900 dark:text-slate-100">{{ t('settings.monitoring.otp_gateway') }}</div>
+                                    <div class="mt-px text-[11px] text-gray-400 dark:text-slate-500">{{ t('settings.monitoring.gateway_bridge') }}</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1.5 rounded-full border px-2.5 py-[3px]" :class="[oSt.bg, oSt.border]">
+                                <div class="h-1.5 w-1.5 animate-pulse rounded-full" :class="oSt.dot" />
+                                <span class="text-[11px] font-semibold" :class="oSt.text">{{ oSt.label }}</span>
+                            </div>
+                        </div>
+                        <div class="mb-3.5 grid grid-cols-2 gap-2">
+                            <div class="rounded-lg bg-gray-50 p-[9px] dark:bg-white/[0.04]">
+                                <div class="mb-[3px] text-[11px] text-gray-400 dark:text-slate-500">{{ t('settings.monitoring.phones_connected') }}</div>
+                                <div
+                                    class="text-xl font-bold leading-tight"
+                                    :class="otpClients > 0 ? 'text-emerald-400' : 'text-gray-900 dark:text-slate-100'"
+                                >{{ otpClients }}</div>
+                            </div>
+                            <div class="rounded-lg bg-gray-50 p-[9px] dark:bg-white/[0.04]">
+                                <div class="mb-[3px] text-[11px] text-gray-400 dark:text-slate-500">{{ t('settings.monitoring.last_otp') }}</div>
+                                <div class="text-xl font-bold leading-tight text-emerald-400">{{ otpLastSent ?? '—' }}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-[11px] text-gray-400 dark:text-slate-500">:3000</div>
+                            <button
+                                type="button"
+                                @click="reconnect('otp')"
                                 class="rounded-md border border-gray-200 bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 dark:border-white/[0.08] dark:bg-white/5 dark:text-slate-400 dark:hover:bg-white/10"
                             >
                                 {{ t('settings.monitoring.reconnect') }}
