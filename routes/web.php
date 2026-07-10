@@ -21,6 +21,34 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/tiles/{file}', [TilesController::class, 'serve'])->where('file', '.+\.pmtiles');
 
+
+Route::get('/tiles/{z}/{x}/{y}.pbf', function (int $z, int $x, int $y) {
+    $db = new PDO('sqlite:' . config('services.mbtiles.path'), null, null, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    ]);
+
+    // mbtiles хранит Y в TMS-схеме (перевёрнутая ось)
+    $tmsY = (1 << $z) - 1 - $y;
+
+    $stmt = $db->prepare(
+        'SELECT tile_data FROM tiles
+         WHERE zoom_level = ? AND tile_column = ? AND tile_row = ?'
+    );
+    $stmt->execute([$z, $x, $tmsY]);
+    $tile = $stmt->fetchColumn();
+
+    if ($tile === false) {
+        return response('', 204); // пустой тайл — норм для моря/пустых зон
+    }
+
+    return response($tile)
+        ->header('Content-Type', 'application/x-protobuf')
+        ->header('Content-Encoding', 'gzip')  // тайлы в mbtiles уже gzip-сжаты
+        ->header('Cache-Control', 'public, max-age=86400');
+})->where(['z' => '\d{1,2}', 'x' => '\d+', 'y' => '\d+']);
+
+Route::view('/map', 'map');
+
 Route::post('/locale/{locale}', function (string $locale) {
     $supported = ['ru', 'tk'];
     if (in_array($locale, $supported, strict: true)) {
