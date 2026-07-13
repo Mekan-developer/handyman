@@ -10,6 +10,7 @@ import ChangeStatusModal from '@/Pages/Orders/Partials/ChangeStatusModal.vue'
 import EditOrderModal from '@/Pages/Orders/Partials/EditOrderModal.vue'
 import ImageLightbox from '@/Components/ImageLightbox.vue'
 import { formatPhone } from '@/utils/formatPhone'
+import { loadMapStyle, suppressBlankIconWarnings } from '@/utils/loadMapStyle'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -79,7 +80,8 @@ onMounted(async () => {
         attributionControl: false,
     }).setView([clientLat, clientLng], 14)
 
-    baseLayer = L.maplibreGL({ style: page.props.tilesStyleUrl }).addTo(map)
+    baseLayer = L.maplibreGL({ style: await loadMapStyle(page.props.tilesStyleUrl) }).addTo(map)
+    suppressBlankIconWarnings(baseLayer.getMaplibreMap?.())
     currentMode.value = localStorage.getItem(MAP_MODE_STORAGE_KEY) ?? 'auto'
     applyMapMode()
     baseLayer.getMaplibreMap?.()?.on('load', applyMapMode)

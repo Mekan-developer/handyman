@@ -31,6 +31,14 @@
           zoom: 11
         });
         map.addControl(new maplibregl.NavigationControl());
+
+        // Грязь в данных openmaptiles: у редких POI subclass = " ", стиль просит
+        // иконку с таким именем. Подсовываем прозрачный пиксель, чтобы не шуметь в консоли.
+        map.on('styleimagemissing', (e) => {
+          if (!e.id.trim()) {
+            map.addImage(e.id, { width: 1, height: 1, data: new Uint8Array(4) });
+          }
+        });
       });
   </script>
 

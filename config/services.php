@@ -14,8 +14,6 @@ return [
     |
     */
 
-    
-
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
@@ -34,15 +32,14 @@ return [
     ],
 
     'tiles' => [
-        'style_url' => env('TILES_STYLE_URL', 'http://localhost:8080/styles/basic-preview/style.json'),
+        'style_url' => env('TILES_STYLE_URL', '/maps/style.json'),
     ],
- 
-   'mbtiles' => [
-      'path' => env('MBTILES_PATH'),
-   ],
 
-    
-'sms_gateway' => [
+    'mbtiles' => [
+        'path' => storage_path(env('MBTILES_PATH', 'maps/tiles.mbtiles')),
+    ],
+
+    'sms_gateway' => [
         'url' => env('SMS_GATEWAY_URL', 'http://127.0.0.1:3000'),
         'secret' => env('SMS_GATEWAY_SECRET'),
     ],

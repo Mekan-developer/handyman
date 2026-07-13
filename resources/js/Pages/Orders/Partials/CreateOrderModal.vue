@@ -7,6 +7,7 @@ import InputError from '@/Components/InputError.vue'
 import PhoneInput from '@/Components/PhoneInput.vue'
 import OblastCitySelect from '@/Components/OblastCitySelect.vue'
 import CategoryPicker from '@/Components/CategoryPicker.vue'
+import { loadMapStyle, suppressBlankIconWarnings } from '@/utils/loadMapStyle'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -123,7 +124,8 @@ async function initMap() {
         attributionControl: false,
     }).setView(TM_CENTER, 13)
 
-    L.maplibreGL({ style: page.props.tilesStyleUrl }).addTo(map)
+    const baseLayer = L.maplibreGL({ style: await loadMapStyle(page.props.tilesStyleUrl) }).addTo(map)
+    suppressBlankIconWarnings(baseLayer.getMaplibreMap?.())
 
     map.on('click', (e) => {
         form.client_lat = e.latlng.lat.toFixed(6)

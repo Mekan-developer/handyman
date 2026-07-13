@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import { useI18n } from 'vue-i18n'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
+import { loadMapStyle, suppressBlankIconWarnings } from '@/utils/loadMapStyle'
 import 'leaflet/dist/leaflet.css'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -57,7 +58,8 @@ onMounted(async () => {
         attributionControl: false,
     }).setView(TM_CENTER, 11)
 
-    baseLayer = createBaseLayer().addTo(map)
+    baseLayer = (await createBaseLayer()).addTo(map)
+    suppressBlankIconWarnings(baseLayer.getMaplibreMap?.())
     if (typeof baseLayer.bringToBack === 'function') { baseLayer.bringToBack() }
 
     currentMode.value = localStorage.getItem(MAP_MODE_STORAGE_KEY) ?? 'auto'
@@ -125,8 +127,8 @@ function watchTheme() {
 
 // Базовый слой — внешний MapLibre-стиль с self-hosted tileserver-gl.
 // URL приходит из .env через Inertia (config/services.php → HandleInertiaRequests), не хардкодим.
-function createBaseLayer() {
-    return L.maplibreGL({ style: page.props.tilesStyleUrl })
+async function createBaseLayer() {
+    return L.maplibreGL({ style: await loadMapStyle(page.props.tilesStyleUrl) })
 }
 
 function setupControls() {

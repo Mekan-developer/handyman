@@ -19,6 +19,12 @@ export default defineConfig(({ mode }) => {
                     },
                 },
             }),
-        ]
+        ],
+        server: {
+            host: env.VITE_DEV_SERVER_HOST || true,
+            hmr: {
+                host: env.VITE_DEV_SERVER_HOST,
+            },
+        },
     };
 });
