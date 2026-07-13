@@ -18,6 +18,5 @@ yarn-error.log
 /.idea
 /.vscode
 .claude/settings.local.json
-data/tiles.mbtiles
+storage/maps/tiles.mbtiles
 .scribe
-.cursor
