@@ -25,6 +25,13 @@ return [
         'created_at' => 'Дата регистрации',
     ],
 
+    'placeholders' => [
+        'name' => 'Например, Иван Иванов',
+        'email' => 'name@example.com',
+        'password' => 'Минимум 8 символов',
+        'password_confirmation' => 'Повторите пароль',
+    ],
+
     'filters' => [
         'all_roles' => 'Все роли',
         'reset' => 'Сбросить',

@@ -148,12 +148,30 @@ class PaymentTest extends TestCase
         $this->assertEqualsWithDelta(0.0, (float) $master->fresh()->balance, 0.01);
     }
 
+    public function test_manager_cannot_view_payments_index(): void
+    {
+        $this->actingAs(User::factory()->manager()->create());
+
+        $this->get(route('payments.index'))->assertForbidden();
+    }
+
+    public function test_manager_cannot_pay_out(): void
+    {
+        $this->actingAs(User::factory()->manager()->create());
+        $master = Master::factory()->create(['balance' => 200]);
+
+        $this->post(route('payments.payout', $master))->assertForbidden();
+
+        $this->assertDatabaseCount('master_payouts', 0);
+        $this->assertEqualsWithDelta(200.0, (float) $master->fresh()->balance, 0.01);
+    }
+
     public function test_operator_cannot_pay_out(): void
     {
         $this->actingAs(User::factory()->operator()->create());
         $master = Master::factory()->create(['balance' => 200]);
 
-        $this->post(route('payments.payout', $master))->assertRedirect(route('payments.index'));
+        $this->post(route('payments.payout', $master))->assertForbidden();
 
         $this->assertDatabaseCount('master_payouts', 0);
         $this->assertEqualsWithDelta(200.0, (float) $master->fresh()->balance, 0.01);

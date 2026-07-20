@@ -47,7 +47,7 @@ class SettingTest extends TestCase
     {
         $this->actingAs($this->operator())
             ->get(route('settings.index'))
-            ->assertRedirect(route('payments.index'));
+            ->assertForbidden();
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -91,6 +91,6 @@ class SettingTest extends TestCase
                 'master_app_rules' => 'text',
                 'client_app_rules' => 'text',
             ])
-            ->assertRedirect(route('payments.index'));
+            ->assertForbidden();
     }
 }

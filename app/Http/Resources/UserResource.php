@@ -20,6 +20,7 @@ class UserResource extends JsonResource
             'role_label' => $this->role->label(),
             'role_color' => $this->role->color(),
             'is_current' => $this->id === $request->user()?->id,
+            'can_delete' => $request->user()?->can('delete', $this->resource) ?? false,
             'created_at' => $this->created_at->format('d.m.Y'),
         ];
     }

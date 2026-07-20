@@ -40,7 +40,7 @@ class PaymentController extends Controller
                 'value' => $m->value,
                 'label' => $m->label(),
             ]),
-            'canPayout' => $user->isAdministrator() || $user->isManager(),
+            'canPayout' => $user->isAdministrator(),
         ]);
     }
 

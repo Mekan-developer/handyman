@@ -27,6 +27,7 @@ class CreateUserAction
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
             'role' => $targetRole,
+            'created_by' => $creator->id,
         ]);
     }
 }

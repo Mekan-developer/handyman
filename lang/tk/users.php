@@ -25,6 +25,13 @@ return [
         'created_at' => 'Hasap döredilen senesi',
     ],
 
+    'placeholders' => [
+        'name' => 'Meselem, Aman Amanow',
+        'email' => 'name@example.com',
+        'password' => 'Iň azyndan 8 simwol',
+        'password_confirmation' => 'Açar sözi gaýtalaň',
+    ],
+
     'filters' => [
         'all_roles' => 'Ähli roller',
         'reset' => 'Nola getir',

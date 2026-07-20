@@ -53,32 +53,28 @@ class UserTest extends TestCase
             ->assertInertia(fn ($page) => $page->component('Users/Index', false)->has('users'));
     }
 
-    public function test_manager_can_view_users_index(): void
+    public function test_manager_cannot_view_users_index(): void
     {
         $this->actingAs($this->manager());
 
-        $this->get(route('users.index'))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('Users/Index', false));
+        $this->get(route('users.index'))->assertForbidden();
     }
 
     public function test_operator_cannot_view_users_index(): void
     {
         $this->actingAs($this->operator());
 
-        // Operator is redirected to payments by CheckRole middleware
-        $this->get(route('users.index'))
-            ->assertRedirect(route('payments.index'));
+        $this->get(route('users.index'))->assertForbidden();
     }
 
     // ── Store ─────────────────────────────────────────────────────────────────
 
-    public function test_administrator_can_create_user_with_any_role(): void
+    public function test_administrator_can_create_user_with_assignable_roles(): void
     {
         $admin = $this->administrator();
         $this->actingAs($admin);
 
-        foreach (UserRole::cases() as $role) {
+        foreach (UserRole::assignable() as $role) {
             $payload = $this->validPayload($role->value);
             $payload['email'] = "test_{$role->value}@example.com";
 
@@ -92,23 +88,39 @@ class UserTest extends TestCase
         }
     }
 
-    public function test_manager_cannot_create_user_with_administrator_role(): void
+    public function test_operator_role_cannot_be_assigned_on_create(): void
     {
-        $this->actingAs($this->manager());
-
-        $this->post(route('users.store'), $this->validPayload('administrator'))
-            ->assertForbidden();
-    }
-
-    public function test_manager_can_create_user_with_manager_or_operator_role(): void
-    {
-        $this->actingAs($this->manager());
+        $this->actingAs($this->administrator());
 
         $payload = $this->validPayload('operator');
+
+        $this->post(route('users.store'), $payload)
+            ->assertSessionHasErrors('role');
+
+        $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+    }
+
+    public function test_created_by_is_recorded_on_store(): void
+    {
+        $admin = $this->administrator();
+        $this->actingAs($admin);
+
+        $payload = $this->validPayload('manager');
         $this->post(route('users.store'), $payload)
             ->assertRedirect(route('users.index'));
 
-        $this->assertDatabaseHas('users', ['email' => $payload['email'], 'role' => 'operator']);
+        $this->assertDatabaseHas('users', [
+            'email' => $payload['email'],
+            'created_by' => $admin->id,
+        ]);
+    }
+
+    public function test_manager_cannot_create_user(): void
+    {
+        $this->actingAs($this->manager());
+
+        $this->post(route('users.store'), $this->validPayload('manager'))
+            ->assertForbidden();
     }
 
     public function test_operator_cannot_create_user(): void
@@ -116,7 +128,7 @@ class UserTest extends TestCase
         $this->actingAs($this->operator());
 
         $this->post(route('users.store'), $this->validPayload())
-            ->assertRedirect(route('payments.index'));
+            ->assertForbidden();
     }
 
     // ── Update ────────────────────────────────────────────────────────────────
@@ -137,20 +149,7 @@ class UserTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $target->id, 'role' => 'operator']);
     }
 
-    public function test_manager_cannot_update_administrator(): void
-    {
-        $this->actingAs($this->manager());
-
-        $admin = $this->administrator();
-
-        $this->patch(route('users.update', $admin), [
-            'name' => $admin->name,
-            'email' => $admin->email,
-            'role' => 'manager',
-        ])->assertForbidden();
-    }
-
-    public function test_manager_can_update_manager_or_operator(): void
+    public function test_manager_cannot_update_user(): void
     {
         $this->actingAs($this->manager());
 
@@ -160,21 +159,6 @@ class UserTest extends TestCase
             'name' => 'New Name',
             'email' => $target->email,
             'role' => 'manager',
-        ])->assertRedirect(route('users.index'));
-
-        $this->assertDatabaseHas('users', ['id' => $target->id, 'role' => 'manager']);
-    }
-
-    public function test_manager_cannot_assign_administrator_role_on_update(): void
-    {
-        $this->actingAs($this->manager());
-
-        $target = $this->operator();
-
-        $this->patch(route('users.update', $target), [
-            'name' => $target->name,
-            'email' => $target->email,
-            'role' => 'administrator',
         ])->assertForbidden();
     }
 
@@ -188,7 +172,7 @@ class UserTest extends TestCase
             'name' => $target->name,
             'email' => $target->email,
             'role' => 'manager',
-        ])->assertRedirect(route('payments.index'));
+        ])->assertForbidden();
     }
 
     // ── Destroy ───────────────────────────────────────────────────────────────
@@ -215,26 +199,52 @@ class UserTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_manager_cannot_delete_administrator(): void
+    public function test_administrator_can_delete_admin_they_created(): void
     {
-        $this->actingAs($this->manager());
-
         $admin = $this->administrator();
+        $this->actingAs($admin);
 
-        $this->delete(route('users.destroy', $admin))
-            ->assertForbidden();
+        $created = User::factory()->administrator()->create(['created_by' => $admin->id]);
+
+        $this->delete(route('users.destroy', $created))
+            ->assertRedirect(route('users.index'));
+
+        $this->assertDatabaseMissing('users', ['id' => $created->id]);
     }
 
-    public function test_manager_can_delete_manager_or_operator(): void
+    public function test_administrator_cannot_delete_admin_created_by_another(): void
+    {
+        $creator = $this->administrator();
+        $otherAdmin = User::factory()->administrator()->create(['created_by' => $creator->id]);
+
+        $this->actingAs($this->administrator());
+
+        $this->delete(route('users.destroy', $otherAdmin))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $otherAdmin->id]);
+    }
+
+    public function test_administrator_cannot_delete_admin_with_no_creator(): void
+    {
+        $this->actingAs($this->administrator());
+
+        $rootAdmin = User::factory()->administrator()->create(['created_by' => null]);
+
+        $this->delete(route('users.destroy', $rootAdmin))
+            ->assertForbidden();
+
+        $this->assertDatabaseHas('users', ['id' => $rootAdmin->id]);
+    }
+
+    public function test_manager_cannot_delete_user(): void
     {
         $this->actingAs($this->manager());
 
         $target = $this->operator();
 
         $this->delete(route('users.destroy', $target))
-            ->assertRedirect(route('users.index'));
-
-        $this->assertDatabaseMissing('users', ['id' => $target->id]);
+            ->assertForbidden();
     }
 
     public function test_operator_cannot_delete_user(): void
@@ -244,7 +254,7 @@ class UserTest extends TestCase
         $target = $this->manager();
 
         $this->delete(route('users.destroy', $target))
-            ->assertRedirect(route('payments.index'));
+            ->assertForbidden();
     }
 
     // ── Validation ────────────────────────────────────────────────────────────

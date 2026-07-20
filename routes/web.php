@@ -70,9 +70,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Payments — accessible to all roles (administrator, manager, operator)
-    Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
-
     // Dashboard & all other admin sections — administrator and manager only
     Route::middleware('role:administrator,manager')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])
@@ -112,7 +109,13 @@ Route::middleware('auth')->group(function () {
             Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
         });
 
-        Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
+        // Administrators only — managers have no access to these sections
+        Route::middleware('role:administrator')->group(function () {
+            Route::resource('users', UserController::class)->only(['index', 'store', 'update', 'destroy']);
+
+            Route::get('payments', [PaymentController::class, 'index'])->name('payments.index');
+            Route::post('payments/{master}/payout', [PaymentController::class, 'payout'])->name('payments.payout');
+        });
 
         Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
         Route::put('settings', [SettingController::class, 'update'])->name('settings.update');

@@ -208,7 +208,7 @@ const userList = computed(() => props.users?.data ?? [])
                                             </svg>
                                         </button>
                                         <button
-                                            v-if="!user.is_current"
+                                            v-if="user.can_delete"
                                             @click="destroy(user)"
                                             class="rounded-lg p-2 text-slate-400 hover:bg-red-100 hover:text-red-600 dark:hover:bg-red-500/15 dark:hover:text-red-400 transition-all duration-150"
                                             :title="t('users.actions')"

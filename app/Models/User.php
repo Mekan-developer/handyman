@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\UserRole;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -22,6 +23,7 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'created_by',
     ];
 
     /**
@@ -45,7 +47,16 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
+            'created_by' => 'integer',
         ];
+    }
+
+    /**
+     * The administrator who created this user (null for seeded root accounts).
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'created_by');
     }
 
     public function isAdministrator(): bool

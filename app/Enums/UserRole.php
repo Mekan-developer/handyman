@@ -8,6 +8,19 @@ enum UserRole: string
     case Manager = 'manager';
     case Operator = 'operator';
 
+    /**
+     * Roles that can be assigned when creating a user through the admin panel.
+     *
+     * @return array<int, self>
+     */
+    public static function assignable(): array
+    {
+        return [
+            self::Administrator,
+            self::Manager,
+        ];
+    }
+
     public function label(): string
     {
         return match ($this) {

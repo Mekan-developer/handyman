@@ -13,10 +13,6 @@ class CheckRole
         $user = $request->user();
 
         if (! $user || ! in_array($user->role->value, $roles, strict: true)) {
-            if ($user?->isOperator()) {
-                return redirect()->route('payments.index');
-            }
-
             abort(403);
         }
 
