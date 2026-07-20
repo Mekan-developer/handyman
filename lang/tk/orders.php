@@ -29,6 +29,7 @@ return [
         'final_price' => 'Jemi baha',
         'created_at' => 'Döredildi',
         'assigned_at' => 'Bellenildi',
+        'master_change_reason' => 'Ussany çalyşmagyň sebäbi',
         'started_at' => 'Başlandy',
         'completed_at' => 'Tamamlandy',
         'cancelled_at' => 'Ýatyryldy',
@@ -66,6 +67,7 @@ return [
         'all' => 'Hemmesi',
         'all_statuses' => 'Hemme ýagdaýlar',
         'all_cities' => 'Hemme şäherler',
+        'all_oblasts' => 'Hemme welaýatlar',
         'by_status' => 'Ýagdaý boýunça',
         'by_city' => 'Şäher boýunça',
         'search_placeholder' => 'Ady ýa-da telefony boýunça gözleg',
@@ -86,6 +88,11 @@ return [
         'cancel_reason' => 'Ýatyrylan sebäbi',
         'no_eligible_masters' => 'Bu şäher we kategoriýa üçin elýeterli ussa ýok',
         'complete_no_price_warning' => 'Jemi baha görkezilmedi. Göterimli tölegli ussa 0 hasaplanar. Dogry hasaplama üçin bahany giriziň.',
+        'change_reason_label' => 'Ussany çalyşmagyň sebäbi',
+        'change_reason_placeholder' => 'Mysal üçin: usta elýeterli däl, ýalňyşyp bellenildi…',
+        'confirm_master_change_title' => 'Ussanyň çalşylmagyny tassyklaň',
+        'confirm_master_change' => 'Tassykla',
+        'back' => 'Yza',
     ],
 
     'create' => [
@@ -125,5 +132,9 @@ return [
         'not_editable' => 'Sargydy diňe «Garaşylýar» ýagdaýynda redaktirläp bolýar',
         'cannot_cancel_assigned' => 'Sargydy ýatyryp bolmaýar — eýýäm usta bellenildi',
         'master_unavailable' => 'Usta häzirki wagtda sargytlary kabul etmäge elýeterli däl',
+        'master_not_assigned' => 'Ilki sargyda usta belläň',
+        'too_many_photos' => 'Sargytda 4-den köp surat bolup bilmez',
+        'not_completed_yet' => 'Syn diňe sargyt tamamlanandan soň goýlup bilner',
+        'already_reviewed' => 'Siz eýýäm bu sargyda syn goýduňyz',
     ],
 ];

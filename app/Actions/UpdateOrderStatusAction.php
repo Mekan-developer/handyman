@@ -44,7 +44,8 @@ class UpdateOrderStatusAction
     private function isValidTransition(OrderStatus $from, OrderStatus $to): bool
     {
         return match ($from) {
-            OrderStatus::Pending => in_array($to, [OrderStatus::Assigned, OrderStatus::Cancelled], true),
+            // Pending -> Assigned only happens via AssignMasterAction, which also sets master_id/assigned_at.
+            OrderStatus::Pending => $to === OrderStatus::Cancelled,
             OrderStatus::Assigned => in_array($to, [OrderStatus::InProgress, OrderStatus::Cancelled], true),
             OrderStatus::InProgress => in_array($to, [OrderStatus::Completed, OrderStatus::Cancelled], true),
             default => false,

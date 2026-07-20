@@ -34,7 +34,7 @@ watch(() => props.show, (val) => {
 
 const allowedNext = computed(() => {
     const transitions = {
-        pending: ['assigned', 'cancelled'],
+        pending: ['cancelled'],
         assigned: ['in_progress', 'cancelled'],
         in_progress: ['completed', 'cancelled'],
     }

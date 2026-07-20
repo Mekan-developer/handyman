@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\CreateOrderTaskAction;
+use App\Actions\DeleteOrderTaskAction;
 use App\Actions\UploadTaskPhotoAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CreateTaskRequest;
@@ -12,6 +13,7 @@ use App\Models\Master;
 use App\Models\OrderTask;
 use App\Repositories\OrderRepository;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 
 class MasterTaskController extends Controller
 {
@@ -55,5 +57,23 @@ class MasterTaskController extends Controller
         return (new MasterTaskResource($updated))
             ->response()
             ->setStatusCode(202);
+    }
+
+    public function destroy(Request $request, int $orderId, int $taskId, DeleteOrderTaskAction $action): JsonResponse
+    {
+        /** @var Master $master */
+        $master = $request->user();
+
+        $order = $this->repository->findForMasterOrFail($orderId, $master);
+
+        $task = OrderTask::where('order_id', $order->id)->findOrFail($taskId);
+
+        try {
+            $action->handle($master, $task);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(null, 204);
     }
 }

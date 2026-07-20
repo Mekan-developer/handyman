@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Order extends Model
 {
@@ -33,6 +34,7 @@ class Order extends Model
         'completed_at',
         'cancelled_at',
         'cancel_reason',
+        'master_change_reason',
     ];
 
     protected function casts(): array
@@ -82,5 +84,10 @@ class Order extends Model
     public function masterLocations(): HasMany
     {
         return $this->hasMany(MasterLocation::class);
+    }
+
+    public function review(): HasOne
+    {
+        return $this->hasOne(OrderReview::class);
     }
 }

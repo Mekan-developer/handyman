@@ -30,7 +30,7 @@ class OrderRepository
 
     public function forClient(Client $client, ?string $status = null): LengthAwarePaginator
     {
-        return Order::with(['category', 'city', 'master.latestLocation'])
+        return Order::with(['category', 'city', 'master.latestLocation', 'review'])
             ->where('client_id', $client->id)
             ->when($status, fn ($q) => $q->where('status', $status))
             ->latest()
@@ -40,7 +40,7 @@ class OrderRepository
 
     public function findForClientOrFail(int $orderId, Client $client): Order
     {
-        return Order::with(['category', 'city', 'master.latestLocation', 'photos', 'tasks'])
+        return Order::with(['category', 'city', 'master.latestLocation', 'photos', 'tasks', 'review'])
             ->where('client_id', $client->id)
             ->findOrFail($orderId);
     }
@@ -94,12 +94,13 @@ class OrderRepository
         $order->delete();
     }
 
-    public function assignMaster(Order $order, int $masterId): Order
+    public function assignMaster(Order $order, int $masterId, ?string $changeReason = null): Order
     {
         $order->update([
             'master_id' => $masterId,
             'status' => OrderStatus::Assigned,
             'assigned_at' => now(),
+            'master_change_reason' => $changeReason,
         ]);
 
         return $order->fresh();

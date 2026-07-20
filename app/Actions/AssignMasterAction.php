@@ -15,7 +15,7 @@ class AssignMasterAction
         private readonly MasterRepository $masterRepository,
     ) {}
 
-    public function handle(Order $order, int $masterId): Order
+    public function handle(Order $order, int $masterId, ?string $changeReason = null): Order
     {
         if ($order->status->isFinal()) {
             throw OrderException::alreadyFinal();
@@ -40,7 +40,8 @@ class AssignMasterAction
             throw OrderException::categoryMismatch();
         }
 
-        $assigned = $this->orderRepository->assignMaster($order, $master->id);
+        $isReassignment = $order->master_id !== null && $order->master_id !== $master->id;
+        $assigned = $this->orderRepository->assignMaster($order, $master->id, $isReassignment ? $changeReason : null);
 
         MasterAssigned::dispatch($assigned->load('master'));
 

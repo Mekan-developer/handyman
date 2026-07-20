@@ -16,6 +16,10 @@ class SetOrderFinalPriceAction
             throw OrderException::alreadyFinal();
         }
 
+        if ($order->master_id === null) {
+            throw OrderException::masterNotAssigned();
+        }
+
         return $this->repository->update($order, ['final_price' => $finalPrice]);
     }
 }

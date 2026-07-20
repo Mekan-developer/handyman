@@ -72,6 +72,7 @@ class OrderResource extends JsonResource
             'completed_at' => $this->completed_at?->toDateTimeString(),
             'cancelled_at' => $this->cancelled_at?->toDateTimeString(),
             'cancel_reason' => $this->cancel_reason,
+            'master_change_reason' => $this->master_change_reason,
 
             'created_at' => $this->created_at->format('d.m.Y H:i'),
         ];

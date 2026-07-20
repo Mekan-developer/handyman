@@ -256,6 +256,8 @@ return [
         'photos' => 'фотографии',
         'photos.*' => 'фотография',
         'photo' => 'фотография',
+        'remove_photo_ids' => 'фото на удаление',
+        'remove_photo_ids.*' => 'ID фото на удаление',
         'title' => 'название',
         'latitude' => 'широта',
         'longitude' => 'долгота',

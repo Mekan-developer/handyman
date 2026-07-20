@@ -126,6 +126,33 @@ class OrderTest extends TestCase
         $this->get(route('orders.show', 999))->assertNotFound();
     }
 
+    public function test_eligible_masters_excludes_current_master_and_stays_a_list(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+
+        $masters = Master::factory()->count(3)->create(['city_id' => $city->id]);
+        $masters->each(fn (Master $m) => $m->categories()->sync([$category->id]));
+
+        // Assigned master sits in the middle of the eligible set, so filtering it out
+        // leaves non-sequential collection keys — must still serialize as a JSON array.
+        $order = Order::factory()->forMaster($masters[1])->assigned()->create([
+            'city_id' => $city->id,
+            'category_id' => $category->id,
+        ]);
+
+        $this->get(route('orders.show', $order))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('eligibleMasters', fn ($eligible) => count($eligible) === 2
+                    // Keys must be sequential (0,1) — otherwise Inertia serializes the
+                    // collection as a JSON object and the Vue Array prop reads as empty.
+                    && array_is_list(collect($eligible)->all())
+                    && collect($eligible)->pluck('id')->doesntContain($masters[1]->id))
+            );
+    }
+
     // ── Store ─────────────────────────────────────────────────────────────────
 
     public function test_admin_can_create_order(): void
@@ -247,6 +274,47 @@ class OrderTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_reassign_a_different_master_with_a_reason(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+        $firstMaster = Master::factory()->create(['city_id' => $city->id]);
+        $secondMaster = Master::factory()->create(['city_id' => $city->id]);
+        $firstMaster->categories()->sync([$category->id]);
+        $secondMaster->categories()->sync([$category->id]);
+        $order = Order::factory()->forMaster($firstMaster)->assigned()->create([
+            'city_id' => $city->id,
+            'category_id' => $category->id,
+        ]);
+
+        $this->post(route('orders.assign', $order), [
+            'master_id' => $secondMaster->id,
+            'change_reason' => 'Первый мастер недоступен',
+        ])->assertRedirect(route('orders.show', $order));
+
+        $fresh = $order->fresh();
+        $this->assertEquals($secondMaster->id, $fresh->master_id);
+        $this->assertEquals('Первый мастер недоступен', $fresh->master_change_reason);
+    }
+
+    public function test_first_time_assignment_ignores_change_reason(): void
+    {
+        $this->actingAsAdmin();
+        $city = City::factory()->create();
+        $category = Category::factory()->create();
+        $master = Master::factory()->create(['city_id' => $city->id]);
+        $master->categories()->sync([$category->id]);
+        $order = Order::factory()->create(['city_id' => $city->id, 'category_id' => $category->id]);
+
+        $this->post(route('orders.assign', $order), [
+            'master_id' => $master->id,
+            'change_reason' => 'Не должно сохраниться',
+        ])->assertRedirect(route('orders.show', $order));
+
+        $this->assertNull($order->fresh()->master_change_reason);
+    }
+
     public function test_assigning_inactive_master_fails(): void
     {
         $this->actingAsAdmin();
@@ -299,7 +367,8 @@ class OrderTest extends TestCase
     public function test_admin_can_set_final_price(): void
     {
         $this->actingAsAdmin();
-        $order = Order::factory()->create();
+        $master = Master::factory()->create();
+        $order = Order::factory()->forMaster($master)->assigned()->create();
 
         $this->post(route('orders.set-price', $order), ['final_price' => 350.50])
             ->assertRedirect(route('orders.show', $order));
@@ -316,6 +385,17 @@ class OrderTest extends TestCase
             ->assertRedirect();
 
         $this->assertEquals('completed', $order->fresh()->status->value);
+    }
+
+    public function test_setting_price_without_a_master_fails(): void
+    {
+        $this->actingAsAdmin();
+        $order = Order::factory()->create();
+
+        $this->post(route('orders.set-price', $order), ['final_price' => 100])
+            ->assertRedirect();
+
+        $this->assertNull($order->fresh()->final_price);
     }
 
     // ── Update status ─────────────────────────────────────────────────────────
@@ -395,6 +475,19 @@ class OrderTest extends TestCase
             ->assertRedirect();
 
         $this->assertEquals('pending', $order->fresh()->status->value);
+    }
+
+    public function test_pending_order_cannot_be_manually_set_to_assigned_without_a_master(): void
+    {
+        $this->actingAsAdmin();
+        $order = Order::factory()->create();
+
+        $this->post(route('orders.update-status', $order), ['status' => 'assigned'])
+            ->assertRedirect();
+
+        $fresh = $order->fresh();
+        $this->assertEquals('pending', $fresh->status->value);
+        $this->assertNull($fresh->master_id);
     }
 
     // ── Update ───────────────────────────────────────────────────────────────

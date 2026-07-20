@@ -14,6 +14,11 @@ class OrderException extends ApiException
         return new self((string) __('orders.errors.master_unavailable'));
     }
 
+    public static function masterNotAssigned(): self
+    {
+        return new self((string) __('orders.errors.master_not_assigned'));
+    }
+
     public static function cityMismatch(): self
     {
         return new self((string) __('orders.errors.city_mismatch'));
@@ -42,5 +47,20 @@ class OrderException extends ApiException
     public static function cannotCancelAssignedOrder(): self
     {
         return new self((string) __('orders.errors.cannot_cancel_assigned'));
+    }
+
+    public static function tooManyPhotos(): self
+    {
+        return new self((string) __('orders.errors.too_many_photos'));
+    }
+
+    public static function notCompletedYet(): self
+    {
+        return new self((string) __('orders.errors.not_completed_yet'));
+    }
+
+    public static function alreadyReviewed(): self
+    {
+        return new self((string) __('orders.errors.already_reviewed'));
     }
 }

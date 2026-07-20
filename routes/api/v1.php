@@ -66,6 +66,7 @@ Route::prefix('master')->group(function () {
             Route::prefix('{order}/tasks')->name('tasks.')->group(function () {
                 Route::post('/', [MasterTaskController::class, 'store'])->name('store');
                 Route::post('{task}/photo', [MasterTaskController::class, 'uploadPhoto'])->name('photo');
+                Route::delete('{task}', [MasterTaskController::class, 'destroy'])->name('destroy');
             });
         });
     });
@@ -107,7 +108,9 @@ Route::prefix('client')->group(function () {
             Route::get('/', [ClientOrderController::class, 'index'])->name('index');
             Route::get('{order}', [ClientOrderController::class, 'show'])->name('show');
             Route::post('/', [ClientOrderController::class, 'store'])->name('store');
+            Route::patch('{order}', [ClientOrderController::class, 'update'])->name('update');
             Route::post('{order}/cancel', [ClientOrderController::class, 'cancel'])->name('cancel');
+            Route::post('{order}/review', [ClientOrderController::class, 'storeReview'])->name('review');
         });
     });
 });

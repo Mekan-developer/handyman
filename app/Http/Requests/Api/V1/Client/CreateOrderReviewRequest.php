@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\Api\V1\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class AssignMasterToOrderRequest extends FormRequest
+class CreateOrderReviewRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -15,8 +15,8 @@ class AssignMasterToOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'master_id' => ['required', 'integer', 'exists:masters,id'],
-            'change_reason' => ['nullable', 'string', 'max:1000'],
+            'rating' => ['required', 'integer', 'between:1,5'],
+            'comment' => ['nullable', 'string', 'max:1000'],
         ];
     }
 }

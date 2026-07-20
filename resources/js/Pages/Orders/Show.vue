@@ -123,43 +123,45 @@ onMounted(async () => {
         if (isTracking.value) {
             await fetchAndDrawTrajectory(L)
         }
-    } else {
-        props.eligibleMasters.forEach((m) => {
-            if (!m.latest_location) { return }
-
-            const lat = parseFloat(m.latest_location.latitude)
-            const lng = parseFloat(m.latest_location.longitude)
-            const distanceKm = haversineKm(clientLat, clientLng, lat, lng)
-
-            const candidateIcon = L.divIcon({
-                className: 'custom-marker-candidate',
-                html: `<div style="background:#94a3b8;width:26px;height:26px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:11px;">${escapeHtml(initialOf(m.name))}</div>`,
-                iconSize: [26, 26],
-                iconAnchor: [13, 13],
-            })
-
-            const popupHtml = `
-                <div style="min-width:180px;">
-                    <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${escapeHtml(m.name)}</div>
-                    <div style="color:#6b7280;font-size:12px;">${escapeHtml(formatPhone(m.phone))}</div>
-                    <div style="display:flex;align-items:center;gap:4px;color:#2563eb;font-size:12px;font-weight:500;margin:4px 0 8px;">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.5-7-12.5A7 7 0 0112 1a7 7 0 017 7.5C19 13.5 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.5"/></svg>
-                        ${formatDistance(distanceKm)}
-                    </div>
-                    <button
-                        onclick="window.__assignFromMap(${m.id})"
-                        style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;width:100%"
-                    >${escapeHtml(t('orders.actions.assign_master'))}</button>
-                </div>
-            `
-
-            L.marker([lat, lng], { icon: candidateIcon })
-                .addTo(map)
-                .bindPopup(popupHtml)
-
-            allLatLngs.push([lat, lng])
-        })
     }
+
+    // Кандидаты на замену показываем всегда, а не только пока мастер не назначен —
+    // иначе после назначения их пины пропадают с карты и переназначить некого выбрать.
+    props.eligibleMasters.forEach((m) => {
+        if (!m.latest_location) { return }
+
+        const lat = parseFloat(m.latest_location.latitude)
+        const lng = parseFloat(m.latest_location.longitude)
+        const distanceKm = haversineKm(clientLat, clientLng, lat, lng)
+
+        const candidateIcon = L.divIcon({
+            className: 'custom-marker-candidate',
+            html: `<div style="background:#94a3b8;width:26px;height:26px;border-radius:50%;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,0.25);display:flex;align-items:center;justify-content:center;color:white;font-weight:600;font-size:11px;">${escapeHtml(initialOf(m.name))}</div>`,
+            iconSize: [26, 26],
+            iconAnchor: [13, 13],
+        })
+
+        const popupHtml = `
+            <div style="min-width:180px;">
+                <div style="font-weight:600;font-size:13px;margin-bottom:2px;">${escapeHtml(m.name)}</div>
+                <div style="color:#6b7280;font-size:12px;">${escapeHtml(formatPhone(m.phone))}</div>
+                <div style="display:flex;align-items:center;gap:4px;color:#2563eb;font-size:12px;font-weight:500;margin:4px 0 8px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-7.5-7-12.5A7 7 0 0112 1a7 7 0 017 7.5C19 13.5 12 21 12 21z"/><circle cx="12" cy="8.5" r="2.5"/></svg>
+                    ${formatDistance(distanceKm)}
+                </div>
+                <button
+                    onclick="window.__assignFromMap(${m.id})"
+                    style="background:#2563eb;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;width:100%"
+                >${escapeHtml(t('orders.actions.assign_master'))}</button>
+            </div>
+        `
+
+        L.marker([lat, lng], { icon: candidateIcon })
+            .addTo(map)
+            .bindPopup(popupHtml)
+
+        allLatLngs.push([lat, lng])
+    })
 
     if (allLatLngs.length > 1) {
         map.fitBounds(L.latLngBounds(allLatLngs), { padding: [80, 80] })
@@ -405,7 +407,7 @@ const sortedEligibleMasters = computed(() => {
                     </button>
 
                     <button
-                        v-if="!['completed', 'cancelled'].includes(order.status)"
+                        v-if="order.master && !['completed', 'cancelled'].includes(order.status)"
                         @click="showPriceModal = true"
                         class="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                     >
@@ -523,6 +525,9 @@ const sortedEligibleMasters = computed(() => {
                                     <p v-if="order.assigned_at" class="mt-1 text-xs text-gray-400">
                                         {{ t('orders.fields.assigned_at') }}: {{ order.assigned_at }}
                                     </p>
+                                    <p v-if="order.master_change_reason" class="mt-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                                        {{ t('orders.fields.master_change_reason') }}: {{ order.master_change_reason }}
+                                    </p>
 
                                     <div v-if="isTracking && liveDistance !== null" class="mt-3 rounded-lg bg-blue-50 px-3 py-2.5 dark:bg-blue-900/20">
                                         <div class="flex items-center justify-between">
@@ -550,42 +555,6 @@ const sortedEligibleMasters = computed(() => {
                                     </div>
                                 </div>
                                 <p v-else class="text-gray-400 dark:text-slate-500">{{ t('orders.no_master') }}</p>
-                            </div>
-                        </div>
-
-                        <!-- Eligible masters list -->
-                        <div v-if="sortedEligibleMasters.length > 0" class="rounded-xl bg-white shadow-sm dark:bg-slate-800">
-                            <div class="border-b border-gray-100 px-4 py-2.5 dark:border-slate-700">
-                                <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-slate-500">
-                                    Доступные мастера
-                                    <span class="ml-1 rounded-full bg-gray-100 px-1.5 py-0.5 text-gray-500 dark:bg-slate-700 dark:text-slate-400">
-                                        {{ sortedEligibleMasters.length }}
-                                    </span>
-                                </h3>
-                            </div>
-                            <div class="divide-y divide-gray-100 dark:divide-slate-700">
-                                <div
-                                    v-for="master in sortedEligibleMasters"
-                                    :key="master.id"
-                                    class="flex items-center gap-3 px-4 py-3"
-                                >
-                                    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
-                                        {{ initialOf(master.name) }}
-                                    </div>
-                                    <div class="min-w-0 flex-1">
-                                        <p class="truncate text-sm font-medium text-gray-900 dark:text-slate-200">{{ master.name }}</p>
-                                        <p v-if="master.distance_km !== null" class="text-xs font-medium text-blue-600 dark:text-blue-400">
-                                            {{ formatDistance(master.distance_km) }}
-                                        </p>
-                                        <p v-else class="text-xs text-gray-400">нет координат</p>
-                                    </div>
-                                    <button
-                                        @click="router.post(route('orders.assign', order.id), { master_id: master.id })"
-                                        class="shrink-0 rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-medium text-white transition-colors hover:bg-blue-700"
-                                    >
-                                        {{ t('orders.actions.assign_master') }}
-                                    </button>
-                                </div>
                             </div>
                         </div>
 
@@ -696,7 +665,7 @@ const sortedEligibleMasters = computed(() => {
                             <span class="h-3 w-3 rounded-full bg-blue-600 ring-2 ring-white dark:ring-slate-700" />
                             <span class="text-gray-600 dark:text-slate-300">{{ t('orders.fields.master') }}</span>
                         </div>
-                        <div v-if="!order.master && sortedEligibleMasters.length > 0" class="flex items-center gap-1.5">
+                        <div v-if="sortedEligibleMasters.length > 0" class="flex items-center gap-1.5">
                             <span class="h-3 w-3 rounded-full bg-slate-400 ring-2 ring-white dark:ring-slate-700" />
                             <span class="text-gray-600 dark:text-slate-300">Кандидаты</span>
                         </div>
@@ -718,6 +687,7 @@ const sortedEligibleMasters = computed(() => {
             :show="showAssignModal"
             :order-id="order.id"
             :masters="sortedEligibleMasters"
+            :is-reassign="!!order.master"
             @close="showAssignModal = false"
         />
         <SetPriceModal

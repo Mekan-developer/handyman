@@ -52,6 +52,13 @@ class ClientOrderResource extends JsonResource
                 'after_status' => $t->after_status,
             ])),
 
+            'review' => $this->whenLoaded('review', fn () => $this->review ? [
+                'id' => $this->review->id,
+                'rating' => $this->review->rating,
+                'comment' => $this->review->comment,
+                'created_at' => $this->review->created_at->toDateTimeString(),
+            ] : null),
+
             'assigned_at' => $this->assigned_at?->toDateTimeString(),
             'started_at' => $this->started_at?->toDateTimeString(),
             'completed_at' => $this->completed_at?->toDateTimeString(),

@@ -10,22 +10,45 @@ const props = defineProps({
     show: { type: Boolean, required: true },
     orderId: { type: Number, required: true },
     masters: { type: Array, default: () => [] },
+    // Заказу уже назначен мастер — значит это смена, а не первое назначение.
+    isReassign: { type: Boolean, default: false },
 })
 
 const emit = defineEmits(['close'])
 
-const form = useForm({ master_id: null })
+const form = useForm({ master_id: null, change_reason: '' })
 const search = ref('')
+// Мастер, выбранный из списка и ожидающий подтверждения (только для смены мастера).
+const pendingMaster = ref(null)
 
 watch(() => props.show, (val) => {
     if (val) {
         form.reset()
         form.clearErrors()
         search.value = ''
+        pendingMaster.value = null
     }
 })
 
-function selectAndSubmit(masterId) {
+function pickMaster(m) {
+    if (props.isReassign) {
+        pendingMaster.value = m
+        return
+    }
+    submit(m.id)
+}
+
+function cancelPending() {
+    pendingMaster.value = null
+    form.change_reason = ''
+    form.clearErrors()
+}
+
+function confirmPending() {
+    submit(pendingMaster.value.id)
+}
+
+function submit(masterId) {
     form.master_id = masterId
     form.post(route('orders.assign', props.orderId), {
         onSuccess: () => emit('close'),
@@ -53,7 +76,7 @@ function formatDistance(km) {
         <div class="flex h-full flex-col">
         <div class="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4 dark:border-slate-700">
             <h2 class="text-base font-semibold text-gray-900 dark:text-white">
-                {{ t('orders.modals.assign_title') }}
+                {{ pendingMaster ? t('orders.modals.confirm_master_change_title') : t('orders.modals.assign_title') }}
             </h2>
             <button
                 type="button"
@@ -66,7 +89,51 @@ function formatDistance(km) {
             </button>
         </div>
 
-        <div class="flex flex-1 flex-col overflow-hidden px-6 py-5">
+        <!-- Экран подтверждения — показывается после выбора мастера, только при смене -->
+        <div v-if="pendingMaster" class="flex flex-1 flex-col overflow-hidden px-6 py-5">
+            <div class="mb-4 flex items-center gap-3 rounded-xl border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-500/30 dark:bg-blue-500/10">
+                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-bold text-blue-700 dark:bg-blue-500/20 dark:text-blue-300">
+                    {{ pendingMaster.name.trim().charAt(0).toUpperCase() }}
+                </div>
+                <div class="min-w-0 flex-1">
+                    <p class="truncate text-sm font-medium text-gray-900 dark:text-slate-200">{{ pendingMaster.name }}</p>
+                    <p class="text-xs text-gray-500 dark:text-slate-400">{{ pendingMaster.phone }}</p>
+                </div>
+            </div>
+
+            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-slate-300">
+                {{ t('orders.modals.change_reason_label') }}
+            </label>
+            <textarea
+                v-model="form.change_reason"
+                rows="3"
+                autofocus
+                :placeholder="t('orders.modals.change_reason_placeholder')"
+                class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm focus:border-blue-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/20 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
+            />
+            <p v-if="form.errors.change_reason" class="mt-1.5 text-xs text-red-500">{{ form.errors.change_reason }}</p>
+
+            <div class="mt-auto flex shrink-0 justify-end gap-2 pt-5">
+                <button
+                    type="button"
+                    @click="cancelPending"
+                    class="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors"
+                >
+                    {{ t('orders.modals.back') }}
+                </button>
+                <button
+                    type="button"
+                    :disabled="form.processing"
+                    @click="confirmPending"
+                    class="rounded-lg bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                >
+                    {{ form.processing ? '...' : t('orders.modals.confirm_master_change') }}
+                </button>
+            </div>
+        </div>
+
+        <!-- Список мастеров -->
+        <div v-else class="flex flex-1 flex-col overflow-hidden px-6 py-5">
             <input
                 v-model="search"
                 type="text"
@@ -84,7 +151,7 @@ function formatDistance(km) {
                     :key="m.id"
                     type="button"
                     :disabled="form.processing"
-                    @click="selectAndSubmit(m.id)"
+                    @click="pickMaster(m)"
                     class="flex w-full items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-3 text-left transition-all hover:border-blue-400 hover:bg-blue-50/40 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700/50 dark:hover:border-blue-500 dark:hover:bg-slate-700"
                 >
                     <div class="min-w-0 flex-1">

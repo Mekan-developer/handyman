@@ -256,6 +256,8 @@ return [
         'photos' => 'suratlar',
         'photos.*' => 'surat',
         'photo' => 'surat',
+        'remove_photo_ids' => 'aýyrjak suratlar',
+        'remove_photo_ids.*' => 'aýyrjak suratyň ID-si',
         'title' => 'at',
         'latitude' => 'giňlik',
         'longitude' => 'uzynlyk',

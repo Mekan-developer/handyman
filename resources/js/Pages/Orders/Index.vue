@@ -7,6 +7,7 @@ import OrderStatusBadge from '@/Pages/Orders/Partials/OrderStatusBadge.vue'
 import CreateOrderModal from '@/Pages/Orders/Partials/CreateOrderModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
 import Pagination from '@/Components/Pagination.vue'
+import CityFilterSelect from '@/Components/CityFilterSelect.vue'
 import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
@@ -20,13 +21,10 @@ const props = defineProps({
     filters: Object,
 })
 
-// Плоский список городов для фильтра
-const allCities = computed(() => props.oblasts.flatMap((o) => o.cities ?? []))
-
 const showCreate = ref(false)
 
 const statusFilter = ref(props.filters?.status ?? '')
-const cityFilter = ref(props.filters?.city_id ?? '')
+const cityFilter = ref(props.filters?.city_id ? Number(props.filters.city_id) : null)
 const search = ref(props.filters?.search ?? '')
 const dateFrom = ref(props.filters?.date_from ?? '')
 const dateTo = ref(props.filters?.date_to ?? '')
@@ -47,7 +45,7 @@ function applyFilters() {
 
 function resetFilters() {
     statusFilter.value = ''
-    cityFilter.value = ''
+    cityFilter.value = null
     search.value = ''
     dateFrom.value = ''
     dateTo.value = ''
@@ -130,13 +128,13 @@ function confirmDelete() {
                     <option value="">{{ t('orders.filters.all_statuses') }}</option>
                     <option v-for="s in statuses" :key="s.value" :value="s.value">{{ s.label }}</option>
                 </select>
-                <select
+                <CityFilterSelect
                     v-model="cityFilter"
-                    class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                    <option value="">{{ t('orders.filters.all_cities') }}</option>
-                    <option v-for="c in allCities" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
+                    :oblasts="oblasts"
+                    :all-oblasts-label="t('orders.filters.all_oblasts')"
+                    :all-cities-label="t('orders.filters.all_cities')"
+                    select-class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                />
 
                 <!-- Date range -->
                 <div class="flex flex-col">
@@ -177,7 +175,8 @@ function confirmDelete() {
                     <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                         <thead class="bg-gray-50 dark:bg-slate-700/50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">№</th>
+                                <!-- <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">№</th> -->
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">id(#)</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.client_name') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.city') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('orders.fields.category') }}</th>
@@ -200,7 +199,8 @@ function confirmDelete() {
                                 class="cursor-pointer transition-colors hover:bg-blue-50/60 dark:hover:bg-slate-700"
                                 @click="router.visit(route('orders.show', order.id))"
                             >
-                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}</td>
+                                <!-- <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}</td> -->
+                                <td class="px-6 py-4 text-sm font-mono text-gray-500 dark:text-slate-400">{{ order.id }}</td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm font-medium text-gray-900 dark:text-slate-200">{{ order.client_name }}</div>
                                     <div class="text-xs text-gray-400">{{ formatPhone(order.client_phone) }}</div>

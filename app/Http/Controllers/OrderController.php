@@ -81,6 +81,7 @@ class OrderController extends Controller
                             'longitude' => $m->latestLocation->longitude,
                         ] : null,
                     ])
+                    ->values()
                 : collect(),
             'statuses' => collect(OrderStatus::cases())->map(fn ($s) => [
                 'value' => $s->value,
@@ -130,7 +131,8 @@ class OrderController extends Controller
         $order = $this->repository->findOrFail($id);
 
         try {
-            $action->handle($order, (int) $request->validated()['master_id']);
+            $data = $request->validated();
+            $action->handle($order, (int) $data['master_id'], $data['change_reason'] ?? null);
             $this->notifySuccess('orders.notifications.master_assigned');
         } catch (OrderException $e) {
             $this->notifyError($e->getMessage());
