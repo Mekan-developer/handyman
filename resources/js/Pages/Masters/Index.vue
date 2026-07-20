@@ -6,6 +6,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue'
 import MasterFormModal from '@/Pages/Masters/Partials/MasterFormModal.vue'
 import ConfirmModal from '@/Components/ConfirmModal.vue'
 import Pagination from '@/Components/Pagination.vue'
+import CityFilterSelect from '@/Components/CityFilterSelect.vue'
 import { formatPhone } from '@/utils/formatPhone'
 
 const { t } = useI18n()
@@ -32,6 +33,7 @@ const form = useForm({
     access_expires_at: '',
     is_active: true,
     category_ids: [],
+    photo: null,
 })
 
 function openCreate() {
@@ -54,6 +56,7 @@ function openEdit(master) {
         : ''
     form.is_active = master.is_active
     form.category_ids = master.category_ids ? [...master.category_ids] : []
+    form.photo = null
     form.clearErrors()
     showModal.value = true
 }
@@ -66,8 +69,9 @@ function closeModal() {
 }
 
 function submit() {
+    // File uploads require multipart/POST — the update route is registered as POST.
     if (editingMaster.value) {
-        form.put(route('masters.update', editingMaster.value.id), {
+        form.post(route('masters.update', editingMaster.value.id), {
             onSuccess: closeModal,
         })
     } else {
@@ -110,8 +114,6 @@ function confirmResetBalance() {
 // ── Filters ────────────────────────────────────────────────────────────────────
 const search = ref(props.filters.search ?? '')
 const cityFilter = ref(props.filters.city_id ? Number(props.filters.city_id) : null)
-
-const allCities = computed(() => props.oblasts.flatMap((o) => o.cities ?? []))
 
 const activeFilters = computed(() => ({
     ...(search.value ? { search: search.value } : {}),
@@ -187,13 +189,13 @@ const paginationMeta = computed(() => props.masters?.meta ?? null)
                         class="w-64 rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
                     />
                 </div>
-                <select
+                <CityFilterSelect
                     v-model="cityFilter"
-                    class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                >
-                    <option :value="null">{{ t('masters.filters.all_cities') }}</option>
-                    <option v-for="city in allCities" :key="city.id" :value="city.id">{{ city.name }}</option>
-                </select>
+                    :oblasts="oblasts"
+                    :all-oblasts-label="t('masters.filters.all_oblasts')"
+                    :all-cities-label="t('masters.filters.all_cities')"
+                    select-class="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+                />
                 <button
                     v-if="hasActiveFilters"
                     @click="resetFilters"
@@ -213,6 +215,7 @@ const paginationMeta = computed(() => props.masters?.meta ?? null)
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.name') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.phone') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.city') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.rating') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.payment_model') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.status') }}</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-slate-400">{{ t('masters.access_expires_at') }}</th>
@@ -222,7 +225,7 @@ const paginationMeta = computed(() => props.masters?.meta ?? null)
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-slate-700">
                             <tr v-if="masterList.length === 0">
-                                <td colspan="9" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
+                                <td colspan="10" class="px-6 py-12 text-center text-sm text-gray-400 dark:text-slate-500">
                                     {{ t('masters.empty') }}
                                 </td>
                             </tr>
@@ -235,17 +238,34 @@ const paginationMeta = computed(() => props.masters?.meta ?? null)
                                     {{ index + 1 + ((paginationMeta?.current_page ?? 1) - 1) * (paginationMeta?.per_page ?? 15) }}
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="text-sm font-medium text-gray-900 dark:text-slate-300">
-                                        {{ master.name }}
-                                    </span>
-                                    <div v-if="master.categories?.length" class="mt-1 flex flex-wrap gap-1">
-                                        <span
-                                            v-for="cat in master.categories"
-                                            :key="cat.id"
-                                            class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-400"
-                                        >
-                                            {{ cat.name }}
-                                        </span>
+                                    <div class="flex items-center gap-3">
+                                        <div class="h-12 w-9 flex-shrink-0 overflow-hidden rounded-md bg-gray-100 ring-1 ring-gray-200 dark:bg-slate-700 dark:ring-slate-600">
+                                            <img
+                                                v-if="master.photo_url"
+                                                :src="master.photo_url"
+                                                :alt="master.name"
+                                                class="h-full w-full object-cover"
+                                            />
+                                            <div v-else class="flex h-full w-full items-center justify-center text-gray-300 dark:text-slate-500">
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+                                                </svg>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span class="text-sm font-medium text-gray-900 dark:text-slate-300">
+                                                {{ master.name }}
+                                            </span>
+                                            <div v-if="master.categories?.length" class="mt-1 flex flex-wrap gap-1">
+                                                <span
+                                                    v-for="cat in master.categories"
+                                                    :key="cat.id"
+                                                    class="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-600 dark:bg-slate-700 dark:text-slate-400"
+                                                >
+                                                    {{ cat.name }}
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-slate-400">
@@ -253,6 +273,16 @@ const paginationMeta = computed(() => props.masters?.meta ?? null)
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                     {{ master.city?.name ?? '—' }}
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    <div v-if="master.reviews_count > 0" class="flex items-center gap-1">
+                                        <svg class="h-4 w-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.446a1 1 0 00-.363 1.118l1.287 3.957c.3.922-.755 1.688-1.538 1.118l-3.367-2.446a1 1 0 00-1.176 0l-3.367 2.446c-.783.57-1.838-.196-1.538-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.02 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.95-.69l1.286-3.958z" />
+                                        </svg>
+                                        <span class="font-medium text-gray-900 dark:text-slate-200">{{ master.reviews_avg_rating }}</span>
+                                        <span class="text-xs text-gray-400 dark:text-slate-500">({{ master.reviews_count }})</span>
+                                    </div>
+                                    <span v-else class="text-gray-300 dark:text-slate-600">—</span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-slate-400">
                                     {{ paymentModels.find(pm => pm.value === master.payment_model)?.label ?? master.payment_model }}

@@ -28,9 +28,19 @@ const cityId = computed({
     set: (val) => emit('update:modelValue', val ? Number(val) : null),
 })
 
+// Set right before we null out modelValue ourselves, so the watch below
+// doesn't mistake our own city reset for an external one and wipe the
+// oblast the user just picked.
+let resettingCity = false
+
 watch(
     () => props.modelValue,
     (id) => {
+        if (resettingCity) {
+            resettingCity = false
+            return
+        }
+
         if (id) {
             for (const oblast of props.oblasts) {
                 if (oblast.cities?.some((c) => c.id === id)) {
@@ -46,6 +56,7 @@ watch(
 )
 
 function onOblastChange() {
+    resettingCity = true
     emit('update:modelValue', null)
 }
 

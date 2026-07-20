@@ -85,6 +85,41 @@ class PhotoConverter
         return $webpPath;
     }
 
+    /**
+     * Convert an image to WebP, resizing it to a target width (height stays proportional / auto).
+     * Only scales down — images already narrower than the target keep their original size.
+     * Returns the absolute path of the new .webp file.
+     */
+    public static function convertToWidth(string $absolutePath, int $targetWidth): string
+    {
+        $info = @getimagesize($absolutePath);
+
+        if ($info === false) {
+            throw new RuntimeException("Cannot read image: {$absolutePath}");
+        }
+
+        $width = $info[0];
+        $height = $info[1];
+        $mimeType = $info['mime'];
+
+        $image = self::loadImage($absolutePath, $mimeType);
+
+        if ($width > $targetWidth) {
+            $image = self::scaleToWidth($image, $width, $height, $targetWidth);
+        }
+
+        $webpPath = preg_replace('/\.[^.]+$/', '.webp', $absolutePath);
+
+        if (imagewebp($image, $webpPath, self::WEBP_QUALITY) === false) {
+            imagedestroy($image);
+            throw new RuntimeException("Failed to write WebP: {$webpPath}");
+        }
+
+        imagedestroy($image);
+
+        return $webpPath;
+    }
+
     /** @return \GdImage */
     private static function loadImage(string $path, string $mimeType): mixed
     {

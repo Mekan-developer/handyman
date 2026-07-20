@@ -12,6 +12,8 @@ class MasterRepository
     public function paginate(int $perPage = 15, array $filters = []): LengthAwarePaginator
     {
         return Master::with(['city', 'categories'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
             ->when($filters['search'] ?? null, function ($q, $search) {
                 $escaped = addcslashes($search, '%_\\');
                 $q->where(fn ($sub) => $sub

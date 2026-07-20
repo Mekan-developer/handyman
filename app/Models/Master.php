@@ -70,6 +70,11 @@ class Master extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(OrderReview::class);
+    }
+
     public function hasActiveAccess(): bool
     {
         return $this->access_expires_at === null || $this->access_expires_at->isFuture();

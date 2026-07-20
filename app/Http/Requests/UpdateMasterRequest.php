@@ -26,6 +26,7 @@ class UpdateMasterRequest extends FormRequest
             'monthly_salary' => ['required_if:payment_model,salary,salary_percentage', 'nullable', 'numeric', 'min:0'],
             'access_expires_at' => ['nullable', 'date'],
             'is_active' => ['required', 'boolean'],
+            'photo' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
             'category_ids' => ['nullable', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],
         ];

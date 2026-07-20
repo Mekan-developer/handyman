@@ -8,10 +8,15 @@ return [
 
     'name' => 'Имя',
     'name_placeholder' => 'Введите имя мастера',
+    'photo' => 'Фото',
+    'photo_add' => 'Добавить',
+    'photo_change' => 'Изменить',
+    'photo_hint' => 'Формат 3×4, JPG/PNG, до 5 МБ',
     'phone' => 'Телефон',
     'phone_placeholder' => '+99361XXXXXXX',
     'city' => 'Город',
     'city_placeholder' => 'Выберите город',
+    'rating' => 'Рейтинг',
     'categories' => 'Категории',
     'categories_placeholder' => 'Выберите категории',
     'payment_model' => 'Модель оплаты',
@@ -38,6 +43,7 @@ return [
     'search' => 'Поиск по имени или телефону…',
     'filters' => [
         'all_cities' => 'Все города',
+        'all_oblasts' => 'Все велаяты',
         'reset' => 'Сбросить',
     ],
     'empty' => 'Мастера не найдены',

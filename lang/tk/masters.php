@@ -8,10 +8,15 @@ return [
 
     'name' => 'Ady',
     'name_placeholder' => 'Ussadyň adyny giriziň',
+    'photo' => 'Surat',
+    'photo_add' => 'Goş',
+    'photo_change' => 'Üýtget',
+    'photo_hint' => '3×4 format, JPG/PNG, 5 MB çenli',
     'phone' => 'Telefon',
     'phone_placeholder' => '+99361XXXXXXX',
     'city' => 'Şäher',
     'city_placeholder' => 'Şäheri saýlaň',
+    'rating' => 'Reýting',
     'categories' => 'Kategoriyalar',
     'categories_placeholder' => 'Kategoriyalary saýlaň',
     'payment_model' => 'Töleg modeli',
@@ -38,6 +43,7 @@ return [
     'search' => 'Ady ýa-da telefon boýunça gözle…',
     'filters' => [
         'all_cities' => 'Ähli şäherler',
+        'all_oblasts' => 'Ähli welaýatlar',
         'reset' => 'Arassala',
     ],
     'empty' => 'Ussatlar tapylmady',

@@ -56,6 +56,22 @@ function select(id) {
     }
 }
 
+function isAllChildrenSelected(root) {
+    const current = Array.isArray(props.modelValue) ? props.modelValue : []
+    return root.children.every((child) => current.includes(child.id))
+}
+
+function toggleAllChildren(root) {
+    const current = Array.isArray(props.modelValue) ? [...props.modelValue] : []
+    const childIds = root.children.map((child) => child.id)
+
+    const next = isAllChildrenSelected(root)
+        ? current.filter((id) => !childIds.includes(id))
+        : [...new Set([...current, ...childIds])]
+
+    emit('update:modelValue', next)
+}
+
 const chipBase =
     'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-all'
 const chipOn =
@@ -96,7 +112,14 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
             <div v-for="root in categories" :key="root.id" class="space-y-2">
                 <!-- Группа-родитель с детьми: заголовок + чипы детей -->
                 <template v-if="root.children?.length">
-                    <div class="flex items-center gap-1.5">
+                    <label class="flex w-fit items-center gap-1.5 cursor-pointer select-none">
+                        <input
+                            v-if="multiple"
+                            type="checkbox"
+                            :checked="isAllChildrenSelected(root)"
+                            @change="toggleAllChildren(root)"
+                            class="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500/20 dark:border-slate-500 dark:bg-slate-700"
+                        />
                         <ServiceIcon
                             v-if="root.icon_url"
                             :url="root.icon_url"
@@ -105,7 +128,7 @@ const labelClass = 'block text-sm font-medium text-gray-700 dark:text-slate-300'
                         <span class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-slate-500">
                             {{ root.name }}
                         </span>
-                    </div>
+                    </label>
                     <div class="flex flex-wrap gap-2">
                         <button
                             v-for="child in root.children"

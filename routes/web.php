@@ -21,9 +21,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/tiles/{file}', [TilesController::class, 'serve'])->where('file', '.+\.pmtiles');
 
-
 Route::get('/tiles/{z}/{x}/{y}.pbf', function (int $z, int $x, int $y) {
-    $db = new PDO('sqlite:' . config('services.mbtiles.path'), null, null, [
+    $db = new PDO('sqlite:'.config('services.mbtiles.path'), null, null, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
     ]);
 
@@ -84,9 +83,8 @@ Route::middleware('auth')->group(function () {
         Route::get('masters/map', [MasterController::class, 'map'])->name('masters.map');
         Route::get('masters/{master}/trajectory', [MasterController::class, 'trajectory'])->name('masters.trajectory');
         Route::post('masters/{master}/reset-balance', [MasterController::class, 'resetBalance'])->name('masters.reset-balance');
-        Route::resource('masters', MasterController::class)->only(['index', 'store', 'update', 'destroy']);
-
-        Route::post('payments/{master}/payout', [PaymentController::class, 'payout'])->name('payments.payout');
+        Route::resource('masters', MasterController::class)->only(['index', 'store', 'destroy']);
+        Route::post('masters/{master}', [MasterController::class, 'update'])->name('masters.update');
 
         Route::resource('banners', BannerController::class)->only(['index', 'store', 'destroy']);
         Route::post('banners/{banner}', [BannerController::class, 'update'])->name('banners.update');

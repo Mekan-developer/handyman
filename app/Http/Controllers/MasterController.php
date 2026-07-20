@@ -35,10 +35,13 @@ class MasterController extends Controller
             'masters' => MasterResource::collection($this->repository->paginate(15, $filters)),
             'oblasts' => app(OblastRepository::class)->allWithCities(),
             'categories' => app(CategoryRepository::class)->treeForSelect(),
-            'paymentModels' => collect(PaymentModel::cases())->map(fn ($m) => [
-                'value' => $m->value,
-                'label' => $m->label(),
-            ]),
+            'paymentModels' => collect(PaymentModel::cases())
+                ->reject(fn ($m) => $m === PaymentModel::FixedPerJob)
+                ->map(fn ($m) => [
+                    'value' => $m->value,
+                    'label' => $m->label(),
+                ])
+                ->values(),
             'filters' => $filters,
         ]);
     }
